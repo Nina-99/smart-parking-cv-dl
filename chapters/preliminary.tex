@@ -1,0 +1,697 @@
+% *************
+% INTRODUCCIÓN
+% *************
+\section*{INTRODUCCIÓN}
+\addcontentsline{toc}{section}{INTRODUCCIÓN}
+
+Los parqueaderos de vehículos en zonas urbanas son utilizados por la sociedad desde hace
+muchos años, la creciente demanda de sistemas eficientes para la gestión de parqueaderos en
+zonas urbanas ha impulsado el desarrollo de tecnologías avanzadas que optimicen el uso de los
+espacios y mejoren la seguridad.
+
+Anteriormente, los métodos tradicionales, como las barreras automáticas o las cadenas de
+seguridad, presentan limitaciones en términos de eficiencia, fiabilidad y personalización. Ante
+esta problemática, surge la necesidad de implementar soluciones innovadoras que integren
+tecnologías emergentes en los últimos años como la visión artificial y el aprendizaje profundo.
+
+``El procesamiento de imágenes juega un papel vital en el reconocimiento de objetos y sus
+características''\cite{deshpande2020}.
+
+``El seguimiento de vehículos con múltiples cámaras (MTMC) es esencial para el análisis
+de tráfico y el mantenimiento de la seguridad''\cite{tang2019}, juntamente con la inteligencia artificial, permite una
+toma de decisiones más eficientes para favorecer la gestión del establecimiento. Es decir, la
+automatización de la aplicación consigue grandes beneficios, como en el ahorro de ciertos
+recursos económicos cantidad y calidad de los datos recolectados y permite una toma de
+decisiones efectiva.
+
+Con esta propuesta, se espera contribuir al desarrollo de tecnologías
+inteligentes para la gestión de infraestructura urbana, brindando
+soluciones eficientes, seguras y fáciles de implementar en el control de
+acceso vehicular.
+
+% *************
+% ANTECEDENTES
+% *************
+\section*{ANTECEDENTES}
+\addcontentsline{toc}{section}{ANTECEDENTES}
+
+El crecimiento acelerado del parque automotor y la urbanización a nivel
+mundial ha generado un aumento en la demanda de infraestructura idónea
+para el estacionamiento de vehículos. Este fenómeno ha impulsado a
+diversas ciudades y países a explorar soluciones tecnológicas que
+permita gestionar de manera más eficiente los parqueaderos,
+especialmente en zonas urbanas de mayor crecimiento. En este sentido,
+los avances en visión artificial y aprendizaje profundo se han
+posicionado como herramientas clave para automatizar y optimizar estos
+procesos.
+
+En Bolivia, la gestión de los parqueaderos han sido un reto en
+crecimiento, especialmente en la red troncal como La Paz, Cochabamba y
+Santa Cruz, donde la expansión urbana ha generado una mayor demanda de
+espacios de estacionamiento. Sin embargo, en comparación con otros
+países de la región, Bolivia ha experimentado un desarrollo más limitado
+en cuanto a la implementación de tecnologías avanzadas en este ámbito. A
+nivel local, los sistemas de acceso y control vehicular siguen siendo
+mayormente manuales o basados en tecnologías rudimentarios, como la
+intervención humana.
+
+En los últimos años, algunas empresas en el país han empezado a adoptar
+tecnologías de reconocimiento de placas y cámaras de seguridad. Sin
+embargo, se observa una limitada adopción documentada en el uso de aprendizaje
+profundo para este propósito, lo que subraya la oportunidad de desarrollo e
+innovación en este campo de la inteligencia artificial.
+
+A nivel global, los sistemas inteligentes de control vehicular basados
+en visión artificial y aprendizaje profundo han alcanzado un notable
+grado de sofisticación, particularmente en países de Europa, Asia, y
+Norteamérica. China y los Estados Unidos lideran la implementación de
+estas tecnologías, para gestionar grandes volúmenes de tráfico y mejorar
+la seguridad.
+\subsection*{TRABAJOS DESARROLLADOS}
+\addcontentsline{toc}{subsection}{TRABAJOS DESARROLLADOS}
+
+\textbf{ANÁLISIS, DISEÑO E IMPLEMENTACIÓN DE UN SISTEMA DE CONTROL DE
+INGRESO DE VEHÍCULOS BASADO EN VISIÓN ARTIFICIAL Y RECONOCIMIENTO DE
+PLACAS EN EL PARQUEADERO DE LA UNIVERSIDAD POLITÉCNICA SALESIANA - SEDE
+CUENCA}
+
+Desarrollado por Alvares Duran Mayra Alejandra\cite{alvares2014}, el presente
+trabajo consiste en un sistema de reconocimiento de placas vehiculares
+que utiliza algoritmos de Reconocimiento Óptico de Caracteres ROC o OCR,
+mediante las librerías OPENCV, está desarrollado en lenguaje JAVA y se
+encuentra basado en Inteligencia Artificial, esta herramienta recepta y
+procesa las imágenes desde una cámara de video que se encuentra al
+ingresar al parqueadero de la Universidad Politécnica Salesiana, sede
+Cuenca.
+
+\textbf{DISEÑO E IMPLEMENTACIÓN DE UNA METODOLOGÍA BASADA EN
+INTELIGENCIA ARTIFICIAL CAPAZ DE CONTAR Y CLASIFICAR VEHÍCULOS EN LOS
+ACCESO DE AEROPUERTOS Y DE RECONOCER VEHÍCULOS AEROPORTUARIOS}
+
+Realizado por Martines Samper Aniceto José \cite{martines2022} en la Universidad
+Politécnica de Valencia (UPV), este proyecto se basa en realizar un
+conteo y una clasificación automática de vehículos, capaz de poder
+acoplarse a cualquier video de circulación. Particularizando un poco
+más, este proyecto se va a centrar principalmente en la composición de
+un algoritmo para el conteo y clasificación de vehículos en las entradas
+de aeropuertos. Para efectuar este estudio, se ha trabajado con el
+lenguaje de programación open CV. Donde se irá evolucionando el programa
+hasta poder conseguir un resultado óptimo, partiendo de una programación
+más simple, pasando por métodos básicos de procesamiento de imagen y
+finalizando en la implementación de redes neuronales (YOLO) para la
+detección y clasificación de objetos.
+
+\textbf{SISTEMA INTELIGENTE DE GESTIÓN DE TRÁFICO}
+
+González Caballero Javier \cite{gonzalez2019}, de la universidad de Valladolid En
+este proyecto se propone un sistema alternativo capaz de modificar en
+tiempo real la duración en verde o en rojo de los semáforos según el
+flujo de vehículos y la presencia o no de peatones. Para ello, se
+analiza la tecnología de control de los semáforos que se emplea
+actualmente y las investigaciones realizadas.
+
+\subsection*{INFORMACIÓN DOCUMENTAL Y ESTADÍSTICA}
+\addcontentsline{toc}{subsection}{INFORMACIÓN DOCUMENTAL y ESTADÍSTICA}
+
+Como se puede observar en la Figura \ref{fig:resultados_semana},
+se observa la afluencia media por día de vehículos al parqueadero.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}[x=1.8cm, y=0.08cm] % Escala: Separación en X, Altura en Y
+        
+        % 1. Dibujar las líneas de cuadrícula del fondo (Estilo Excel 3D)
+        \foreach \y in {0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100} {
+            % Línea diagonal (profundidad) y línea horizontal
+            \draw[gray!30, thin] (0, \y) -- (0.3, \y+5) -- (6.7, \y+5);
+            % Etiquetas del eje Y
+            \node[left, font=\scriptsize\sffamily, text=gray!80!black] at (0, \y) {\y};
+        }
+        
+        % ==========================================
+        % MACRO: Creador de barras 3D (Adaptado a escala 0-100)
+        % ==========================================
+        \newcommand{\barraTresD}[4]{
+            % #1: Posición X, #2: Valor Y, #3: Color, #4: Etiqueta inferior
+            
+            % Variables de perspectiva geométrica
+            \def\px{0.3}  % Profundidad en X
+            \def\py{5}    % Profundidad en Y
+            \def\ancho{0.3} % Ancho de la mitad de la barra
+            
+            % Cara frontal
+            \draw[fill=#3!80, draw=#3!50!black, thick] 
+                (#1-\ancho, 0) rectangle (#1+\ancho, #2);
+            
+            % Cara lateral derecha (profundidad oscura)
+            \draw[fill=#3!95!black, draw=#3!50!black, thick] 
+                (#1+\ancho, 0) -- 
+                (#1+\ancho+\px, \py) -- 
+                (#1+\ancho+\px, #2+\py) -- 
+                (#1+\ancho, #2) -- cycle;
+                
+            % Cara superior (tapa clara)
+            \draw[fill=#3!50, draw=#3!50!black, thick] 
+                (#1-\ancho, #2) -- 
+                (#1-\ancho+\px, #2+\py) -- 
+                (#1+\ancho+\px, #2+\py) -- 
+                (#1+\ancho, #2) -- cycle;
+                
+            % Etiqueta abajo en el eje X
+            \node[below, font=\scriptsize\sffamily, text=black!80] at (#1, -4) {#4};
+        }
+        
+        % ==========================================
+        % DATOS DEL GRÁFICO
+        % ==========================================
+        % Formato: \barraTresD{Posición X}{Valor Y}{Color}{Etiqueta}
+        
+        \barraTresD{1}{85}{blue!70!cyan}{LUNES}
+        \barraTresD{2}{80}{blue!70!cyan}{MARTES}
+        \barraTresD{3}{96}{blue!70!cyan}{MIERCOLES}
+        \barraTresD{4}{76}{blue!70!cyan}{JUEVES}
+        \barraTresD{5}{66}{blue!70!cyan}{VIERNES}
+        \barraTresD{6}{96}{blue!70!cyan}{SABADO}
+        
+    \end{tikzpicture}
+    
+    \caption{Resultados registrados durante los días de la semana.}
+    \label{fig:resultados_semana}
+\end{figure}
+
+% ***********************
+% SITUACIÓN PROBLEMÁTICA
+% ***********************
+\section*{SITUACIÓN PROBLEMÁTICA}
+\addcontentsline{toc}{section}{SITUACIÓN PROBLEMÁTICA}
+
+En una ciudad con alta densidad del parque automotor, los estacionamientos en áreas
+concurridas (como centros comerciales, edificios de oficinas y hospitales), enfrentan algunos
+inconvenientes en horas pico en el manejo de la información, algunos de los cuales se detallan a
+continuación:
+
+\begin{longtable}{
+        m{5cm}
+        m{5cm}
+        m{5cm}
+    }
+    \caption{Análisis causa-efecto}
+    \label{tab:causa_efecto}\\
+    
+    \toprule
+    \rowcolor{gray!20}
+    \makecell{\textbf{CAUSA/FACTOR}\\\textbf{GENERADOR}}
+    &
+    \makecell{\textbf{EFECTO/}\\\textbf {CONSECUENCIA}\\\textbf{DIRECTA}}
+    &
+    \makecell{\textbf{IMPACTO}\\\textbf {OPERATIVO}} \\
+    \midrule
+    \endfirsthead
+
+    \multicolumn{3}{c}{\textit{Continuación de la Tabla \ref{tab:causa_efecto}}} \\
+    \toprule
+    \rowcolor{gray!20}
+    \makecell{\textbf{OBJETIVOS}\\\textbf{ESPECÍFICOS}}
+    &
+    \makecell{\textbf{MÉTODOS,}\\\textbf {TÉCNICAS Y/O}\\\textbf{HERRAMIENTAS}}
+    &
+    \makecell{\textbf{ACTIVIDAD}} \\
+    \midrule
+    \endhead
+
+    Intervención manual de operadores en el registro de acceso.
+    &
+    Tiempos de atención variables y comisión de errores en la toma de datos.
+    &
+    Falta de información confiable sobre la ocupación y los vehículos.
+    \\
+
+    \midrule
+    Ausencia de identificación automatizada de atributos (tipo, color, placa).
+    &
+    Imposibilidad de clasificar y registrar sistemáticamente las características
+    vehiculares.
+    &
+    Carencia de perfiles detallados de los vehículos que ingresan o salen.
+    \\
+
+    \midrule
+    Omisión de registro temporal y espacial (fecha, hora, punto de acceso,
+    sentido).
+    &
+    Desconexión entre el evento físico y la trazabilidad de los movimientos.
+    &
+    Imposibilidad de ejecutar auditorías, seguimiento o análisis estadístico
+    posterior.
+    \\
+
+    \midrule
+    Verificación de autorización realizada manualmente.
+    &
+    Detección tardía o nula de vehículos no autorizados en los puntos de
+    acceso.
+    &
+    Vulnerabilidad en la seguridad del recinto y ausencia de evidencia
+    digital auditable.
+    \\
+
+    \midrule
+    Variables del entorno de captura (iluminación, oclusión, ángulo, distancia).
+    &
+    Potencial degradación en la tasa de acierto de los modelos de visión
+    artificial.
+    &
+    Necesidad de diseñar el sistema considerando condiciones reales no controladas.
+    \\
+    \bottomrule
+\end{longtable}
+
+% ***************************
+% PLANTEAMIENTO DEL PROBLEMA
+% ***************************
+\section*{PLANTEAMIENTO DEL PROBLEMA}
+\addcontentsline{toc}{section}{PLANTEAMIENTO DEL PROBLEMA}
+
+En el control de acceso vehicular de los parqueaderos, los procedimientos
+manuales o semiautomáticos pueden generar errores de registro, dificultades para
+ejecutar el seguimiento de los vehículos y limitaciones para disponer de
+información confiable sobre los eventos de ingreso y salida. La ausencia de
+mecanismos automatizados para identificar las características de los vehículos
+también dificulta la revisión de los accesos y la generación de información
+histórica para el análisis de la operación del recinto.
+
+En el parqueadero, esta problemática se relaciona con la necesidad de
+identificar automáticamente los vehículos considerando su tipo, color
+predominante y placa de matrícula, registrar la fecha, hora, cámara y sentido
+correspondiente al evento, y disponer de esta información para consulta,
+seguimiento y análisis estadístico.
+
+En este contexto, el desarrollo de técnicas de visión artificial y aprendizaje
+profundo ofrece la posibilidad de automatizar parte del proceso de identificación
+vehicular mediante el procesamiento de imágenes y video. Sin embargo, el
+desempeño del sistema depende de factores como las condiciones de iluminación,
+el ángulo y distancia de captura, las características de las placas y la calidad
+de las imágenes obtenidas en el entorno de estudio.
+
+Por tanto, el problema de investigación se centra en determinar en qué medida un
+sistema basado en visión artificial y aprendizaje profundo puede automatizar la
+identificación de vehículos y el registro de sus eventos de ingreso y salida,
+manteniendo un desempeño adecuado bajo las condiciones de captura del parqueadero.
+
+En este contexto, se formula la siguiente pregunta de investigación:
+\begin{quote}
+    ¿En qué medida un sistema basado en visión artificial y aprendizaje profundo
+    puede automatizar la identificación de los vehículos, mediante el
+    reconocimiento de su tipo, color predominante y placa de matrícula, así como
+    el registro de sus eventos de ingreso y salida, bajo las condiciones de
+    captura del parqueadero?
+\end{quote}
+
+\section*{OBJETO DE ESTUDIO}
+\addcontentsline{toc}{section}{OBJETO DE ESTUDIO}
+
+El proceso de control de acceso e identificación vehicular en parqueaderos urbanos.
+
+\section*{OBJETIVOS}
+\addcontentsline{toc}{section}{OBJETIVOS}
+
+\subsection*{OBJETIVO GENERAL}
+\addcontentsline{toc}{subsection}{OBJETIVO GENERAL}
+
+Desarrollar un sistema inteligente para la gestión automatizada del control de
+acceso vehicular en un parqueadero, mediante técnicas de visión artificial y
+aprendizaje profundo, que permita identificar el tipo, color predominante y placas
+de los vehículos, registrar los eventos de ingreso y salida y generar información 
+para el seguimiento y análisis de la operación del recinto.
+
+\subsection*{OBJETIVOS ESPECÍFICOS}
+\addcontentsline{toc}{subsection}{OBJETIVOS ESPECÍFICOS}
+
+\begin{itemize}
+    \item
+        Analizar las condiciones de operaciones del parqueadero, las características
+        de los puntos de acceso y los requerimientos técnicos y funcionales del
+        sistema, considerando las condiciones de captura de las cámaras,
+        para establecer los criterios de diseño de la solución propuesta.
+    \item
+        Construir y preparar un conjunto de datos representativos de las condiciones
+        reales del parqueadero, mediante la selección, extracción, organización y
+        anotación de imágenes de vehículos, considerando sus categorías, color
+        predominante y placas, para el entrenamiento y evaluación de los modelos
+        de visión artificial.
+    \item
+        Adaptar y entrenar modelos de aprendizaje profundo para la detección
+        e identificación del tipo y color predominante de los vehículos, así como
+        para la localización de sus placas, utilizando el conjunto de datos
+        construido y evaluando su desempeño mediante métricas apropiadas.
+    \item
+        Desarrollar y entrenar un modelo de reconocimiento óptico de caracteres orientado
+        a la lectura de placas vehiculares, empleando datos correspondientes
+        al formato de las matrículas presentes en el contexto del estudio, y
+        evaluar su desempeño bajo diferentes condiciones de visibilidad.
+    \item
+        Integrar los modelos de visión artificial en un sistema de gestión
+        que permita registrar los vehículos identificados y sus eventos de ingreso
+        y salida, asociando la información obtenida con la fecha, hora y cámara
+        correspondiente, y proporcionando mecanismos para su consulta y visualización.
+    \item
+        Evaluar el desempeño del sistema desarrollado mediante pruebas experimentales
+        en condiciones representativas del entorno de estudio, considerando la
+        precisión de la detección e identificación de vehículos y placas, la correcta
+        determinación de los eventos de ingreso y salida y el rendimiento computacional
+        del modelo antes y después de aplicar técnicas de optimización.
+\end{itemize}
+
+% ****************
+% CAMPO DE ACCIÓN
+% ****************
+\section*{CAMPO DE ACCIÓN}
+\addcontentsline{toc}{section}{CAMPO DE ACCIÓN}
+
+La automatización del proceso de identificación y registro de vehículos en los
+puntos de acceso de un parqueadero, mediante técnicas de visión computacional y
+aprendizaje profundo, considerando el reconocimiento de su tipo, color
+predominante y placa de matrícula, así como el registro de los eventos de
+ingreso y salida.
+
+% **********
+% HIPÓTESIS
+% **********
+\section*{HIPÓTESIS}
+\addcontentsline{toc}{section}{HIPÓTESIS}
+
+La implementación de un sistema basado en visión artificial y aprendizaje
+profundo permitirá automatizar la identificación y el registro de vehículos en
+los puntos de acceso del parqueadero, mediante el reconocimiento de su tipo,
+color predominante y placa de matrícula, así como el registro de sus eventos de
+ingreso y salida, con un desempeño adecuado bajo las condiciones de captura
+definidas para el entorno de estudio.
+
+\subsection*{CRITERIO DE EVALUACIÓN DE LA HIPÓTESIS}
+\addcontentsline{toc}{subsection}{CRITERIO DE EVALUACIÓN DE LA HIPÓTESIS}
+
+La hipótesis será contrastada mediante pruebas experimentales realizadas sobre
+un conjunto de datos de prueba independiente del utilizado durante el
+entrenamiento. La evaluación considerará el desempeño de los modelos de
+detección e identificación, el reconocimiento de placas de matrícula, la
+determinación de los eventos de ingreso y salida y el rendimiento computacional
+del sistema.
+
+La hipótesis será considerada respaldada cuando los resultados experimentales
+demuestren que el sistema permite automatizar el proceso de identificación y
+registro vehicular bajo las condiciones definidas para el entorno de estudio y
+alcance los umbrales de desempeño establecidos para cada componente durante el
+diseño experimental. En caso contrario, se considerarán las limitaciones
+identificadas y se analizarán sus causas.
+
+% **************
+% JUSTIFICACIÓN
+% **************
+\section*{JUSTIFICACIÓN}
+\addcontentsline{toc}{section}{JUSTIFICACIÓN}
+
+\subsection*{JUSTIFICACIÓN TÉCNICA}
+\addcontentsline{toc}{subsection}{JUSTIFICACIÓN TÉCNICA}
+
+El desarrollo del sistema se justifica técnicamente por la necesidad de
+automatizar el proceso de identificación y registro de vehículos mediante
+técnicas de visión artificial y aprendizaje profundo. La solución propuesta
+permitirá procesar imágenes obtenidas mediante cámaras ubicadas en los puntos de
+acceso del parqueadero para detectar los vehículos, identificar su tipo y color
+predominante y localizar sus placas de matrícula para su posterior reconocimiento.
+
+La utilización de modelos de aprendizaje profundo permitirá adaptar la solución
+a las características visuales del entorno de estudio mediante datos obtenidos
+del propio parqueadero. Asimismo, el procesamiento de imágenes permitirá realizar
+las etapas necesarias para mejorar la información utilizada por los modelos y
+por el sistema de reconocimiento de placas.
+
+La integración de los modelos con un sistema de gestión permitirá asociar la
+información visual obtenida con los eventos de ingreso y salida, generando
+registros estructurados que puedan ser consultados posteriormente. De esta
+manera, la solución no se limita al reconocimiento de vehículos, sino que
+integra percepción visual, procesamiento, almacenamiento y gestión de información.
+
+\subsection*{JUSTIFICACIÓN ECONÓMICA}
+\addcontentsline{toc}{subsection}{JUSTIFICACIÓN ECONÓMICA}
+
+El proyecto presenta una justificación económica relacionada con la
+automatización de tareas asociadas al registro y control de acceso vehicular, lo
+que puede reducir la necesidad de intervención manual en determinadas actividades
+y favorecer un uso más eficiente de la información generada por el parqueadero.
+
+Asimismo, la reutilización de infraestructura de captura existente, cuando sus
+características técnicas sean adecuadas para el sistema, puede contribuir a
+disminuir los requerimientos adicionales de equipamiento. La evaluación del
+sistema permitirá determinar el comportamiento del modelo y sus requerimientos
+computacionales, proporcionando información para analizar su viabilidad de
+implementación en equipos con diferentes capacidades de procesamiento.
+
+\subsection*{JUSTIFICACIÓN SOCIAL}
+\addcontentsline{toc}{subsection}{JUSTIFICACIÓN SOCIAL}
+
+El proyecto se justifica socialmente por su contribución al mejoramiento del
+control y la trazabilidad de los vehículos que ingresan y salen del parqueadero.
+El registro automatizado de información como la placa de matrícula, el tipo, el
+color predominante, la fecha, la hora y el punto de acceso permitirá disponer de
+evidencia digital asociada a los eventos vehiculares.
+
+La disponibilidad de esta información puede facilitar la consulta ante incidentes
+y mejorar el control de acceso mediante la identificación de vehículos que no se
+encuentren autorizados en los registros del sistema. De esta manera, la propuesta
+busca contribuir a un proceso de control vehicular más organizado, trazable y
+basado en información.
+
+\section*{ALCANCES Y LIMITACIONES}
+\addcontentsline{toc}{section}{ALCANCES Y LIMITACIONES}
+
+\subsection*{ALCANCES}
+\addcontentsline{toc}{subsection}{ALCANCES}
+
+La presente propuesta del sistema automatizado para el parqueadero
+presenta los siguientes alcances
+
+\begin{itemize}
+    \item
+        \textbf{Captura y procesamiento de imágenes:} utilización de las cámaras
+        disponibles en los puntos de acceso seleccionados para obtener imágenes y
+        video de los vehículos.
+    \item
+        \textbf{Detección e identificación vehicular:} detección de vehículos
+        mediante modelos de aprendizaje profundo y reconocimiento de su tipo y
+        color predominante.
+    \item
+        Escalabilidad del sistema. El sistema podrá ser ampliado para
+        controlar múltiples puntos de acceso, gestionando grandes volúmenes de
+        vehículos y características en tiempo real y sin pérdida de
+        rendimiento.
+    \item
+        \textbf{Reconocimiento de placas:} localización de las placas de
+        matrícula y desarrollo de un mecanismo de reconocimiento óptico de
+        caracteres orientado al formato de las matrículas presentes en el
+        contexto de estudio.
+    \item
+        \textbf{Determinación de eventos:} registro de los eventos de ingreso y
+        salida asociados a los vehículos, considerando fecha, hora y cámara
+        correspondiente.
+    \item
+        \textbf{Control de autorización:} comparación de la matrícula reconocida
+        con los registros de autorización definidos en la base de datos para
+        identificar accesos no autorizados.
+    \item
+        \textbf{Gestión de información:} almacenamiento estructurado de los
+        datos obtenidos y disponibilidad de mecanismos de consulta y
+        visualización mediante una aplicación web.
+    \item
+        \textbf{Generación de estadísticas:} elaboración de información
+        estadística basada en los registros históricos, incluyendo afluencia
+        vehicular, distribución temporal de ingresos y salidas y tiempos de
+        permanencia cuando exista información suficiente para su cálculo.
+    \item
+        \textbf{Optimización del modelo:} evaluación de técnicas de optimización
+        y cuantización con el propósito de analizar su impacto sobre el
+        rendimiento computacional del sistema.
+    \item
+        \textbf{Evaluación experimental:} pruebas del sistema bajo condiciones
+        representativas del entorno de estudio y comparación de su desempeño en
+        las diferentes etapas del procesamiento.
+\end{itemize}
+
+\subsection*{LIMITACIONES}
+\addcontentsline{toc}{subsection}{LIMITACIONES}
+
+\begin{itemize}
+    \item
+        \textbf{Condiciones de captura:} el desempeño del sistema dependerá de la
+        calidad de las imágenes obtenidas por las cámaras, pudiendo verse afectado
+        por variaciones de iluminación, distancia, ángulo de observación, movimiento,
+        oclusiones y condiciones de baja visibilidad.
+    \item
+        \textbf{Reconocimiento de placas:} el reconocimiento óptico de caracteres
+        podrá presentar errores cuando la placa no sea suficientemente visible,
+        presente obstrucción, reflejos, desenfoque o una resolución insuficiente.
+    \item
+        \textbf{Representatividad del conjunto de datos:} el desempeño obtenido
+        estará condicionado por la diversidad y calidad de las imágenes utilizadas
+        para el entrenamiento y evaluación de los modelos.
+    \item
+        \textbf{Capacidad computacional:} el tiempo de inferencia y el rendimiento
+        del sistema dependerán de las características del equipo usado para ejecutar
+        los modelos.
+    \item
+        \textbf{Infraestructura de red:} la comunicación entre los componentes del
+        sistema podrá verse afectada por la disponibilidad y estabilidad de la
+        infraestructura de red.
+    \item
+        \textbf{Alcance de las cámaras:} el proyecto se limitará a los puntos de
+        acceso seleccionados y a las condiciones de captura disponibles en el entorno
+        de estudio.
+    \item
+        \textbf{Privacidad y tratamiento de información:} el almacenamiento y
+        procesamiento de placas y registros asociados deberá considerar las disposiciones
+        aplicables al tratamiento de datos personales y la información generada durante
+        la implementación.
+\end{itemize}
+
+\section*{APORTES}
+\addcontentsline{toc}{section}{APORTES}
+
+\subsection*{APORTE TEÓRICO}
+\addcontentsline{toc}{subsection}{APORTE TEÓRICO}
+
+El aporte teórico del proyecto consiste en la sistematización de fundamentos
+relacionados con visión computacional, aprendizaje profundo, detección de
+objetos, reconocimiento de matrículas y procesamiento de información vehicular,
+orientados a su aplicación en un sistema de control de acceso de un parqueadero.
+Asimismo, se establecerán criterios técnicos para la evaluación del desempeño de
+los modelos en función de las condiciones del entorno de estudio.
+
+\subsection*{APORTE PRÁCTICO}
+\addcontentsline{toc}{subsection}{APORTE PRÁCTICO}
+
+El aporte práctico consiste en el desarrollo de un pipeline integrado para la
+detección e identificación de vehículos, localización y reconocimiento de placas
+mediante OCR, registro de eventos de ingreso y salida y gestión de la información
+generada por el sistema. El proyecto contempla además la construcción de un
+conjunto de datos propio obtenido del entorno de estudio para el entrenamiento y
+evaluación de los modelos.
+
+\subsection*{APORTE ACADÉMICO}
+\addcontentsline{toc}{subsection}{APORTE ACADÉMICO}
+
+El aporte académico consiste en la generación de una experiencia documentada de
+aplicación de visión computacional y aprendizaje profundo al control de acceso
+vehicular, incluyendo la construcción de datos, entrenamiento, evaluación e
+integración de modelos en un sistema informático. La documentación obtenida
+podrá servir como referencia para futuros trabajos relacionados con inteligencia
+artificial aplicada en la Carrera de Ingeniería Informática.
+
+\subsection*{INGENIERÍA DEL PROYECTO}
+\addcontentsline{toc}{subsection}{INGENIERÍA DEL PROYECTO}
+
+\renewcommand{\arraystretch}{1.3}
+\begin{longtable}{
+        m{4.5cm}
+        m{5cm}
+        m{5.5cm}
+    }
+    \caption{Ingeniería del Proyecto}
+    \label{tab:ingenieria_del_proyecto}\\
+    
+    \toprule
+    \rowcolor{gray!20}
+    \makecell{\textbf{OBJETIVOS}\\\textbf{ESPECÍFICOS}}
+    &
+    \makecell{\textbf{MÉTODOS,}\\\textbf {TÉCNICAS Y/O}\\\textbf{HERRAMIENTAS}}
+    &
+    \makecell{\textbf{ACTIVIDAD}} \\
+    \midrule
+    \endfirsthead
+
+    \multicolumn{3}{c}{\textit{Continuación de la Tabla \ref{tab:ingenieria_del_proyecto}}} \\
+    \toprule
+    \rowcolor{gray!20}
+    \makecell{\textbf{OBJETIVOS}\\\textbf{ESPECÍFICOS}}
+    &
+    \makecell{\textbf{MÉTODOS,}\\\textbf {TÉCNICAS Y/O}\\\textbf{HERRAMIENTAS}}
+    &
+    \makecell{\textbf{ACTIVIDAD}} \\
+    \midrule
+    \endhead
+
+    Analizar las condiciones de operación del parqueadero, las características
+    de los puntos de acceso y los requerimientos técnicos y funcionales del sistema.
+    &
+    Observación directa, inspección técnica, revisión documental, análisis
+    de imágenes y videos, entrevistas cuando corresponda.
+    &
+    Analizar ubicación y características de las cámaras; identificar condiciones
+    de iluminación, distancia y ángulo de captura; identificar tipos de vehículos
+    presentes; determinar requerimientos funcionales y técnicos; establecer
+    condiciones y restricciones del sistema.
+    \\
+
+    \midrule
+    Construir y preparar un conjunto de datos representativo de las condiciones
+    reales del parqueadero.
+    & 
+    Recolección de imágenes y videos, extracción de fotogramas, selección y
+    depuración de datos, anotación y organización del conjunto de datos, OpenCV.
+    &
+    Seleccionar material audiovisual; extraer imágenes; eliminar redundancias y
+    datos inadecuados; definir clases; realizar anotaciones; organizar los
+    conjuntos de entrenamiento, validación y prueba; documentar las
+    características del dataset.
+    \\
+
+    \midrule
+    Adaptar y entrenar modelos de aprendizaje profundo para la detección e
+    identificación de vehículos y localización de placas.
+    &
+    YOLO26, PyTorch, aprendizaje por transferencia, entrenamiento supervisado,
+    ajuste de hiperparámetros y evaluación mediante métricas de detección y
+    clasificación.
+    &
+    Preparar los datos; seleccionar el modelo; hacer entrenamiento y
+    fine-tuning; experimentar con configuraciones; evaluar precisión, recall,
+    F1, IoU y mAP según corresponda; seleccionar el modelo con mejor relación
+    entre desempeño y costo computacional.
+    \\
+
+    \midrule
+    Desarrollar y entrenar un modelo de reconocimiento óptico de caracteres
+    orientado a placas de matrícula.
+    &
+    OpenCV, PyTorch, técnicas de preprocesamiento y OCR, aprendizaje supervisado
+    y métricas específicas para reconocimiento de caracteres.
+    &
+    Extraer y preparar recortes de placas; normalizar y preprocesar las imágenes;
+    construir el conjunto de datos para OCR; entrenar el modelo; evaluar
+    caracteres y placas completas; analizar errores según condiciones de visibilidad.
+    \\
+
+    \midrule
+    Integrar los modelos en un sistema de gestión para el registro y consulta de
+    eventos vehiculares.
+    &
+    OpenCV, Python, FastAPI, React y PostgreSQL.
+    &
+    Diseñar la arquitectura del sistema; implementar el procesamiento de video;
+    integrar los modelos; desarrollar la API; diseñar la base de datos;
+    implementar el registro de vehículos y eventos; implementar consultas,
+    control de autorización y visualización de información.
+    \\
+
+    \midrule
+    Evaluar el desempeño del sistema y el impacto de técnicas de optimización.
+    &
+    Diseño experimental, pruebas de campo, métricas de desempeño, medición de
+    latencia y FPS, evaluación comparativa y técnicas de cuantización/optimización.
+    &
+    Definir escenarios de prueba; ejecutar pruebas; medir desempeño de detección,
+    identificación, OCR y eventos; medir latencia, FPS y consumo de recursos;
+    aplicar optimización/cuanti­zación; comparar modelo original y optimizado;
+    analizar resultados y limitaciones.
+    \\
+    \bottomrule
+\end{longtable}

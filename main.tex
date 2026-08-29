@@ -1,0 +1,130 @@
+\documentclass[12pt, a4paper]{report}
+
+% *** ESSENTIAL PACKAGES ***
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish, es-tabla]{babel}
+\usepackage{amsmath, amssymb, amsfonts}
+\usepackage{svg}
+\usepackage{cite}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+\usepackage{graphicx}
+% *** MÁRGINS (Ajust) ***
+\usepackage{geometry}
+\geometry{top=2cm, bottom=2cm, left=3cm, right=2cm}
+
+\graphicspath{{figures/}}
+\usepackage{tcolorbox}
+% *** Indent **
+\usepackage{setspace}
+\onehalfspacing
+\setlength{\parindent}{1.25cm}
+\setlength{\parskip}{0pt}
+\setlength{\parskip}{\baselineskip}
+% *** font ***
+\usepackage{time}
+
+% *** GRAFICS ***
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18} % Asegura usar la versión más estable
+\usepackage{subcaption}
+
+% *** TABLES ***
+\usepackage{colortbl}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{makecell}
+\usepackage{longtable}
+
+% *** CODE CONFIGURATION (Python/PyTorch) ***
+\usepackage{listings}
+\usepackage[table]{xcolor}
+
+% *** COLOR ***
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+\definecolor{cielo}{HTML}{A8D8EA}
+\definecolor{purpura}{HTML}{AA96DA}
+\definecolor{rosa}{HTML}{FCBAD3}
+\definecolor{yelloy}{HTML}{FFFFD2}
+
+\lstdefinestyle{pythonstyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle= \color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    numbers=left,
+    numbersep=5pt
+}
+\lstset{style=pythonstyle}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  citecolor=black,
+  urlcolor=blue,
+  pdftitle={Gestión inteligente de parqueaderos basada en visión artificial y aprendizaje profundo},
+  pdfauthor={Nina Nuñez Marco}
+}
+
+% **************
+% MAIN DOCUMENT
+% **************
+
+\begin{document}
+
+\begin{titlepage}
+    \centering
+    {\Large \textbf{UNIVERSIDAD TÉCNICA DE ORURO}\\}
+    {\large \textbf{FACULTAD NACIONAL DE INGENIERÍA}\\}
+    {\large \textbf{CARRERA INGENIERÍA INFORMÁTICA}}\\[1cm]
+
+    % *** Logo ***
+    \includesvg[width=0.45\textwidth]{LOGO_INF.svg}\\[1cm]
+
+    % ***  Document Type ***
+    {\large Proyecto de Grado para optar al título de:\\[0.2cm]
+    \textbf{Licenciado en Ingeniería Informática}}\\[1cm]
+
+    % *** Title ***
+    {\Large \textbf{GESTIÓN INTELIGENTE DE PARQUEADEROS BASADA EN VISIÓN ARTIFICIAL Y APRENDIZAJE PROFUNDO}}\\[1.5cm]
+
+
+    % *** Information Data (Alignead with Tabular) ***
+    {\large \textbf{Postulante:} Univ. Nina Nuñez Marco}\\[0.5cm]
+
+    \vfill
+    {\large Oruro, \today}
+    
+\end{titlepage}
+
+% *** INDICES ***
+\pagenumbering{roman}
+\tableofcontents
+\listoffigures
+\listoftables
+\clearpage
+
+% *** CHAPTERS ***
+\pagenumbering{arabic}
+\renewcommand{\thechapter}{\Roman{chapter}}
+\renewcommand{\thesection}{\arabic{chapter}.\arabic{section}}
+\renewcommand{\thefigure}{\arabic{chapter}.\arabic{figure}}
+\renewcommand{\theequation}{\arabic{chapter}.\arabic{equation}}
+\include{chapters/preliminary}
+\include{chapters/1_theorical_framework}
+
+% *** REFERENCES (FORMAT IEEE) ***
+\clearpage
+\addcontentsline{toc}{chapter}{Bibliografía}
+\bibliographystyle{ieeetran} % MAGIC LINE: Le dice a LaTeX que use el estándar IEEE
+\bibliography{references} % Call to file references.bib
+\end{document}
