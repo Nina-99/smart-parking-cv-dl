@@ -1,0 +1,29 @@
+name: build
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "**.pdf"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download repository
+        uses: actions/checkout@v4
+
+      - name: build document LaTeX
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: main.tex
+
+      - name: Hacer commit y push del PDF al repositorio
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "🤖 PDF generate automatically"
+          file_pattern: "*.pdf"
