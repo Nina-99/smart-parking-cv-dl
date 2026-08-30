@@ -3,8 +3,8 @@
 % *** ESSENTIAL PACKAGES ***
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage[spanish, es-tabla]{babel}
-\usepackage{amsmath, amssymb, amsfonts}
+\usepackage[spanish]{babel}
+\usepackage{amsmath, amsfonts}
 \usepackage{svg}
 \usepackage{cite}
 \usepackage{url}
@@ -22,8 +22,6 @@
 \setlength{\parindent}{1.25cm}
 \setlength{\parskip}{0pt}
 \setlength{\parskip}{\baselineskip}
-% *** font ***
-\usepackage{time}
 
 % *** GRAFICS ***
 \usepackage{tikz}
@@ -120,11 +118,10 @@
 \renewcommand{\thefigure}{\arabic{chapter}.\arabic{figure}}
 \renewcommand{\theequation}{\arabic{chapter}.\arabic{equation}}
 \include{chapters/preliminary}
-\include{chapters/1_theorical_framework}
 
 % *** REFERENCES (FORMAT IEEE) ***
 \clearpage
 \addcontentsline{toc}{chapter}{Bibliografía}
-\bibliographystyle{ieeetran} % MAGIC LINE: Le dice a LaTeX que use el estándar IEEE
+\bibliographystyle{ieeetr} % MAGIC LINE: Le dice a LaTeX que use el estándar IEEE
 \bibliography{references} % Call to file references.bib
 \end{document}
