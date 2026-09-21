@@ -1,0 +1,51 @@
+# ==========================================
+# LaTeX build artifacts
+# ==========================================
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.lof
+*.log
+*.lot
+*.out
+*.run.xml
+*.synctex.gz
+*.toc
+*.xdv
+*.nav
+*.snm
+*.vrb
+
+# ==========================================
+# Generated PDFs
+# ==========================================
+# Solo ignoramos los PDFs generados a partir de los tex principales
+main.pdf
+preliminary.pdf
+chapters/*.pdf
+
+# ==========================================
+# Python (scripts auxiliares)
+# ==========================================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# ==========================================
+# IDEs and OS files
+# ==========================================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# ==========================================
+# OpenCode / AI Metadata
+# ==========================================
+.atl/
+openspec/
