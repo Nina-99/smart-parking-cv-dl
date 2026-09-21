@@ -9,20 +9,20 @@ muchos años, la creciente demanda de sistemas eficientes para la gestión de pa
 zonas urbanas ha impulsado el desarrollo de tecnologías avanzadas que optimicen el uso de los
 espacios y mejoren la seguridad.
 
-Anteriormente, los métodos tradicionales, como las barreras automáticas o las cadenas de
+Actualmente, los métodos tradicionales, como las barreras automáticas o las cadenas de
 seguridad, presentan limitaciones en términos de eficiencia, fiabilidad y personalización. Ante
 esta problemática, surge la necesidad de implementar soluciones innovadoras que integren
 tecnologías emergentes en los últimos años como la visión artificial y el aprendizaje profundo.
 
 ``El procesamiento de imágenes juega un papel vital en el reconocimiento de objetos y sus
-características''\cite{deshpande2020}.
+características \cite{deshpande2020comparative}''.
 
 ``El seguimiento de vehículos con múltiples cámaras (MTMC) es esencial para el análisis
-de tráfico y el mantenimiento de la seguridad''\cite{tang2019}, juntamente con la inteligencia artificial, permite una
-toma de decisiones más eficientes para favorecer la gestión del establecimiento. Es decir, la
-automatización de la aplicación consigue grandes beneficios, como en el ahorro de ciertos
-recursos económicos cantidad y calidad de los datos recolectados y permite una toma de
-decisiones efectiva.
+de tráfico y el mantenimiento de la seguridad \cite{tang2019cityflow}'', y junto con la
+inteligencia artificial, permite una toma de decisiones más eficientes para favorecer
+la gestión del establecimiento. Es decir, la automatización de la aplicación consigue
+grandes beneficios, como en el ahorro de ciertos recursos económicos, cantidad y
+calidad de los datos recolectados y permite una toma de decisiones efectiva.
 
 Con esta propuesta, se espera contribuir al desarrollo de tecnologías
 inteligentes para la gestión de infraestructura urbana, brindando
@@ -45,7 +45,7 @@ los avances en visión artificial y aprendizaje profundo se han
 posicionado como herramientas clave para automatizar y optimizar estos
 procesos.
 
-En Bolivia, la gestión de los parqueaderos han sido un reto en
+En Bolivia, la gestión de los parqueaderos ha sido un reto en
 crecimiento, especialmente en la red troncal como La Paz, Cochabamba y
 Santa Cruz, donde la expansión urbana ha generado una mayor demanda de
 espacios de estacionamiento. Sin embargo, en comparación con otros
@@ -75,11 +75,11 @@ INGRESO DE VEHÍCULOS BASADO EN VISIÓN ARTIFICIAL Y RECONOCIMIENTO DE
 PLACAS EN EL PARQUEADERO DE LA UNIVERSIDAD POLITÉCNICA SALESIANA - SEDE
 CUENCA}
 
-Desarrollado por Alvares Duran Mayra Alejandra\cite{alvares2014}, el presente
+Desarrollado por Alvares Duran Mayra Alejandra\cite{alvares2014control}, el presente
 trabajo consiste en un sistema de reconocimiento de placas vehiculares
 que utiliza algoritmos de Reconocimiento Óptico de Caracteres ROC o OCR,
-mediante las librerías OPENCV, está desarrollado en lenguaje JAVA y se
-encuentra basado en Inteligencia Artificial, esta herramienta recepta y
+mediante las librerías OpenCV, está desarrollado en lenguaje JAVA y se
+encuentra basado en Inteligencia Artificial, esta herramienta recibe y
 procesa las imágenes desde una cámara de video que se encuentra al
 ingresar al parqueadero de la Universidad Politécnica Salesiana, sede
 Cuenca.
@@ -88,14 +88,14 @@ Cuenca.
 INTELIGENCIA ARTIFICIAL CAPAZ DE CONTAR Y CLASIFICAR VEHÍCULOS EN LOS
 ACCESO DE AEROPUERTOS Y DE RECONOCER VEHÍCULOS AEROPORTUARIOS}
 
-Realizado por Martines Samper Aniceto José \cite{martines2022} en la Universidad
+Realizado por Martines Samper Aniceto José \cite{martines2022vehiculos} en la Universidad
 Politécnica de Valencia (UPV), este proyecto se basa en realizar un
-conteo y una clasificación automática de vehículos, capaz de poder
+conteo y una clasificación automática de vehículos, capaz de
 acoplarse a cualquier video de circulación. Particularizando un poco
 más, este proyecto se va a centrar principalmente en la composición de
 un algoritmo para el conteo y clasificación de vehículos en las entradas
 de aeropuertos. Para efectuar este estudio, se ha trabajado con el
-lenguaje de programación open CV. Donde se irá evolucionando el programa
+lenguaje de programación OpenCV. En este proceso, el programa irá evolucionando el programa
 hasta poder conseguir un resultado óptimo, partiendo de una programación
 más simple, pasando por métodos básicos de procesamiento de imagen y
 finalizando en la implementación de redes neuronales (YOLO) para la
@@ -103,17 +103,17 @@ detección y clasificación de objetos.
 
 \textbf{SISTEMA INTELIGENTE DE GESTIÓN DE TRÁFICO}
 
-González Caballero Javier \cite{gonzalez2019}, de la universidad de Valladolid En
-este proyecto se propone un sistema alternativo capaz de modificar en
-tiempo real la duración en verde o en rojo de los semáforos según el
-flujo de vehículos y la presencia o no de peatones. Para ello, se
-analiza la tecnología de control de los semáforos que se emplea
-actualmente y las investigaciones realizadas.
+González Caballero Javier \cite{gonzalez2019sistema}, de la universidad
+de Valladolid En este proyecto se propone un sistema alternativo capaz
+de modificar en tiempo real la duración en verde o en rojo de los
+semáforos según el flujo de vehículos y la presencia o no de peatones.
+Para ello, se analiza la tecnología de control de los semáforos que
+se emplea actualmente y las investigaciones realizadas.
 
 \subsection*{INFORMACIÓN DOCUMENTAL Y ESTADÍSTICA}
-\addcontentsline{toc}{subsection}{INFORMACIÓN DOCUMENTAL y ESTADÍSTICA}
+\addcontentsline{toc}{subsection}{INFORMACIÓN DOCUMENTAL Y ESTADÍSTICA}
 
-Como se puede observar en la Figura \ref{fig:resultados_semana},
+Como se observar en la Figura \ref{fig:resultados_semana},
 se observa la afluencia media por día de vehículos al parqueadero.
 
 \begin{figure}[htbp]
@@ -128,50 +128,17 @@ se observa la afluencia media por día de vehículos al parqueadero.
             \node[left, font=\scriptsize\sffamily, text=gray!80!black] at (0, \y) {\y};
         }
         
-        % ==========================================
-        % MACRO: Creador de barras 3D (Adaptado a escala 0-100)
-        % ==========================================
-        \newcommand{\barraTresD}[4]{
-            % #1: Posición X, #2: Valor Y, #3: Color, #4: Etiqueta inferior
-            
-            % Variables de perspectiva geométrica
-            \def\px{0.3}  % Profundidad en X
-            \def\py{5}    % Profundidad en Y
-            \def\ancho{0.3} % Ancho de la mitad de la barra
-            
-            % Cara frontal
-            \draw[fill=#3!80, draw=#3!50!black, thick] 
-                (#1-\ancho, 0) rectangle (#1+\ancho, #2);
-            
-            % Cara lateral derecha (profundidad oscura)
-            \draw[fill=#3!95!black, draw=#3!50!black, thick] 
-                (#1+\ancho, 0) -- 
-                (#1+\ancho+\px, \py) -- 
-                (#1+\ancho+\px, #2+\py) -- 
-                (#1+\ancho, #2) -- cycle;
-                
-            % Cara superior (tapa clara)
-            \draw[fill=#3!50, draw=#3!50!black, thick] 
-                (#1-\ancho, #2) -- 
-                (#1-\ancho+\px, #2+\py) -- 
-                (#1+\ancho+\px, #2+\py) -- 
-                (#1+\ancho, #2) -- cycle;
-                
-            % Etiqueta abajo en el eje X
-            \node[below, font=\scriptsize\sffamily, text=black!80] at (#1, -4) {#4};
-        }
-        
-        % ==========================================
+        % ******************
         % DATOS DEL GRÁFICO
-        % ==========================================
+        % ******************
         % Formato: \barraTresD{Posición X}{Valor Y}{Color}{Etiqueta}
         
         \barraTresD{1}{85}{blue!70!cyan}{LUNES}
         \barraTresD{2}{80}{blue!70!cyan}{MARTES}
-        \barraTresD{3}{96}{blue!70!cyan}{MIERCOLES}
+        \barraTresD{3}{96}{blue!70!cyan}{MIÉRCOLES}
         \barraTresD{4}{76}{blue!70!cyan}{JUEVES}
         \barraTresD{5}{66}{blue!70!cyan}{VIERNES}
-        \barraTresD{6}{96}{blue!70!cyan}{SABADO}
+        \barraTresD{6}{96}{blue!70!cyan}{SÁBADO}
         
     \end{tikzpicture}
     
@@ -185,86 +152,37 @@ se observa la afluencia media por día de vehículos al parqueadero.
 \section*{SITUACIÓN PROBLEMÁTICA}
 \addcontentsline{toc}{section}{SITUACIÓN PROBLEMÁTICA}
 
-En una ciudad con alta densidad del parque automotor, los estacionamientos en áreas
-concurridas (como centros comerciales, edificios de oficinas y hospitales), enfrentan algunos
-inconvenientes en horas pico en el manejo de la información, algunos de los cuales se detallan a
-continuación:
+En los parqueaderos urbanos, el control de ingreso y salida de vehículos
+se realiza mediante procedimientos manuales o semiautomáticos que requieren
+la intervención de operadores para registrar y verificar la información
+correspondiente. Esta práctica genera tiempos de atención variables, errores
+en el registro y dificultades para disponer de información confiable sobre
+los vehículos que ingresan y salen del recinto.
 
-\begin{longtable}{
-        m{5cm}
-        m{5cm}
-        m{5cm}
-    }
-    \caption{Análisis causa-efecto}
-    \label{tab:causa_efecto}\\
-    
-    \toprule
-    \rowcolor{gray!20}
-    \makecell{\textbf{CAUSA/FACTOR}\\\textbf{GENERADOR}}
-    &
-    \makecell{\textbf{EFECTO/}\\\textbf {CONSECUENCIA}\\\textbf{DIRECTA}}
-    &
-    \makecell{\textbf{IMPACTO}\\\textbf {OPERATIVO}} \\
-    \midrule
-    \endfirsthead
+En el parqueadero objeto de estudio, la ausencia de un mecanismo automatizado
+para identificar las características de los vehículos limita el registro
+sistemático de información como el tipo de vehículo, el color predominante
+y la placa de matrícula. Asimismo, la falta de un registro asociado a la
+fecha, hora, punto de acceso y sentido del evento dificulta la trazabilidad
+de los movimientos vehiculares y la generación posterior de información
+estadística.
 
-    \multicolumn{3}{c}{\textit{Continuación de la Tabla \ref{tab:causa_efecto}}} \\
-    \toprule
-    \rowcolor{gray!20}
-    \makecell{\textbf{OBJETIVOS}\\\textbf{ESPECÍFICOS}}
-    &
-    \makecell{\textbf{MÉTODOS,}\\\textbf {TÉCNICAS Y/O}\\\textbf{HERRAMIENTAS}}
-    &
-    \makecell{\textbf{ACTIVIDAD}} \\
-    \midrule
-    \endhead
+A lo anterior se suma una limitación en el control de acceso: la
+identificación de los vehículos y la verificación de su autorización no se
+realizan de manera automatizada, lo que dificulta la detección oportuna de
+vehículos no autorizados y la disponibilidad de evidencia digital auditable.
 
-    Intervención manual de operadores en el registro de acceso.
-    &
-    Tiempos de atención variables y comisión de errores en la toma de datos.
-    &
-    Falta de información confiable sobre la ocupación y los vehículos.
-    \\
+A esto se suma que las condiciones de captura de las cámaras --variaciones
+de iluminación, distancia, ángulo de observación, oclusiones parciales y
+visibilidad de las placas-- pueden afectar la identificación automática de los
+vehículos. Estas condiciones reales del entorno deben ser consideradas
+durante la construcción y evaluación de los modelos de visión artificial.
 
-    \midrule
-    Ausencia de identificación automatizada de atributos (tipo, color, placa).
-    &
-    Imposibilidad de clasificar y registrar sistemáticamente las características
-    vehiculares.
-    &
-    Carencia de perfiles detallados de los vehículos que ingresan o salen.
-    \\
-
-    \midrule
-    Omisión de registro temporal y espacial (fecha, hora, punto de acceso,
-    sentido).
-    &
-    Desconexión entre el evento físico y la trazabilidad de los movimientos.
-    &
-    Imposibilidad de ejecutar auditorías, seguimiento o análisis estadístico
-    posterior.
-    \\
-
-    \midrule
-    Verificación de autorización realizada manualmente.
-    &
-    Detección tardía o nula de vehículos no autorizados en los puntos de
-    acceso.
-    &
-    Vulnerabilidad en la seguridad del recinto y ausencia de evidencia
-    digital auditable.
-    \\
-
-    \midrule
-    Variables del entorno de captura (iluminación, oclusión, ángulo, distancia).
-    &
-    Potencial degradación en la tasa de acierto de los modelos de visión
-    artificial.
-    &
-    Necesidad de diseñar el sistema considerando condiciones reales no controladas.
-    \\
-    \bottomrule
-\end{longtable}
+Ante esta situación, se plantea el desarrollo de un sistema basado en visión
+artificial y aprendizaje profundo que automatice la identificación de los
+vehículos en los puntos de acceso, reconozca su tipo, color predominante y
+placa de matrícula, registre los eventos de ingreso y salida, y almacene la
+información generada para su consulta y análisis.
 
 % ***************************
 % PLANTEAMIENTO DEL PROBLEMA
@@ -380,29 +298,125 @@ ingreso y salida.
 \section*{HIPÓTESIS}
 \addcontentsline{toc}{section}{HIPÓTESIS}
 
-La implementación de un sistema basado en visión artificial y aprendizaje
-profundo permitirá automatizar la identificación y el registro de vehículos en
-los puntos de acceso del parqueadero, mediante el reconocimiento de su tipo,
-color predominante y placa de matrícula, así como el registro de sus eventos de
-ingreso y salida, con un desempeño adecuado bajo las condiciones de captura
-definidas para el entorno de estudio.
+\textbf{Hipótesis general ($H_1$):}
+
+El sistema de gestión inteligente de parqueaderos basado en visión artificial y
+aprendizaje profundo alcanza los criterios de desempeño establecidos para la
+detección e identificación de vehículos, el reconocimiento de placas de
+matrícula y la determinación de los eventos de ingreso y salida, bajo las
+condiciones de captura del entorno de estudio.
+
+\textbf{Hipótesis nula ($H_0$):}
+
+El sistema de gestión inteligente de parqueaderos basado en visión artificial y
+aprendizaje profundo no alcanza los criterios de desempeño establecidos para la
+detección e identificación de vehículos, el reconocimiento de placas de
+matrícula y la determinación de los eventos de ingreso y salida, bajo las
+condiciones de captura del entorno de estudio.
+
+$H_{1.1}$: El modelo de detección de vehículos alcanza un mAP@50 igual o superior
+al 80 \% bajo las condiciones de captura del entorno de estudio.
+
+$H_{0.1}$: El modelo de detección de vehículos no alcanza un mAP@50 del 80 \%
+bajo las condiciones de captura del entorno de estudio.
+
+$H_{1.2}$: El modelo de identificación del tipo de vehículo alcanza un F1-score
+macro igual o superior al 85 \% bajo las condiciones de captura del entorno de
+estudio.
+
+$H_{0.2}$: El modelo de identificación del tipo de vehículo no alcanza un
+F1-score macro del 85 \% bajo las condiciones de captura del entorno de estudio.
+
+$H_{1.3}$: El modelo de identificación del color predominante alcanza un F1-score
+macro igual o superior al 85 \% bajo las condiciones de captura del entorno de
+estudio.
+
+$H_{0.3}$: El modelo de identificación del color predominante no alcanza un
+F1-score macro del 85 \% bajo las condiciones de captura del entorno de estudio.
+
+$H_{1.4}$: El sistema de reconocimiento de placas alcanza simultáneamente un
+Recall igual o superior al 90 \% en la detección de las placas y una exactitud
+por carácter igual o superior al 90 \% en el reconocimiento de las matrículas,
+bajo las condiciones de visibilidad del entorno de estudio.
+
+$H_{0.4}$: El sistema de reconocimiento de placas no alcanza los valores mínimos
+establecidos para la detección y reconocimiento de las matrículas bajo las
+condiciones de visibilidad del entorno de estudio.
+
+$H_{1.5}$: El sistema determina correctamente los eventos de ingreso y salida de
+los vehículos con una exactitud igual o superior al 90 \% bajo las condiciones
+de operación del parqueadero.
+
+$H_{0.5}$: El sistema no alcanza una exactitud del 90 \% en la determinación de
+los eventos de ingreso y salida bajo las condiciones de operación del parqueadero.
 
 \subsection*{CRITERIO DE EVALUACIÓN DE LA HIPÓTESIS}
 \addcontentsline{toc}{subsection}{CRITERIO DE EVALUACIÓN DE LA HIPÓTESIS}
 
-La hipótesis será contrastada mediante pruebas experimentales realizadas sobre
-un conjunto de datos de prueba independiente del utilizado durante el
-entrenamiento. La evaluación considerará el desempeño de los modelos de
-detección e identificación, el reconocimiento de placas de matrícula, la
-determinación de los eventos de ingreso y salida y el rendimiento computacional
-del sistema.
 
-La hipótesis será considerada respaldada cuando los resultados experimentales
-demuestren que el sistema permite automatizar el proceso de identificación y
-registro vehicular bajo las condiciones definidas para el entorno de estudio y
-alcance los umbrales de desempeño establecidos para cada componente durante el
-diseño experimental. En caso contrario, se considerarán las limitaciones
-identificadas y se analizarán sus causas.
+La contrastación de la hipótesis se realizará mediante pruebas experimentales
+sobre un conjunto de datos de prueba independiente de los datos utilizados para
+el entrenamiento de los modelos. El conjunto de prueba deberá contener muestras
+representativas de las condiciones de captura del parqueadero, incluyendo
+variaciones de iluminación, visibilidad, distancia, ángulo de captura y
+oclusiones presentes en el entorno de estudio.
+
+La evaluación se realizará de forma independiente para cada componente del
+sistema, utilizando los siguientes criterios:
+
+\begin{itemize}
+    \item \textbf{Detección de vehículos:} se utilizará como indicador principal
+        el mAP@50, considerando como criterio mínimo de cumplimiento un valor
+        igual o superior al 80\%. Adicionalmente, se reportarán Precisión,
+        Recall y mAP@50--95 para caracterizar el comportamiento del detector.
+
+    \item \textbf{Identificación del tipo de vehículo:} se utilizará como
+        indicador principal el F1-score macro, considerando como criterio mínimo
+        un valor igual o superior al 85\%. Se complementará con Accuracy,
+        Precision, Recall y matriz de confusión por clase.
+
+    \item \textbf{Identificación del color predominante:} se utilizará como
+        indicador principal el F1-score macro, considerando como criterio mínimo
+        un valor igual o superior al 85\%. Se complementará con Accuracy y matriz
+        de confusión por clase.
+
+    \item \textbf{Detección de placas de matrícula:} se utilizará como indicador
+        principal el Recall, considerando como criterio mínimo un valor igual o
+        superior al 90\%. También se reportarán Precision, IoU y mAP para evaluar
+        la calidad de localización de las placas.
+
+    \item \textbf{Reconocimiento óptico de caracteres:} se utilizará como indicador
+        principal la exactitud a nivel de carácter, considerando como criterio
+        mínimo un valor igual o superior al 90\%. Asimismo, se calculará el
+        Character Error Rate (CER), cuyo valor deberá ser igual o inferior al 10\%,
+        y la proporción de placas reconocidas completamente mediante Exact Match,
+        considerando como referencia un valor igual o superior al 80\%.
+
+    \item \textbf{Determinación de eventos de ingreso y salida:} se utilizará
+        como indicador principal la Accuracy, considerando como criterio mínimo
+        un valor igual o superior al 90\%. Se reportarán adicionalmente
+        Precision, Recall y F1-score.
+
+    \item \textbf{Rendimiento computacional:} se evaluará mediante la latencia
+        promedio por evento, FPS, tiempo de inferencia y consumo de recursos.
+        Como criterio operacional de referencia se considerará una latencia
+        promedio igual o inferior a un segundo por evento, bajo las condiciones
+        y hardware definidos para las pruebas.
+\end{itemize}
+
+La hipótesis general será considerada respaldada cuando el sistema desarrollado
+cumpla los criterios mínimos establecidos para los componentes críticos del
+proceso de identificación y registro vehicular y demuestre que puede ejecutar de
+forma automatizada las funciones definidas dentro del alcance del proyecto.
+
+La hipótesis nula será considerada respaldada cuando el sistema no alcance los
+criterios mínimos establecidos en los componentes críticos o cuando las
+deficiencias observadas impidan realizar de manera confiable el proceso
+automatizado de identificación y registro vehicular bajo las condiciones evaluadas.
+
+Los resultados serán analizados además de manera desagregada por tipo de
+vehículo, condición de iluminación y nivel de visibilidad, con el propósito de
+identificar las condiciones en las que el sistema presenta mayores tasas de error.
 
 % **************
 % JUSTIFICACIÓN
@@ -481,7 +495,7 @@ presenta los siguientes alcances
         mediante modelos de aprendizaje profundo y reconocimiento de su tipo y
         color predominante.
     \item
-        Escalabilidad del sistema. El sistema podrá ser ampliado para
+        \textbf{Escalabilidad del sistema:} El sistema podrá ser ampliado para
         controlar múltiples puntos de acceso, gestionando grandes volúmenes de
         vehículos y características en tiempo real y sin pérdida de
         rendimiento.
@@ -690,7 +704,7 @@ artificial aplicada en la Carrera de Ingeniería Informática.
     &
     Definir escenarios de prueba; ejecutar pruebas; medir desempeño de detección,
     identificación, OCR y eventos; medir latencia, FPS y consumo de recursos;
-    aplicar optimización/cuanti­zación; comparar modelo original y optimizado;
+    aplicar optimización/cuantización; comparar modelo original y optimizado;
     analizar resultados y limitaciones.
     \\
     \bottomrule

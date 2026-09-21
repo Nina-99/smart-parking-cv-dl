@@ -1,0 +1,29 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{smartparking}[2026/08/30 v1.0 Macros propias del proyecto]
+
+% *** Barras 3D para gráfico de afluencia semanal ***
+% Uso: \barraTresD{posición X}{valor Y}{color}{etiqueta}
+\newcommand{\barraTresD}[4]{%
+    \def\px{0.3}%
+    \def\py{5}%
+    \def\ancho{0.3}%
+    % Cara frontal
+    \draw[fill=#3!80, draw=#3!50!black, thick]
+        (#1-\ancho, 0) rectangle (#1+\ancho, #2);
+    % Cara lateral derecha
+    \draw[fill=#3!95!black, draw=#3!50!black, thick]
+        (#1+\ancho, 0) --
+        (#1+\ancho+\px, \py) --
+        (#1+\ancho+\px, #2+\py) --
+        (#1+\ancho, #2) -- cycle;
+    % Cara superior
+    \draw[fill=#3!50, draw=#3!50!black, thick]
+        (#1-\ancho, #2) --
+        (#1-\ancho+\px, #2+\py) --
+        (#1+\ancho+\px, #2+\py) --
+        (#1+\ancho, #2) -- cycle;
+    % Etiqueta inferior
+    \node[below, font=\scriptsize\sffamily, text=black!80] at (#1, -4) {#4};
+}
+
+\endinput

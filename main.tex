@@ -6,16 +6,18 @@
 \usepackage[spanish]{babel}
 \usepackage{amsmath, amsfonts}
 \usepackage{svg}
-\usepackage{cite}
+\usepackage[backend=biber, style=ieee]{biblatex}
+\addbibresource{references.bib}
 \usepackage{url}
-\usepackage[hidelinks]{hyperref}
 \usepackage{graphicx}
+
 % *** MÁRGINS (Ajust) ***
 \usepackage{geometry}
 \geometry{top=2cm, bottom=2cm, left=3cm, right=2cm}
 
 \graphicspath{{figures/}}
 \usepackage{tcolorbox}
+
 % *** Indent **
 \usepackage{setspace}
 \onehalfspacing
@@ -25,23 +27,25 @@
 
 % *** GRAFICS ***
 \usepackage{tikz}
+\usetikzlibrary{matrix, arrows.meta, calc, positioning}
 \usepackage{pgfplots}
-\pgfplotsset{compat=1.18} % Asegura usar la versión más estable
+\pgfplotsset{compat=1.18} 
+\usepackage{smartparking} % *** MACROS PROPIAS DEL PROYECTO ***
 \usepackage{subcaption}
 
 % *** TABLES ***
-\usepackage{colortbl}
 \usepackage{tabularx}
 \usepackage{booktabs}
 \usepackage{array}
 \usepackage{makecell}
 \usepackage{longtable}
 
-% *** CODE CONFIGURATION (Python/PyTorch) ***
-\usepackage{listings}
+% *** COLOR & CODE CONFIGURATION ***
 \usepackage[table]{xcolor}
+\usepackage{listings}
 
-% *** COLOR ***
+\definecolor{matblue}{RGB}{0, 90, 140}
+\definecolor{matgray}{RGB}{150, 150, 150}
 \definecolor{codegreen}{rgb}{0,0.6,0}
 \definecolor{codegray}{rgb}{0.5,0.5,0.5}
 \definecolor{codepurple}{rgb}{0.58,0,0.82}
@@ -53,7 +57,7 @@
 
 \lstdefinestyle{pythonstyle}{
     backgroundcolor=\color{backcolour},
-    commentstyle= \color{codegreen},
+    commentstyle=\color{codegreen},
     keywordstyle=\color{magenta},
     numberstyle=\tiny\color{codegray},
     stringstyle=\color{codepurple},
@@ -64,13 +68,15 @@
 }
 \lstset{style=pythonstyle}
 
+% *** HYPERREF (SIEMPRE AL FINAL DEL PREÁMBULO) ***
+\usepackage{hyperref}
 \hypersetup{
-  colorlinks=true,
-  linkcolor=black,
-  citecolor=black,
-  urlcolor=blue,
-  pdftitle={Gestión inteligente de parqueaderos basada en visión artificial y aprendizaje profundo},
-  pdfauthor={Nina Nuñez Marco}
+    colorlinks=true,
+    linkcolor=black,
+    citecolor=black,
+    urlcolor=black,
+    pdftitle={Gestión inteligente de parqueaderos basada en visión artificial y aprendizaje profundo},
+    pdfauthor={Nina Nuñez Marco}
 }
 
 % **************
@@ -80,28 +86,28 @@
 \begin{document}
 
 \begin{titlepage}
-    \centering
-    {\Large \textbf{UNIVERSIDAD TÉCNICA DE ORURO}\\}
-    {\large \textbf{FACULTAD NACIONAL DE INGENIERÍA}\\}
-    {\large \textbf{CARRERA INGENIERÍA INFORMÁTICA}}\\[1cm]
+	\centering
+	{\Large \textbf{UNIVERSIDAD TÉCNICA DE ORURO}\\}
+	{\large \textbf{FACULTAD NACIONAL DE INGENIERÍA}\\}
+	{\large \textbf{CARRERA INGENIERÍA INFORMÁTICA}}\\[1cm]
 
-    % *** Logo ***
-    \includesvg[width=0.45\textwidth]{LOGO_INF.svg}\\[1cm]
+	% *** Logo ***
+	\includesvg[width=0.45\textwidth]{LOGO_INF.svg}\\[1cm]
 
-    % ***  Document Type ***
-    {\large Proyecto de Grado para optar al título de:\\[0.2cm]
-    \textbf{Licenciado en Ingeniería Informática}}\\[1cm]
+	% ***  Document Type ***
+	{\large Proyecto de Grado para optar al título de:\\[0.2cm]
+		\textbf{Licenciado en Ingeniería Informática}}\\[1cm]
 
-    % *** Title ***
-    {\Large \textbf{GESTIÓN INTELIGENTE DE PARQUEADEROS BASADA EN VISIÓN ARTIFICIAL Y APRENDIZAJE PROFUNDO}}\\[1.5cm]
+	% *** Title ***
+	{\Large \textbf{GESTIÓN INTELIGENTE DE PARQUEADEROS BASADA EN VISIÓN ARTIFICIAL Y APRENDIZAJE PROFUNDO}}\\[1.5cm]
 
 
-    % *** Information Data (Alignead with Tabular) ***
-    {\large \textbf{Postulante:} Univ. Nina Nuñez Marco}\\[0.5cm]
+	% *** Information Data (Alignead with Tabular) ***
+	{\large \textbf{Postulante:} Univ. Nina Nuñez Marco}\\[0.5cm]
 
-    \vfill
-    {\large Oruro, \today}
-    
+	\vfill
+	{\large Oruro, \today}
+
 \end{titlepage}
 
 % *** INDICES ***
@@ -118,10 +124,12 @@
 \renewcommand{\thefigure}{\arabic{chapter}.\arabic{figure}}
 \renewcommand{\theequation}{\arabic{chapter}.\arabic{equation}}
 \include{chapters/preliminary}
+\include{chapters/1_theorical_framework}
 
 % *** REFERENCES (FORMAT IEEE) ***
 \clearpage
 \addcontentsline{toc}{chapter}{Bibliografía}
-\bibliographystyle{ieeetr} % MAGIC LINE: Le dice a LaTeX que use el estándar IEEE
-\bibliography{references} % Call to file references.bib
+%\bibliographystyle{ieeetr} % MAGIC LINE: Le dice a LaTeX que use el estándar IEEE
+%\addbibresource{references.bib} % Call to file references.bib
+\printbibliography
 \end{document}
