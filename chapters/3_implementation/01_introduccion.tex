@@ -1,0 +1,28 @@
+\section{Introducción}
+
+El presente capítulo documenta la materialización del diseño especificado en el
+capítulo anterior, así como la verificación experimental de su desempeño. Su
+propósito es doble: por un lado, describir la implementación efectiva de cada
+subsistema ---el motor de percepción, la plataforma de gestión y la interfaz de
+usuario--- junto con las decisiones técnicas adoptadas durante la construcción;
+por otro, presentar los resultados obtenidos en las pruebas realizadas bajo
+condiciones representativas del entorno de estudio.
+
+A diferencia del capítulo de diseño, que establece la arquitectura conceptual y
+los criterios de aceptación, este capítulo se apoya en artefactos verificables:
+fragmentos de código, esquemas de base de datos, archivos de configuración,
+métricas medidas y capturas de la aplicación en funcionamiento. La trazabilidad
+entre ambas fases se mantiene mediante los identificadores de requerimiento
+definidos en las Tablas \ref{tab:requerimientos_funcionales} y
+\ref{tab:requerimientos_no_funcionales}, de modo que cada requisito pueda
+vincularse con el componente que lo satisface y con la prueba que lo verifica.
+
+El capítulo se organiza siguiendo la secuencia de construcción del sistema. En
+primer lugar, se describe el modelo de implementación: el entorno tecnológico,
+la arquitectura de despliegue y la organización del repositorio. A continuación,
+se documenta la construcción del conjunto de datos, etapa habilitante para el
+entrenamiento de los modelos. Posteriormente, se detalla la implementación del
+subsistema de visión artificial y del subsistema de gestión. Luego se presenta
+la estrategia de optimización y despliegue en hardware de borde. Finalmente, se
+exponen el protocolo experimental y los resultados obtenidos, y se muestran las
+interfaces del sistema en operación.

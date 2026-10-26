@@ -1,0 +1,362 @@
+\section{Construcción del Conjunto de Datos}
+
+El conjunto de datos se construye a partir del material de video registrado en el
+propio recinto, en lugar de reutilizar un conjunto público. Esta decisión responde
+a que las condiciones que determinan el desempeño del sistema ---perspectiva de
+montaje, rango dinámico de la cámara, formato y tipografía de las matrículas
+locales, patrones de iluminación del sitio--- no están representadas en los
+conjuntos de uso general. El costo de esta decisión es la necesidad de construir
+el etiquetado desde cero, lo que motiva el diseño de un proceso de extracción y
+generación asistida que se describe en este apartado.
+
+El proceso no consiste en muestrear fotogramas al azar, sino en localizar
+primero los intervalos en los que ocurre algo relevante, reconstruir después la
+trayectoria completa de cada vehículo y conservar únicamente los fotogramas con
+potencial de contener una placa legible. La Figura \ref{fig:pipeline_dataset}
+presenta el proceso, organizado en dos pasadas, y la Tabla \ref{tab:parametros}
+enumera los parámetros que lo gobiernan.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}
+        % *** Entrada ***
+        \spData{entrada}{-2.6,1.15}{video archivado}
+
+        % *** Etapas ***
+        \spBlock{etapa1}{-2.6,0}{7.4cm}{purpura}
+            {Muestreo disperso y puerta de movimiento}{Primera pasada}
+        \spBlock{etapa2}{-2.6,-1.35}{7.4cm}{purpura}
+            {Re-decodificación densa}{Segunda pasada}
+        \spBlock{etapa3}{-2.6,-2.70}{7.4cm}{purpura}
+            {Detección y seguimiento}{YOLO26 + ByteTrack}
+        \spBlock{etapa4}{-2.6,-4.05}{7.4cm}{purpura}
+            {Clasificación de trayectorias}{Zonas y línea virtual}
+        \spBlock{etapa5}{-2.6,-5.40}{7.4cm}{purpura}
+            {Selección de fotogramas}{Mejores candidatos por trayectoria}
+        \spBlock{etapa6}{-2.6,-6.75}{7.4cm}{purpura}
+            {Generación sintética y revisión}{Ampliación de dominio y etiquetado}
+
+        % *** Artefactos ***
+        \spData{d1}{4.5,0}{ventanas de actividad}
+        \spData{d2}{4.5,-1.35}{fotogramas continuos}
+        \spData{d3}{4.5,-2.70}{trayectorias con identidad}
+        \spData{d4}{4.5,-4.05}{ingreso, salida o tránsito}
+        \spData{d5}{4.5,-5.40}{candidatos de placa}
+        \spData{d6}{4.5,-6.75}{conjunto anotado}
+
+        % *** Flujo ***
+        \draw[spflow] (entrada.south) -- (etapa1.north);
+        \draw[spflow] (etapa1.south) -- (etapa2.north);
+        \draw[spflow] (etapa2.south) -- (etapa3.north);
+        \draw[spflow] (etapa3.south) -- (etapa4.north);
+        \draw[spflow] (etapa4.south) -- (etapa5.north);
+        \draw[spflow] (etapa5.south) -- (etapa6.north);
+
+        \draw[spflow] (etapa1.east) -- (d1.west);
+        \draw[spflow] (etapa2.east) -- (d2.west);
+        \draw[spflow] (etapa3.east) -- (d3.west);
+        \draw[spflow] (etapa4.east) -- (d4.west);
+        \draw[spflow] (etapa5.east) -- (d5.west);
+        \draw[spflow] (etapa6.east) -- (d6.west);
+
+    \end{tikzpicture}
+    \caption{Pipeline de construcción del conjunto de datos.}
+    \label{fig:pipeline_dataset}
+\end{figure}
+
+\begin{longtable}{
+        P{0.30}
+        P{0.12}
+        P{0.50}
+    }
+    \caption{Parámetros de configuración del extractor}
+    \label{tab:parametros}\\
+
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Parámetro} &
+    \textbf{Valor} &
+    \textbf{Función} \\
+    \midrule
+    \endfirsthead
+
+    \multicolumn{3}{c}{\textit{Continuación de la Tabla
+    \ref{tab:parametros}}} \\
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Parámetro} &
+    \textbf{Valor} &
+    \textbf{Función} \\
+    \midrule
+    \endhead
+
+    \texttt{scan\_stride} & 12 & Separación entre muestras en la primera pasada. \\
+    \texttt{motion\_downscale} & 0,25 & Reducción aplicada antes de estimar el movimiento. \\
+    \texttt{motion\_pixel\_threshold} & 25 & Diferencia de intensidad que cuenta como cambio. \\
+    \texttt{motion\_threshold} & 0,008 & Fracción de píxeles cambiados para declarar actividad. \\
+    \texttt{segment\_pad\_frames} & 45 & Margen añadido a cada ventana detectada. \\
+    \texttt{segment\_merge\_gap} & 60 & Separación máxima para fusionar ventanas contiguas. \\
+    \texttt{dense\_stride} & 1 & Procesamiento fotograma a fotograma en la segunda pasada. \\
+    \texttt{grace\_frames} & 30 & Fotogramas de tolerancia antes de cerrar una trayectoria. \\
+    \texttt{min\_track\_hits} & 3 & Observaciones mínimas para aceptar una trayectoria. \\
+    \texttt{top\_k\_frames} & 10 & Fotogramas conservados por trayectoria. \\
+    \texttt{vehicle\_conf} & 0,35 & Confianza mínima de detección del vehículo. \\
+    \texttt{min\_area\_pixels} & 3000 & Área mínima de la caja del vehículo. \\
+    \texttt{ocr\_min\_conf} & 0,60 & Confianza mínima para aceptar la lectura preliminar de la placa. \\
+    \texttt{min\_plate\_px} & 40 & Altura mínima del recorte de placa. \\
+    \texttt{min\_plate\_sharpness} & 15,0 & Nitidez mínima exigida al recorte de placa. \\
+    \texttt{plate\_y\_min} / \texttt{plate\_y\_max} & 0,55 / 1,00 & Franja vertical esperada de la placa dentro del vehículo. \\*
+    \multicolumn{3}{r}{\footnotesize\textit{Fuente: Elaboración propia}} \\*
+    \bottomrule
+\end{longtable}
+
+\subsection{Calibración de zonas de interés y línea virtual}
+
+La pertenencia de un vehículo al recinto no puede resolverse mediante una única
+región rectangular: el tránsito que circula por la vía pública y los vehículos
+que ingresan ocupan la misma banda de la imagen, de modo que la posición por sí
+sola no discrimina. Por esa razón la geometría se define mediante polígonos en
+coordenadas normalizadas ---independientes de la resolución de captura--- que
+distinguen tres elementos:
+
+\begin{itemize}
+    \item \textbf{Zona de vía:} polígono que cubre la calzada pública.
+    \item \textbf{Zona interior:} polígono estrictamente posterior al acceso, que
+        representa el espacio dentro del recinto.
+    \item \textbf{Línea virtual:} segmento orientado que separa ambas zonas y
+        cuya intersección detecta el cruce.
+\end{itemize}
+
+El punto de referencia empleado para evaluar la pertenencia y el cruce es el
+\textit{punto de contacto con el suelo} ---el centro del borde inferior de la caja
+del vehículo--- y no su centroide. La elección es física: un vehículo toca la
+calzada por la parte inferior de su silueta, por lo que ese punto es el único que
+atraviesa la línea en el mismo instante en que el vehículo lo hace.
+
+La calibración no se realiza por inspección visual del fotograma, sino sobre
+evidencia. Se dispone de una herramienta de visualización de trayectorias que
+ejecuta el seguimiento sobre un fragmento de video sin aplicar ningún
+filtro de zona y superpone todas las trayectorias reconstruidas sobre un
+fotograma de referencia. Los vehículos que ingresan y los que sólo transitan
+producen dos familias de curvas visualmente distinguibles, de manera que los
+polígonos y la línea se trazan a partir de la separación observada entre ambas
+familias y no de una estimación previa.
+
+Un aspecto particular del entorno de captura es la presencia de información
+incrustada por el grabador: el equipo superpone una etiqueta de canal y una marca
+temporal directamente sobre el video. Dado que el motor de reconocimiento de
+texto interpreta esa información como si fuese una matrícula ---llegando a leer
+el identificador del canal---, la configuración declara regiones normalizadas que
+se enmascaran antes de invocar al reconocimiento. Esta corrección es condición
+necesaria para la validez de las muestras extraídas.
+
+\subsection{Detección de movimiento y segmentación de ventanas}
+
+Procesar la totalidad de los fotogramas de un archivo de video de varias horas
+resulta prohibitive, pero alimentar un seguidor con fotogramas dispersos tampoco
+es viable: los algoritmos de seguimiento suponen continuidad entre fotogramas
+consecutivos y pierden las trayectorias cuando esa continuidad no existe. La
+solución adoptada consiste en separar el problema en dos pasadas.
+
+La primera pasada recorre el video de forma dispersa y calcula, en cada muestra,
+una señal de movimiento de costo casi nulo: el fotograma se reduce a un cuarto de
+su tamaño, se convierte a escala de grises, se suaviza y se compara con la muestra
+anterior. La fracción de píxeles cuya diferencia supera un umbral de intensidad
+constituye la energía de movimiento. Cuando esa energía supera un valor mínimo, la
+muestra se marca como actividad.
+
+Los instantes marcados se agrupan en ventanas temporales, a las que se añade un
+margen por ambos extremos ---para no truncar la aproximación del vehículo--- y que
+se fusionan cuando su separación es menor que un umbral, evitando fragmentar un
+mismo tránsito en varios segmentos.
+
+La segunda pasada vuelve a decodificar únicamente las ventanas
+identificadas, esta vez fotograma a fotograma. Sólo en esta pasada se ejecutan la
+detección y el seguimiento, sobre una secuencia continua. El resultado es una
+reducción drástica del cómputo: el trabajo pesado se concentra en la fracción del
+video donde efectivamente hay vehículos.
+
+\subsection{Selección de fotogramas representativos}
+
+El extractor razona sobre la trayectoria completa de cada vehículo y nunca sobre
+un fotograma aislado. Esta decisión es la que permite distinguir un ingreso de un
+simple tránsito sin depender de una única imagen: un vehículo que ingresa cruza la
+línea virtual en dirección al recinto y su desplazamiento es predominantemente en
+profundidad, con un aumento progresivo de su escala; un vehículo que sólo transita
+mantiene una dirección horizontal y nunca alcanza la zona interior.
+
+Las trayectorias con menos observaciones que el mínimo establecido se descartan
+por considerarse ruido de detección. Para las restantes se conservan únicamente
+los mejores fotogramas, seleccionados mediante un indicador económico de
+legibilidad de placa. Ese indicador no evalúa el vehículo completo, sino su parte
+inferior ---donde se ubica la placa---, donde mide la nitidez mediante la varianza
+del laplaciano, y pondera el resultado por el tamaño del vehículo. Los recortes
+que ocupan casi la totalidad del encuadre se penalizan deliberadamente, porque
+corresponden a vehículos tan próximos que su placa queda fuera de cuadro o
+recortada.
+
+Sobre los fotogramas así elegidos se aplican además restricciones de calidad: se
+exige una altura mínima del recorte de placa, una nitidez mínima y que la placa se
+encuentre dentro de la franja vertical esperada. Los fotogramas que no satisfacen
+estas condiciones no se descartan de inmediato, sino que se derivan al proceso de
+revisión descrito a continuación.
+
+\subsection{Pseudo-etiquetado, generación sintética y etiquetado humano}
+
+Para garantizar la fiabilidad del entrenamiento y evitar la circularidad
+metodológica, el etiquetado se organiza bajo reglas estrictas según el tipo de
+atributo:
+
+\begin{enumerate}
+    \item \textbf{Pre-etiquetado y revisión de matrículas:} El motor PaddleOCR
+        actúa exclusivamente como pseudo-etiquetador preliminar. Sus detecciones
+        pasan a una carpeta de revisión (\texttt{review/}) para ser verificadas o
+        corregidas por un humano antes de ingresar al conjunto de datos oficial.
+        Para filtrar ruido antes de la revisión, se descartan cadenas sin dígitos
+        (que corresponden a nombres de marcas impresas en la carrocería) y recortes
+        con relaciones de aspecto ajenas al estándar rectangular.
+
+    \item \textbf{Etiquetado humano directo de atributos (tipo y color):} Los
+        atributos visuales del vehículo (categoría de carrocería y color
+        predominante) son etiquetados en su totalidad por un operador humano mediante
+        una herramienta interactiva especializada (\texttt{label\_attributes.py}).
+        Se prohíbe explícitamente el uso de clasificadores automáticos para generar
+        estas etiquetas: hacerlo implicaría entrenar el modelo final con las
+        predicciones de una regla contra la cual se pretende evaluar su desempeño,
+        incurriendo en una invalidez científica.
+
+    \item \textbf{Generación sintética de matrículas (pre-entrenamiento):} Debido
+        a que la recolección de placas reales requiere procesar cientos de horas de
+        video, se implementa un generador sintético
+        (\texttt{generate\_synth\_plates.py}). Este módulo renderiza la tipografía,
+        colores y símbolos oficiales de las placas vehiculares de Bolivia (formatos
+        \texttt{NNNNLLL} y \texttt{NNNLLL} con leyenda nacional) y aplica un
+        \textit{pipeline} de degradación física (deformación de perspectiva,
+        variación fotométrica, sombras sintéticas, desenfoque de movimiento y
+        ruido de sensor) ajustando su tamaño a la distribución real observada
+        (mediana de $96 \times 39$ píxeles). Las muestras sintéticas se identifican
+        en el manifiesto con la marca \texttt{synth: true} y se utilizan
+        exclusivamente durante la fase de pre-entrenamiento, jamás para la
+        evaluación final.
+\end{enumerate}
+
+La salida del proceso se organiza según la Tabla \ref{tab:salida_dataset}.
+
+\begin{longtable}{
+        P{0.30}
+        P{0.65}
+    }
+    \caption{Organización de la salida del extractor y generador}
+    \label{tab:salida_dataset}\\
+
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Salida} &
+    \textbf{Contenido} \\
+    \midrule
+    \endfirsthead
+
+    \multicolumn{2}{c}{\textit{Continuación de la Tabla
+    \ref{tab:salida_dataset}}} \\
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Salida} &
+    \textbf{Contenido} \\
+    \midrule
+    \endhead
+
+    \texttt{vehicles/images/} & Recorte del vehículo con la placa visible. \\
+    \midrule
+    \texttt{vehicles/labels/} & Caja delimitadora de la placa en coordenadas del recorte. \\
+    \midrule
+    \texttt{plates/images/} & Recorte ajustado de la placa, destinado al OCR. \\
+    \midrule
+    \texttt{plates/labels/} & Texto de la matrícula confirmado por el operador. \\
+    \midrule
+    \texttt{attributes/labels.jsonl} & Etiquetas de tipo y color asignadas por el operador. \\
+    \midrule
+    \texttt{review/} & Lecturas de baja confianza o mala nitidez, pendientes de revisión. \\
+    \midrule
+    \texttt{negatives/} & Recortes de vehículos que transitan por la vía sin ingresar. \\
+    \midrule
+    \texttt{manifest.jsonl} & Registro central de muestras (etiqueta real o \texttt{synth: true}). \\*
+    \multicolumn{2}{r}{\footnotesize\textit{Fuente: Elaboración propia}} \\*
+    \bottomrule
+\end{longtable}
+
+\subsection{Partición y protocolo de ablación del conjunto de datos}
+
+La partición entre entrenamiento, validación y prueba se establece por
+sesión de grabación y por trayectoria, y no de forma aleatoria por imagen. Un mismo
+vehículo aparece en decenas de fotogramas consecutivos; si esos fotogramas se
+distribuyeran al azar, el modelo memorizaría el vehículo específico en lugar de
+aprender a generalizar. La partición por sesión elimina la fuga de información por
+identidad.
+
+Para evaluar el impacto de la generación sintética sobre el reconocimiento de
+matrículas, se construye un protocolo de ablación determinista
+(\texttt{prepare\_ocr\_ablation.py}) fijando una semilla aleatoria ($seed = 7$) y una
+proporción de prueba del $20\%$.
+
+La Tabla \ref{tab:caracterizacion_dataset} muestra la caracterización del conjunto de
+datos alcanzada en el hito experimental actual.
+
+\begin{longtable}{
+        P{0.20}
+        P{0.12}
+        P{0.60}
+    }
+    \caption{Caracterización del conjunto de datos (Hito preliminar)}
+    \label{tab:caracterizacion_dataset}\\
+
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Conjunto} &
+    \textbf{Muestras} &
+    \textbf{Propósito y origen} \\
+    \midrule
+    \endfirsthead
+
+    \multicolumn{3}{c}{\textit{Continuación de la Tabla
+    \ref{tab:caracterizacion_dataset}}} \\
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Conjunto} &
+    \textbf{Muestras} &
+    \textbf{Propósito y origen} \\
+    \midrule
+    \endhead
+
+    \texttt{train\_real} & 395 & Muestras reales extraídas de 284 sesiones de grabación. \\
+    \midrule
+    \texttt{train\_synth} & 359.992 & Muestras sintéticas generadas con formato boliviano. \\
+    \midrule
+    \texttt{test} (evaluación) & 101 & Muestras reales independientes para la prueba final. \\
+    \midrule
+    \textbf{Total real procesado} & \textbf{496} & \textbf{Extraídas de 284 sesiones de grabación.} \\*
+    \multicolumn{3}{r}{\footnotesize\textit{Fuente: Elaboración propia}} \\*
+    \bottomrule
+\end{longtable}
+
+Es importante destacar que el tamaño actual del conjunto de datos real ($496$
+matrículas confirmadas por un operador) representa un hito preliminar de la
+investigación, y que ese tamaño es la restricción dominante del módulo de
+reconocimiento, no la arquitectura del modelo (Sección~\ref{sec:resultados_ocr}).
+Dado que los modelos profundos de OCR requieren volúmenes crecientes de datos para
+maximizar su generalización, la infraestructura de extracción y los protocolos
+desarrollados están diseñados para escalar la recolección sin alterar la
+metodología ni el código de evaluación.
+
+Los 360.000 especímenes sintéticos previstos se redujeron a 359.992 utilizables:
+ocho archivos JPEG quedaron truncados durante su transferencia desde el disco
+externo de trabajo, que presentó errores de entrada/salida ($EIO$) en
+aproximadamente el $1{,}3\%$ de los recortes del pool. Los ocho archivos no
+pudieron recuperarse y se excluyeron del listado de entrenamiento. El episodio se
+documenta aquí porque condicionó el orden de trabajo posterior: todo el material
+se migró a almacenamiento NVMe y el disco externo dejó de ser fuente de verdad.
+
+Cabe señalar una limitación inherente a la recolección: todas las sesiones provienen
+de las mismas cámaras instaladas en el recinto. La partición por sesión controla
+la fuga por identidad dentro de la misma toma, pero no la variabilidad entre
+distintos modelos de cámara o diferentes recintos. Esta condición se mantiene de
+forma transparente y se retoma en el análisis de resultados.

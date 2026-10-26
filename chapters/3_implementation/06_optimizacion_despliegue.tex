@@ -1,0 +1,158 @@
+\section{Optimización y Despliegue en el Borde}
+
+Los modelos empleados en el sistema son de gran porte ---la variante de mayor
+tamaño supera los cien megabytes en sus pesos originales---, mientras que el
+destino de ejecución es un equipo con recursos acotados que debe procesar video
+de forma continua. Este apartado documenta las transformaciones aplicadas a los
+modelos para reducir su costo de ejecución y las estrategias que disminuyen el
+volumen de cómputo requerido, y cierra señalando qué mediciones restan para
+cuantificar su efecto.
+
+\subsection{Exportación a formatos intermedios}
+
+Los pesos originales de la familia de detectores se distribuyen en un formato
+orientado al entrenamiento, que no es el más eficiente para inferencia. El
+primer paso consiste en exportarlos a un formato intermedio de grafo de cómputo
+que describa la red de manera independiente del marco de trabajo, lo que permite
+desplegarla sobre distintos ejecutores.
+
+La exportación se realiza con una resolución de entrada fija, condición necesaria
+para que el compilador posterior pueda especializar las operaciones. Cuando el
+formato admite el almacenamiento de los pesos como datos externos, el grafo y los
+parámetros quedan en archivos separados; la Tabla \ref{tab:formatos} registra la
+huella efectiva de cada formato para la variante empleada en la extracción.
+
+\begin{longtable}{
+        P{0.18}
+        P{0.12}
+        P{0.15}
+        P{0.45}
+    }
+    \caption{Huella en disco por formato de modelo}
+    \label{tab:formatos}\\
+
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Formato} &
+    \textbf{Precisión} &
+    \textbf{Tamaño} &
+    \textbf{Observación} \\
+    \midrule
+    \endfirsthead
+
+    \multicolumn{4}{c}{\textit{Continuación de la Tabla
+    \ref{tab:formatos}}} \\
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Formato} &
+    \textbf{Precisión} &
+    \textbf{Tamaño} &
+    \textbf{Observación} \\
+    \midrule
+    \endhead
+
+    Pesos (variante pequeña) & FP32 & $4{,}8$ MB & Alternativa más liviana. \\
+    \midrule
+    Pesos (variante media) & FP32 & $42{,}2$ MB & Alternativa intermedia. \\
+    \midrule
+    Pesos (variante grande) & FP32 & $113{,}2$ MB & Variante empleada en la
+    extracción. \\
+    \midrule
+    Grafo (FP32) & FP32 & $212{,}9$ MB $+$ $214{,}4$ MB &
+    Pesos almacenados como datos externos. \\
+    \midrule
+    Grafo (FP16) & FP16 & $106{,}6$ MB & Media precisión. \\
+    \midrule
+    Motor compilado & FP16 & $345{,}5$ MB & Específico del dispositivo de
+    compilación. \\*
+    \multicolumn{4}{r}{\footnotesize\textit{Fuente: Elaboración propia}} \\*
+    \bottomrule
+\end{longtable}
+
+La comparación entre la representación en precisión simple y la de media
+precisión muestra una reducción de la huella de $427{,}3$ MB a $106{,}6$ MB, esto
+es, aproximadamente un $75\%$. El motor compilado, en cambio, ocupa un espacio
+mayor que los pesos originales: un motor de inferencia contiene, además de los
+parámetros, los núcleos de ejecución y las estrategias de paralelización
+seleccionadas para el dispositivo. Se trata, por tanto, de un intercambio
+deliberado de espacio en disco por velocidad de ejecución.
+
+\subsection{Compilación y ejecución con TensorRT}
+
+El formato intermedio se compila finalmente a un motor especializado para el
+acelerador gráfico de destino. La compilación toma el grafo exportado y la
+resolución de entrada, y genera un artefacto optimizado que incluye las
+operaciones fusionadas y los núcleos seleccionados para la arquitectura
+específica del dispositivo.
+
+La selección del motor se realiza de forma automática: la configuración resuelve,
+para cada modelo, la existencia de un motor compilado junto a los pesos y lo
+prefiere cuando está disponible, recurriendo a los pesos originales en los
+entornos donde el motor no puede ejecutarse. Gracias a esta regla, la cadena de
+herramientas no requiere modificación alguna al pasar de un entorno de cómputo a
+otro: basta con compilar el motor una vez en el equipo de destino.
+
+Cabe precisar una limitación relevante para el despliegue: \textbf{los motores
+compilados son específicos del dispositivo y del controlador} con los que fueron
+generados. Un motor construido para un acelerador determinado no es portable a
+otro, por lo que cada equipo de destino requiere su propia compilación. Esta
+característica condiciona la distribución del sistema y se declara en el apartado
+de limitaciones.
+
+En cuanto a la precisión de ejecución, el motor se compila en media precisión y
+la configuración de inferencia solicita ese mismo modo para los pesos que no
+disponen de motor. Nótese que los motores ya se encuentran cuantizados, por lo
+que la solicitud de media precisión se desactiva al cargarlos, evitando una
+conversión redundante.
+
+\subsection{Estrategias de reducción de carga computacional}
+
+Más allá de la transformación de los modelos, la arquitectura del proceso reduce
+el cómputo requerido mediante decisiones de diseño que evitan trabajo
+innecesario. Las estrategias aplicadas son las siguientes:
+
+\begin{enumerate}
+    \item \textbf{Muestreo disperso previo.} La primera pasada del extractor
+        examina una de cada doce muestras del video con una señal de movimiento
+        de costo casi nulo, de modo que la ejecución de la red se reserva para
+        los intervalos con actividad.
+
+    \item \textbf{Procesamiento restringido a ventanas de actividad.} La segunda
+        pasada decodifica únicamente los intervalos marcados, en lugar del video
+        completo. La reducción es proporcional a la fracción de tiempo con
+        vehículos presentes.
+
+    \item \textbf{Enmascarado de la información incrustada.} Las regiones donde el
+        grabador superpone la etiqueta de canal y la marca temporal se anulan
+        antes de invocar al reconocimiento de texto, evitando un costo de
+        inferencia que además produciría lecturas espurias.
+
+    \item \textbf{Selección de los mejores fotogramas por trayectoria.} Sólo los
+        fotogramas mejor puntuados de cada vehículo alcanzan la etapa de
+        reconocimiento, en lugar de la totalidad de los fotogramas en los que
+        aparece.
+
+    \item \textbf{Filtros de calidad previos al reconocimiento.} Se exige un
+        tamaño mínimo y una nitidez mínima al recorte de placa, y se descartan
+        las detecciones de área inferior al umbral establecido. Estos filtros
+        evitan invocar al motor de reconocimiento sobre recortes sin posibilidad
+        de lectura.
+
+    \item \textbf{Ejecución asíncrona con concurrencia unitaria.} El trabajador de
+        inferencia se ejecuta con una sola unidad de concurrencia, dado que cada
+        tarea satura el acelerador. Aumentar la concurrencia no reduciría la
+        latencia y, en cambio, competiría por la misma unidad de cómputo.
+
+    \item \textbf{Media precisión.} Tanto el motor compilado como los pesos que se
+        ejecutan sin compilación operan en media precisión.
+\end{enumerate}
+
+El sistema registra, desde la implementación del trabajador, la latencia de
+inferencia de cada fotograma procesado: cada observación persiste el tiempo que
+demandó el motor de visión para ese fotograma, de modo que la base de datos ya
+acumula el dato que el despliegue necesita. Lo que resta es el banco comparativo
+que ese registro no reemplaza: la misma secuencia procesada con cada formato de
+modelo y cada variante de escala, sobre el hardware de destino, junto con la
+degradación de exactitud atribuible a la media precisión. Esa comparación es la
+que permite decidir si el intercambio entre velocidad y precisión es aceptable
+para un punto de acceso concreto, y no se realizó en este trabajo.

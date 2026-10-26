@@ -1,0 +1,369 @@
+\section{Pruebas y resultados}
+
+Este apartado contrasta cada hipótesis específica con mediciones obtenidas sobre
+conjuntos de prueba que no participaron del entrenamiento. Se explicitan también
+las hipótesis que \textbf{no} pudieron evaluarse: presentar un sistema completo
+sin declarar qué partes no fueron medidas equivaldría a afirmar más de lo que la
+evidencia sostiene.
+
+\subsection{Condiciones experimentales}
+
+\begin{itemize}
+    \item \textbf{Hardware:} GPU NVIDIA RTX 3050 Laptop (4 GB de memoria de video),
+        almacenamiento NVMe para los $360.488$ recortes de patente y para los
+        conjuntos de atributos.
+    \item \textbf{Independencia de los conjuntos:} la partición se realizó por
+        sesión de grabación y por bloque horario, nunca por imagen. En
+        clasificación de atributos y en detección de placas se verificó
+        explícitamente que no exista ninguna sesión compartida entre
+        entrenamiento y prueba; el número de sesiones compartidas reportado es
+        cero en todos los casos.
+    \item \textbf{Métricas:} para clasificación se usa el F1-score macro,
+        calculado sobre las clases cuya muestra de prueba alcanza al menos $40$
+        ejemplares (\texttt{min\_test\_support}); las clases por debajo de ese
+        umbral se informan pero no promedian, porque su intervalo de confianza
+        supera los $25$ puntos porcentuales. Para reconocimiento de texto se usa
+        la exactitud por carácter ($1 - CER$ promedio) y la coincidencia exacta
+        (\textit{Exact Match}). Para detección, precisión, exhaustividad,
+        mAP@50 y mAP@50--95.
+    \item \textbf{Selección de checkpoint:} en los clasificadores de atributos se
+        eligió la época según el F1 macro de validación restringido a clases con
+        al menos $20$ ejemplares. Utilizar el macro sobre todas las clases
+        presentes dejaba la decisión en manos de clases con tres o cuatro
+        imágenes, donde un único acierto desplaza el promedio $1/11 = 0{,}09$.
+        Corregir ese criterio elevó el F1 macro de color de $0{,}7937$ a
+        $0{,}8124$.
+    \item \textbf{Repeticiones:} se ejecutó una corrida por clasificador. La
+        varianza medida entre corridas idénticas es de $1$ a $3{,}4$ puntos de
+        F1 macro, de modo que las diferencias menores a ese rango no se
+        interpretan como mejoras.
+\end{itemize}
+
+\subsection{Detección de vehículos (H1.1): no evaluada}
+
+La hipótesis $H_{1.1}$ exige un mAP@50 igual o superior al $80\%$ para el detector
+de vehículos. \textbf{Esa medición no se realizó} y no se reporta un valor
+estimado.
+
+El motivo es de disponibilidad de datos, no de método: el pool congelado contiene
+etiquetas de clasificación (tipo y color por recorte), no cajas delimitadoras
+verificadas por un operador. Calcular mAP requiere un conjunto de cajas de
+referencia humana, que no existe para los vehículos. El detector YOLO26x opera en
+el sistema con sus pesos originales de COCO y sin ajuste fino, por lo que tampoco
+hay un conjunto de validación propio que reportar.
+
+La consecuencia se asume explícitamente: el error de la etapa de detección de
+vehículos se propaga a todas las etapas posteriores y no está cuantificado en este
+trabajo. La línea de trabajo inmediata es anotar cajas de vehículos sobre una
+muestra del pool, con el mismo procedimiento de revisión humana utilizado para las
+placas (Subsección~\ref{subsec:deteccion_placas}).
+
+\subsection{Clasificación de tipo de vehículo (H1.2)}
+
+El conjunto de prueba contiene $633$ recortes de $5$ clases. La taxonomía excluye
+la clase \textit{furgón}, fusionada durante el desarrollo: $98$ recortes
+etiquetados como tal se reauditaron individualmente y se reasignaron a
+\textit{camioneta} ($23$), \textit{vagoneta} ($20$) y \textit{minibús} ($6$),
+descartándose $49$ por no ser identificables.
+
+\begin{table}[H]
+    \centering
+    \caption{Clasificador de tipo: métricas por clase sobre el conjunto de prueba
+    ($n = 633$).}
+    \begin{tabular}{lrrrr}
+        \toprule
+        \textbf{Clase} & \textbf{Precisión} & \textbf{Exhaustividad} & \textbf{F1} & \textbf{n} \\
+        \midrule
+        automóvil  & 0{,}838 & 0{,}748 & 0{,}791 & 159 \\
+        camioneta  & 0{,}880 & 0{,}880 & 0{,}880 &  83 \\
+        minibús    & 0{,}949 & 0{,}937 & 0{,}943 &  79 \\
+        moto       & 0{,}979 & 1{,}000 & 0{,}989 &  46 \\
+        vagoneta   & 0{,}816 & 0{,}868 & 0{,}842 & 266 \\
+        \midrule
+        \textbf{F1 macro} & \multicolumn{2}{c}{} & \textbf{0{,}8887} & 633 \\
+        \textbf{Exactitud} & \multicolumn{2}{c}{} & \textbf{0{,}8578} & 633 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+El error está concentrado en un único par: de $90$ clasificaciones incorrectas,
+$62$ ($69\%$) corresponden a la confusión entre \textit{automóvil} y
+\textit{vagoneta} ($39$ automóviles predichos como vagoneta, $23$ en sentido
+inverso). Es la confusión esperable entre dos siluetas de turismo que, desde una
+cámara de tráfico, difieren esencialmente en la altura del techo y el volumen
+trasero.
+
+\textbf{Contraste:} $H_{1.2}$ exige F1 macro $\geq 0{,}85$; el valor medido es
+$0{,}8887$. \textbf{La hipótesis se respalda.}
+
+\subsection{Clasificación de color predominante (H1.3)}
+
+El conjunto de prueba contiene $551$ recortes distribuidos en $11$ clases, de las
+cuales solo seis alcanzan el soporte mínimo de $40$ ejemplares.
+
+\begin{table}[H]
+    \centering
+    \caption{Clasificador de color sobre el conjunto de prueba. Las clases con
+    $n < 40$ se listan solo para dejar constancia de su existencia.}
+    \begin{tabular}{lrrrrl}
+        \toprule
+        \textbf{Clase} & \textbf{Precisión} & \textbf{Exhaustividad} & \textbf{F1} & \textbf{n} & \textbf{Evaluada} \\
+        \midrule
+        blanco    & 0{,}883 & 0{,}917 & 0{,}900 & 132 & sí \\
+        gris      & 0{,}778 & 0{,}575 & 0{,}661 &  73 & sí \\
+        plata     & 0{,}824 & 0{,}800 & 0{,}812 & 105 & sí \\
+        negro     & 0{,}703 & 0{,}738 & 0{,}720 &  61 & sí \\
+        rojo      & 0{,}949 & 0{,}921 & 0{,}935 & 101 & sí \\
+        azul      & 0{,}887 & 0{,}810 & 0{,}847 &  58 & sí \\
+        \midrule
+        verde     & 0{,}500 & 0{,}545 & 0{,}522 &  11 & no \\
+        amarillo  & 0{,}000 & 0{,}000 & 0{,}000 &   1 & no \\
+        marrón    & 0{,}000 & 0{,}000 & 0{,}000 &   2 & no \\
+        beige     & 0{,}083 & 0{,}250 & 0{,}125 &   4 & no \\
+        naranja   & 0{,}600 & 1{,}000 & 0{,}750 &   3 & no \\
+        \midrule
+        \textbf{F1 macro (evaluadas)} & \multicolumn{2}{c}{} & \textbf{0{,}8124} & 530 & \\
+        \textbf{F1 macro (las 11 clases)} & \multicolumn{2}{c}{} & \textbf{0{,}5637} & 551 & \\
+        \textbf{Exactitud} & \multicolumn{2}{c}{} & \textbf{0{,}8022} & 551 & \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Todo el error se concentra en el bloque acromático. Las confusiones dominantes son
+\textit{gris} $\leftrightarrow$ \textit{plata} ($9$ y $5$ casos),
+\textit{gris} $\leftrightarrow$ \textit{negro} ($5$ y $4$) y
+\textit{plata} $\leftrightarrow$ \textit{blanco} ($12$ y $5$). Separar blanco,
+plata, gris y negro en capturas nocturnas es un problema de nivel de brillo, no de
+tono, y el clasificador no dispone de una referencia de exposición absoluta: el
+mismo vehículo gris claro aparece casi blanco bajo iluminación directa y casi
+negro a la sombra.
+
+\textbf{Contraste:} $H_{1.3}$ exige F1 macro $\geq 0{,}85$. El valor medido sobre
+las clases evaluables es $0{,}8124$. \textbf{La hipótesis no se respalda} y se
+acepta la hipótesis nula $H_{0.3}$ para este componente.
+
+Se deja constancia de una ambigüedad del criterio de evaluación definido en el
+perfil del proyecto: la expresión ``F1-score macro'' no especifica el tratamiento
+de clases con soporte insuficiente. Bajo la lectura estricta (las once clases) el
+valor es $0{,}5637$; bajo la lectura restringida a clases evaluables es $0{,}8124$.
+Ambas lecturas quedan por debajo del umbral, por lo que la conclusión no depende
+de cómo se resuelva la ambigüedad.
+
+\subsection{Detección de placas de matrícula (H1.4, componente de detección)}
+\label{sec:resultados_deteccion}
+
+Sobre el conjunto de prueba de $178$ recortes de vehículo ($140$ con placa
+visible) provenientes de $58$ bloques de grabación no vistos durante el
+entrenamiento:
+
+\begin{table}[H]
+    \centering
+    \caption{Detector de placas frente al etiquetador automático, sobre el mismo
+    conjunto de referencia humana.}
+    \begin{tabular}{lrrrr}
+        \toprule
+        \textbf{Sistema} & \textbf{Precisión} & \textbf{Exhaustividad} & \textbf{mAP@50} & \textbf{mAP@50--95} \\
+        \midrule
+        YOLO26n ajustado    & 0{,}9857 & 0{,}9714 & 0{,}9898 & 0{,}6329 \\
+        PaddleOCR (localizador) & 0{,}9630 & 0{,}8060 & --- & --- \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\textbf{Contraste:} $H_{1.4}$ exige una exhaustividad $\geq 90\%$ en la detección.
+El valor medido es $0{,}9714$. \textbf{El componente de detección se respalda.}
+
+El dato que justificó entrenar un detector propio es la diferencia entre
+encontrar la placa y delimitarla correctamente: de las $700$ propuestas
+automáticas que sí correspondían a una placa, solo $183$ ($26{,}1\%$) resultaron
+utilizables sin corrección humana. El etiquetador localiza, pero su caja recorta
+los glifos.
+
+\subsection{Reconocimiento de placas (H1.4, componente de reconocimiento)}
+\label{sec:resultados_ocr}
+
+\subsubsection{Sobre recortes de placa aislados}
+
+Conjunto de prueba congelado de $101$ placas reales, sin aumento de datos:
+
+\begin{table}[H]
+    \centering
+    \caption{Reconocimiento sobre recortes de placa aislados ($n = 101$).}
+    \begin{tabular}{lrr}
+        \toprule
+        \textbf{Modelo} & \textbf{Exactitud por carácter} & \textbf{Exact Match} \\
+        \midrule
+        CRNN (ResNet18 + BiLSTM + CTC) & 0{,}789 & 0{,}356 \\
+        PaddleOCR                      & 0{,}601 & 0{,}297 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+El resultado depende fuertemente de la resolución del recorte, y esa dependencia es
+la que fija el techo del módulo:
+
+\begin{table}[H]
+    \centering
+    \caption{Exactitud por carácter según la altura del recorte, CRNN.
+    Mismo modelo en todos los tramos.}
+    \begin{tabular}{lrrr}
+        \toprule
+        \textbf{Altura del recorte} & \textbf{n} & \textbf{Char. accuracy} & \textbf{Exact Match} \\
+        \midrule
+        $< 20$ px      &  17 & 0{,}605 & 0{,}118 \\
+        $20$--$30$ px  &  33 & 0{,}824 & 0{,}333 \\
+        $30$--$40$ px  &  22 & 0{,}803 & 0{,}500 \\
+        $\geq 40$ px   &  29 & 0{,}847 & 0{,}414 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Un recorte de $40 \times 13$ píxeles contiene siete caracteres, es decir del orden
+de cinco píxeles de ancho por glifo: la información no está en la imagen y ningún
+modelo puede reconstruirla. Los diecisiete recortes por debajo de $20$ píxeles de
+altura arrastran el promedio global.
+
+\subsubsection{Sobre recortes de vehículo (sistema completo)}
+
+La medición anterior asume un recorte perfecto de la placa. La medición del
+sistema ensamblado ---detector propio más CRNN--- se realizó sobre una muestra de
+$88$ recortes de vehículo cuyo texto fue verificado manualmente por un operador:
+
+\begin{table}[H]
+    \centering
+    \caption{Sistema completo sobre $88$ recortes de vehículo con texto verificado.
+    Detector y lector reciben exactamente la misma entrada.}
+    \begin{tabular}{lrr}
+        \toprule
+        \textbf{Configuración} & \textbf{Exactitud por carácter} & \textbf{Exact Match} \\
+        \midrule
+        Detector propio + CRNN (producción) & 0{,}737 & 0{,}261 \\
+        Caja humana + CRNN                  & 0{,}799 & 0{,}330 \\
+        PaddleOCR de extremo a extremo      & 0{,}653 & 0{,}307 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+El detector localizó la placa en $88$ de $88$ casos de esta muestra
+($100\%$). La diferencia entre la segunda y la primera fila ---$6{,}2$ puntos de
+exactitud por carácter--- es el costo atribuible al error de localización. El
+resto es reconocimiento.
+
+Frente a PaddleOCR, el sistema propio gana en exactitud por carácter ($0{,}737$
+contra $0{,}653$) y pierde en coincidencia exacta ($0{,}261$ contra $0{,}307$).
+La interpretación es consistente con el comportamiento observado durante todo el
+desarrollo: el CRNN emite siempre una cadena plausible y acumula aciertos
+parciales, mientras que el motor genérico devuelve vacío cuando no alcanza su
+umbral de confianza, o la placa completa cuando la reconoce.
+
+\textbf{Contraste:} $H_{1.4}$ es conjuntiva y exige, simultáneamente,
+exhaustividad de detección $\geq 90\%$ y exactitud por carácter $\geq 90\%$. El
+primer término se cumple ($0{,}9714$); el segundo no ($0{,}789$ sobre recortes de
+placa, $0{,}737$ de extremo a extremo). Adicionalmente, el criterio de evaluación
+pide Exact Match $\geq 80\%$, valor que alcanza $0{,}356$. \textbf{La hipótesis
+$H_{1.4}$ no se respalda en su totalidad} y se acepta $H_{0.4}$ para el
+componente de reconocimiento.
+
+\subsubsection{Nota metodológica sobre la selección de época}
+
+El conjunto de prueba se evaluó al final de cada época durante el entrenamiento
+del reconocedor. El valor reportado corresponde a la época $500$, fijada de
+antemano con el criterio ``entrenar hasta que la curva se aplane'', y no al máximo
+observado en la curva, que fue de $0{,}793$ en una época intermedia. Elegir el
+máximo habría introducido un sesgo de selección sobre el propio conjunto de
+prueba. Con $n = 101$, el error de muestreo es del orden de $\pm 5$ puntos
+porcentuales, por lo que la diferencia entre ambas cifras no es interpretable como
+una mejora.
+
+\subsection{Determinación de eventos de ingreso y salida (H1.5): no evaluada}
+
+La hipótesis $H_{1.5}$ requiere exactitud $\geq 90\%$ en la clasificación de
+eventos de ingreso y salida. Su medición depende de la simulación de extremo a
+extremo con las dos cámaras sincronizadas, que no forma parte del bloque de
+trabajo documentado aquí. \textbf{No se reporta un valor.}
+
+\subsection{Contraste de hipótesis}
+
+\begin{table}[H]
+    \centering
+    \caption{Estado de cada hipótesis específica frente a la evidencia medida.}
+    \label{tab:contraste_hipotesis}
+    \begin{tabular}{llll}
+        \toprule
+        \textbf{Hipótesis} & \textbf{Criterio} & \textbf{Medido} & \textbf{Veredicto} \\
+        \midrule
+        $H_{1.1}$ detección de vehículos & mAP@50 $\geq 0{,}80$ & no medido & sin evaluar \\
+        $H_{1.2}$ tipo de vehículo       & F1 macro $\geq 0{,}85$ & $0{,}8887$ & respaldada \\
+        $H_{1.3}$ color predominante     & F1 macro $\geq 0{,}85$ & $0{,}8124$ & no respaldada \\
+        $H_{1.4}$ placas (detección)     & recall $\geq 0{,}90$ & $0{,}9714$ & respaldada \\
+        $H_{1.4}$ placas (reconocimiento) & char acc $\geq 0{,}90$ & $0{,}789$ & no respaldada \\
+        $H_{1.4}$ placas (Exact Match)   & EM $\geq 0{,}80$ & $0{,}356$ & no respaldada \\
+        $H_{1.5}$ eventos ingreso/salida & exactitud $\geq 0{,}90$ & no medido & sin evaluar \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Análisis y limitaciones}
+
+\subsubsection{El techo del reconocimiento es el conjunto de datos}
+
+Dos sistemas de arquitectura y entrenamiento distintos, evaluados sobre el mismo
+conjunto, convergen en la misma franja de exactitud por carácter: $0{,}789$ el
+CRNN entrenado para este dominio y $0{,}601$ PaddleOCR, que nunca vio estas
+cámaras. Aun el sistema con mejor desempeño se queda en $0{,}847$ sobre los
+recortes de mayor resolución. Junto con la degradación monótona en función de la
+altura del recorte, esto sostiene que la restricción dominante es la calidad y el
+volumen del material, no la capacidad del modelo.
+
+Con $496$ placas reales ---de las cuales $395$ se destinan a entrenamiento--- el
+ajuste fino dispone de muy pocos ejemplos por carácter. La curva de exactitud
+seguía aumentando al finalizar las $500$ épocas, lo que indica que el modelo aún
+no había agotado la información disponible; el límite aparece antes por cantidad
+de datos que por convergencia.
+
+\subsubsection{Decisiones que se documentan por su efecto medido}
+
+Tres decisiones de implementación modificaron el resultado en un orden de magnitud
+mayor que cualquier ajuste de hiperparámetros, y se dejan registradas con su
+medición porque el sistema anterior era sustancialmente peor:
+
+\begin{itemize}
+    \item \textbf{Normalización de contraste (CLAHE):} $0{,}14 \rightarrow 0{,}676$
+        de exactitud por carácter en la corrida de dos etapas. Sin ella, las
+        capturas nocturnas quedan fuera de la distribución de entrenamiento.
+    \item \textbf{Aumento geométrico de recorte:} $0{,}594 \rightarrow 0{,}737$ de
+        exactitud por carácter en el sistema completo. El error de encuadre entre
+        el detector que corta en producción y el etiquetador que cortó los datos
+        de entrenamiento se absorbía como error de reconocimiento.
+    \item \textbf{Selección de época por clases con soporte suficiente:}
+        $0{,}7937 \rightarrow 0{,}8124$ de F1 macro en el clasificador de color,
+        sin cambiar el modelo ni una sola imagen.
+\end{itemize}
+
+\subsubsection{Amenazas a la validez}
+
+\begin{itemize}
+    \item \textbf{Una sola corrida por clasificador.} La varianza medida entre
+        corridas idénticas es de $1$ a $3{,}4$ puntos de F1 macro; diferencias
+        menores a ese rango no se interpretan como mejoras.
+    \item \textbf{Muestra pequeña en la medición de extremo a extremo.} Los $88$
+        recortes con texto verificado implican un error de muestreo de
+        aproximadamente $\pm 5$ puntos en exactitud por carácter. La comparación
+        con PaddleOCR en esa condición es indicativa, no concluyente.
+    \item \textbf{Selección de la muestra de extremo a extremo.} Los $88$ recortes
+        provienen de un conjunto donde el etiquetador automático ya había
+        propuesto una caja, por lo que la muestra no es estrictamente aleatoria
+        respecto de la dificultad.
+    \item \textbf{Un solo recinto y un solo conjunto de cámaras.} Todas las
+        sesiones provienen de las mismas cámaras. La partición por bloque horario
+        controla la fuga por identidad, pero no la variabilidad entre modelos de
+        cámara o condiciones de instalación distintas.
+    \item \textbf{Etapas no medidas.} La detección de vehículos y la
+        determinación de eventos de ingreso y salida no fueron evaluadas. El
+        error de la primera se propaga a todas las etapas posteriores sin
+        cuantificar.
+    \item \textbf{Clases de color no evaluables.} Cinco de las once clases de color
+        tienen menos de $40$ ejemplares en prueba, con intervalos de confianza
+        superiores a $25$ puntos. Su desempeño no es interpretable con este
+        conjunto.
+\end{itemize}

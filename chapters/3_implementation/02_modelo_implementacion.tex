@@ -1,0 +1,306 @@
+\section{Modelo de Implementación}
+
+Este apartado documenta el entorno tecnológico sobre el que se construyó el
+sistema, la forma en que sus componentes se despliegan y la organización del
+código fuente. La descripción es deliberadamente concreta: frente al capítulo de
+diseño, que establece la arquitectura conceptual, aquí se registran las
+tecnologías efectivamente empleadas y su disposición física, de modo que la
+implementación pueda reproducirse sobre otro entorno.
+
+\subsection{Entorno tecnológico y dependencias}
+
+La selección de tecnologías responde a las restricciones identificadas en el
+diseño: la necesidad de ejecutar inferencia profunda sobre hardware con recursos
+limitados, de desacoplar el trabajo pesado de la atención de solicitudes y de
+mantener una única fuente de verdad para los datos. La Tabla
+\ref{tab:entorno} resume el entorno tecnológico.
+
+\begin{longtable}{
+        P{0.18}
+        P{0.35}
+        P{0.39}
+    }
+    \caption{Entorno tecnológico del sistema}
+    \label{tab:entorno}\\
+
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Componente} &
+    \textbf{Tecnología y versión} &
+    \textbf{Rol en el sistema} \\
+    \midrule
+    \endfirsthead
+
+    \multicolumn{3}{c}{\textit{Continuación de la Tabla
+    \ref{tab:entorno}}} \\
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Componente} &
+    \textbf{Tecnología y versión} &
+    \textbf{Rol en el sistema} \\
+    \midrule
+    \endhead
+
+    Lenguaje y entorno & Python 3.12; gestor de dependencias \textit{uv} con
+    archivo de bloqueo & Servicios, trabajador y herramientas de datos \\
+    \midrule
+
+    Servicio web & FastAPI $\geq 0{,}115$; Uvicorn $\geq 0{,}32$ & API REST y
+    documentación automática de la interfaz \\
+    \midrule
+
+    Acceso a datos & SQLAlchemy $\geq 2{,}0$ en modo asíncrono; asyncpg
+    $\geq 0{,}30$ & Persistencia no bloqueante desde el servicio \\
+    \midrule
+
+    Migraciones & Alembic $\geq 1{,}14$ & Versionado del esquema de datos \\
+    \midrule
+
+    Base de datos & PostgreSQL 16 & Almacenamiento relacional de vehículos,
+    sesiones y detecciones \\
+    \midrule
+
+    Cola de tareas & Celery $\geq 5{,}4$; Redis $\geq 5{,}1$ & Ejecución
+    asíncrona de la inferencia \\
+    \midrule
+
+    Detección de objetos & Ultralytics (YOLO26) $\geq 8{,}4$ & Localización de
+    vehículos y placas de matrícula \\
+    \midrule
+
+    Aprendizaje profundo & PyTorch $\geq 2{,}4$; torchvision $\geq 0{,}19$ &
+    Entrenamiento e inferencia de los modelos \\
+    \midrule
+
+    Visión clásica & OpenCV (sin interfaz gráfica) $\geq 4{,}10$ & Captura,
+    preprocesamiento y calibración de zonas \\
+    \midrule
+
+    Seguimiento & ByteTrack mediante \textit{lapx} $\geq 0{,}5{,}2$ & Asociación
+    temporal de detecciones entre fotogramas \\
+    \midrule
+
+    Reconocimiento de texto & PaddleOCR $\geq 2{,}8$; PaddlePaddle $\geq 3{,}0$ &
+    Pseudo-etiquetado de placas y comparación de referencia \\
+    \midrule
+
+    Optimización de modelos & ONNX, onnxslim, ONNX Runtime GPU y TensorRT &
+    Exportación y aceleración de la inferencia \\
+    \midrule
+
+    Notificación & \textit{websockets} $\geq 13$ & Canal persistente con el panel
+    de monitoreo \\
+    \midrule
+
+    Interfaz web & React 19; Vite 6; Tailwind CSS 3.4 & Aplicación del personal
+    del parqueadero \\
+    \midrule
+
+    Estado del cliente & TanStack Query 5; TypeScript 5.7 & Sincronización con la
+    API y tipado del cliente \\
+    \midrule
+
+    Contenerización & Docker; Docker Compose & Despliegue reproducible de los
+    cinco servicios \\*
+    \multicolumn{3}{r}{\footnotesize\textit{Fuente: Elaboración propia}} \\*
+    \bottomrule
+\end{longtable}
+
+La gestión de dependencias se realiza con un archivo de bloqueo que fija las
+versiones exactas de cada paquete, de modo que la instalación resulte
+reproducible. La resolución se restringe explícitamente a Python 3.12, dado que
+las versiones posteriores del intérprete imponen una versión de la biblioteca
+numérica incompatible con la requerida por el motor de reconocimiento de texto.
+
+\subsection{Arquitectura de despliegue}
+
+El sistema se despliega como un conjunto de cinco servicios contenerizados que
+comparten una red interna y se comunican por nombre de servicio. La Figura
+\ref{fig:despliegue} presenta su disposición; la Tabla \ref{tab:servicios}
+detalla la función de cada uno y sus dependencias de arranque.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}
+        \spBlock{frontend}{-5.0,0}{3.6cm}{cielo}
+            {Cliente web}{Nginx}
+        \spBlock{api}{0,0}{3.6cm}{cielo}
+            {API REST}{FastAPI + Uvicorn}
+        \spBlock{bd}{5.0,0}{3.6cm}{purpura}
+            {PostgreSQL}{Datos del sistema}
+
+        \spBlock{redis}{0,-2.8}{3.6cm}{purpura}
+            {Redis}{Cola de mensajes}
+        \spBlock{worker}{5.0,-2.8}{3.6cm}{cielo}
+            {Worker}{Celery + inferencia}
+
+        \draw[spflow] (frontend.east) --
+            node[above, font=\tiny\itshape, text=black!70] {HTTP}
+            (api.west);
+        \draw[spflow] (api.east) --
+            node[above, font=\tiny\itshape, text=black!70] {SQL}
+            (bd.west);
+        \draw[spflow] (api.south) -- (redis.north);
+        \draw[spflow] (worker.west) -- (redis.east);
+        \draw[spflow] (worker.north) -- (bd.south);
+
+    \end{tikzpicture}
+    \caption{Arquitectura de despliegue en contenedores.}
+    \label{fig:despliegue}
+\end{figure}
+
+\begin{longtable}{
+        P{0.10}
+        P{0.28}
+        P{0.54}
+    }
+    \caption{Servicios de despliegue y sus dependencias}
+    \label{tab:servicios}\\
+
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Servicio} &
+    \textbf{Tecnología} &
+    \textbf{Función y dependencias} \\
+    \midrule
+    \endfirsthead
+
+    \multicolumn{3}{c}{\textit{Continuación de la Tabla
+    \ref{tab:servicios}}} \\
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Servicio} &
+    \textbf{Tecnología} &
+    \textbf{Función y dependencias} \\
+    \midrule
+    \endhead
+
+    \texttt{api} & FastAPI sobre Uvicorn & Expone los recursos REST y el canal de
+    notificación. Depende de que la base de datos esté disponible y de que la cola
+    se encuentre en ejecución. \\
+    \midrule
+
+    \texttt{worker} & Celery & Consume las tareas de inferencia encoladas y
+    actualiza los resultados en la base de datos. Comparte las mismas
+    dependencias de arranque que el servicio. \\
+    \midrule
+
+    \texttt{postgres} & PostgreSQL 16 & Almacena el estado del sistema sobre un
+    volumen persistente. Declara una comprobación de salud que condiciona el
+    arranque de los servicios que la consumen. \\
+    \midrule
+
+    \texttt{redis} & Redis 7 & Actúa como intermediario de mensajes y como
+    almacén de resultados de las tareas. \\
+    \midrule
+
+    \texttt{frontend} & React servido por Nginx & Entrega la aplicación web
+    compilada y depende del servicio de la API. \\*
+    \multicolumn{3}{r}{\footnotesize\textit{Fuente: Elaboración propia}} \\*
+    \bottomrule
+\end{longtable}
+
+Los servicios de aplicación se construyen a partir de imágenes base de Python
+3.12 en dos etapas: una de compilación, en la que se resuelven las dependencias
+mediante el gestor de paquetes, y otra de ejecución, que recibe únicamente lo
+estrictamente necesario. El cliente web se compila en una imagen de Node y se
+sirve como contenido estático sobre Nginx. Los datos se conservan en volúmenes
+declarados explícitamente, de modo que la reconstrucción de los contenedores no
+suponga pérdida de información.
+
+El trabajador de inferencia se ejecuta con una única unidad de concurrencia, ya
+que cada tarea satura la unidad de procesamiento gráfico disponible. La
+reservación del dispositivo gráfico para este contenedor se declara en el archivo
+de composición y se habilita según el entorno de despliegue: en una estación de
+trabajo con acelerador dedicado se activa, mientras que en un entorno sin
+aceleración el trabajador opera sobre el procesador.
+
+\subsection{Estructura del repositorio y organización del código}
+
+El código se organiza en cuatro áreas: el servicio de gestión, el trabajador de
+inferencia, el cliente web y las herramientas de datos y de despliegue de
+modelos. La Tabla \ref{tab:repositorio} describe la responsabilidad de cada
+directorio.
+
+\begin{longtable}{
+        P{0.33}
+        P{0.62}
+    }
+    \caption{Organización del código fuente}
+    \label{tab:repositorio}\\
+
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Ruta} &
+    \textbf{Responsabilidad} \\
+    \midrule
+    \endfirsthead
+
+    \multicolumn{2}{c}{\textit{Continuación de la Tabla
+    \ref{tab:repositorio}}} \\
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Ruta} &
+    \textbf{Responsabilidad} \\
+    \midrule
+    \endhead
+
+    \texttt{backend/app/api/routes/} & Definición de los recursos HTTP y del canal
+    de notificación. \\
+    \midrule
+
+    \texttt{backend/app/models/} & Modelos de datos: vehículo, sesión de
+    estacionamiento y detección. \\
+    \midrule
+
+    \texttt{backend/app/schemas/} & Contratos de entrada y salida de la interfaz
+    de programación. \\
+    \midrule
+
+    \texttt{backend/app/core/} & Configuración, sesión de base de datos y cliente
+    de la cola. \\
+    \midrule
+
+    \texttt{backend/app/main.py} & Composición de la aplicación y gestión del
+    ciclo de vida. \\
+    \midrule
+
+    \texttt{backend/worker/} & Aplicación Celery y tareas de inferencia. \\
+    \midrule
+
+    \texttt{backend/alembic/} & Migraciones versionadas del esquema. \\
+    \midrule
+
+    \texttt{backend/tests/} & Pruebas automatizadas del servicio. \\
+    \midrule
+
+    \texttt{frontend/src/pages/} & Vistas del panel de monitoreo y del historial. \\
+    \midrule
+
+    \texttt{frontend/src/components/} & Componentes reutilizables de la interfaz. \\
+    \midrule
+
+    \texttt{frontend/src/hooks/} & Enlaces del cliente, incluido el canal
+    persistente con el servicio. \\
+    \midrule
+
+    \texttt{frontend/src/services/} & Acceso a la API y gestión del canal de
+    notificación. \\
+    \midrule
+
+    \texttt{rtsp-capture/} & Captura de flujos RTSP y despacho de tareas de
+    inferencia. \\
+    \midrule
+
+    \texttt{tools/} & Calibración de zonas, extracción del conjunto de datos y
+    exportación de modelos. \\*
+    \multicolumn{2}{r}{\footnotesize\textit{Fuente: Elaboración propia}} \\*
+    \bottomrule
+\end{longtable}
+
+La separación entre el servicio de gestión y el trabajador de inferencia se
+refleja en el propio árbol de directorios: el primero concentra las reglas de
+negocio y el acceso a los datos, mientras que el segundo aloja exclusivamente la
+lógica de procesamiento. Las herramientas del directorio \texttt{tools} se
+ejecutan fuera del ciclo de operación y no forman parte de los servicios
+desplegados.

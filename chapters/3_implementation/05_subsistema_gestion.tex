@@ -1,0 +1,346 @@
+\section{Implementación del Subsistema de Gestión}
+
+El subsistema de gestión constituye el punto de acceso único al sistema: recibe
+las imágenes capturadas en los accesos, coordina su procesamiento y expone la
+información resultante. Este apartado documenta su implementación efectiva y
+cierra con una declaración explícita del estado de cada componente junto con la
+evidencia que lo respalda, con el propósito de distinguir con precisión lo
+construido de lo pendiente.
+
+\subsection{Modelo físico de datos y migraciones}
+
+El esquema físico comprende las tres entidades especificadas en el diseño
+---vehículo, sesión y detección---, cuyas columnas se detallan en la Tabla
+\ref{tab:diccionario_datos}. La implementación añade las siguientes decisiones
+que no se derivan directamente del modelo conceptual:
+
+\begin{itemize}
+    \item \textbf{Identificadores generados en la aplicación.} Las claves
+        primarias son identificadores únicos universales generados por el
+        servicio antes de la inserción, y no valores secuenciales asignados por
+        el motor de base de datos. Esto permite que el servicio conozca el
+        identificador de la sesión en el mismo instante en que la crea, sin
+        requerir una lectura posterior, y facilita la correlación de registros
+        entre componentes.
+
+    \item \textbf{Procedencia del vehículo preservada.} Cada sesión referencia
+        obligatoriamente a un vehículo, y el borrado del vehículo arrastra sus
+        sesiones asociadas. La clave foránea es la que garantiza que no exista
+        una sesión sin vehículo identificado.
+
+    \item \textbf{Caja delimitadora como documento estructurado.} Las
+        coordenadas de las detecciones se almacenan en un campo de tipo documento
+        estructurado y no en cuatro columnas escalares. La decisión responde a
+        que la caja es un dato de auditoría y no un atributo de consulta: no se
+        filtra por coordenadas, pero interesa conservar su estructura para
+        reconstruir una detección.
+
+    \item \textbf{Estado de la sesión como enumeración.} El ciclo de vida de una
+        sesión se restringe a los valores activa, completada o cancelada, de modo
+        que el motor de base de datos rechace cualquier estado no previsto.
+
+    \item \textbf{Marcas temporales con zona horaria.} Todos los instantes se
+        almacenan con zona horaria y valor por omisión asignado por el servidor,
+        lo que evita ambigüedades cuando el servicio y la base de datos residen en
+        contenedores con configuración regional distinta.
+\end{itemize}
+
+El modelo declara índices sobre la matrícula, sobre el identificador de vehículo
+y el estado de la sesión, y sobre el identificador de sesión y la cámara en la
+bitácora de detecciones. Estos índices corresponden a los patrones de consulta
+efectivos del sistema: recuperar el historial de un vehículo, listar las sesiones
+activas para calcular la ocupación y reconstruir las observaciones de una visita.
+
+El acceso a los datos se resuelve mediante una dependencia que entrega una sesión
+asíncrona por solicitud y delimita su transacción: los cambios se confirman al
+concluir la atención de la solicitud y se revierten si se produce una excepción.
+Esta política garantiza que una operación que involucra varias escrituras
+---crear el vehículo y crear su sesión--- se aplique de forma atómica. El motor
+mantiene un grupo de conexiones reutilizables, dimensionado para sostener la
+concurrencia esperada del servicio sin saturar la base de datos.
+
+El esquema no se crea de forma directa: se materializa mediante tres revisiones
+versionadas que se aplican en orden y dejan registro del cambio estructural. La
+primera establece las tres entidades con sus restricciones e índices; la segunda
+añade el motivo y el operador del cierre manual, que se registran junto al
+instante de salida previsto en el esquema inicial; la tercera retira columnas que
+ningún componente produce: el vector de características, que se midió y se
+descartó como señal de identidad, y los campos de marca, que ningún clasificador
+entrega. Esa tercera revisión merece señalarse porque documenta una decisión:
+conservar campos que nadie escribe obliga a cada lector del esquema a preguntarse
+cuáles son reales.
+
+La aplicación de las tres revisiones sobre una base vacía es reproducible y forma
+parte de la verificación automática: el banco de pruebas de integración levanta
+una base temporal, aplica las migraciones y ejercita sobre ella el ciclo completo
+de registro y cierre.
+
+\subsection{Interfaz de programación}
+
+La interfaz se expone bajo un prefijo versionado y agrupa sus recursos por área
+funcional: operación, consulta, autenticación y diagnóstico. El ingreso de
+fotogramas no utiliza HTTP: el proceso de captura publica la tarea de inferencia
+en la cola y el trabajador escribe el resultado directamente en la base de datos,
+de modo que la interfaz no se interpone en el camino crítico. La Tabla
+\ref{tab:api_implementada} enumera los recursos efectivamente implementados y sus
+parámetros.
+
+\newcolumntype{P}[1]{>{\raggedright\arraybackslash}m{#1\dimexpr\textwidth\relax}}
+\begin{longtable}{
+        P{0.09}
+        P{0.27}
+        P{0.34}
+        P{0.20}
+    }
+    \caption{Recursos implementados de la interfaz de programación}
+    \label{tab:api_implementada}\\
+
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Método} &
+    \textbf{Ruta} &
+    \textbf{Función} &
+    \textbf{Parámetros} \\
+    \midrule
+    \endfirsthead
+
+    \multicolumn{4}{c}{\textit{Continuación de la Tabla
+    \ref{tab:api_implementada}}} \\
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Método} &
+    \textbf{Ruta} &
+    \textbf{Función} &
+    \textbf{Parámetros} \\
+    \midrule
+    \endhead
+
+    GET & /api/v1/stats/active & Lista los vehículos actualmente dentro del
+    recinto, con sus atributos. & — \\
+    \midrule
+
+    GET & /api/v1/stats/history & Lista las sesiones completadas, ordenadas de la
+    más reciente a la más antigua. & Límite ($1$--$500$) y desplazamiento. \\
+    \midrule
+
+    GET & /api/v1/stats/occupancy & Devuelve el número de sesiones activas y el
+    instante de la consulta. & — \\
+    \midrule
+
+    GET & /api/v1/stats/daily & Devuelve, por día, el total de sesiones y la
+    duración media. & Número de días ($1$--$90$). \\
+    \midrule
+
+    WS & /api/v1/ws/occupancy & Canal persistente que propaga las variaciones de
+    ocupación. & — \\
+    \midrule
+
+    POST & /api/v1/auth/login & Autentica al operador y entrega el token de
+    sesión. & Usuario y contraseña. \\
+    \midrule
+
+    POST & /api/v1/auth/logout & Revoca la sesión vigente. & — \\
+    \midrule
+
+    GET & /api/v1/auth/me & Devuelve el operador autenticado. & — \\
+    \midrule
+
+    GET & /api/v1/cameras & Estado y último latido de cada cámara. & — \\
+    \midrule
+
+    POST & /api/v1/sessions/\{id\}/close & Cierra una sesión activa con operador
+    y motivo, y deja registro de auditoría. & Identificador y motivo. \\
+    \midrule
+
+    GET & /api/v1/vehicles/search & Busca vehículos por matrícula o atributos.
+    & Texto de búsqueda. \\
+    \midrule
+
+    GET & /api/v1/vehicles/\{id\} & Detalle del vehículo con su historial de
+    sesiones. & Identificador. \\
+    \midrule
+
+    GET & /api/v1/vehicles/\{id\}/image & Entrega el recorte asociado al
+    vehículo. & Identificador. \\
+    \midrule
+
+    GET & /api/v1/stats/model & Distribución de tipos y colores observados.
+    & — \\
+    \midrule
+
+    GET & /api/v1/stats/colors & Agregado de sesiones por color predominante.
+    & — \\
+    \midrule
+
+    GET & /health, /health/live y /health/ready & Disponibilidad y preparación
+    del servicio para recibir tráfico. & — \\*
+    \multicolumn{4}{r}{\footnotesize\textit{Fuente: Elaboración propia}} \\*
+    \bottomrule
+\end{longtable}
+
+El recurso de historial implementa paginación por límite y desplazamiento ---con
+un máximo de quinientos registros por solicitud--- y el de agregados diarios
+acota el intervalo consultable, evitando que una petición sin restricciones
+recorra la totalidad de la bitácora. Los contratos de entrada y salida se
+declaran como tipos validados, de modo que una solicitud malformada se rechace
+antes de alcanzar la lógica de negocio. La especificación formal de la interfaz
+se publica de forma automática a partir de esas declaraciones, lo que garantiza
+que la documentación no se desincronice de la implementación.
+
+El acceso está protegido: los recursos de lectura no responden sin un token de
+sesión válido, que el cliente conserva en una cookie inaccesible al código del
+navegador. La distinción entre recursos de escritura ---destinados a los
+dispositivos de captura--- y de consulta ---destinados al personal del
+parqueadero--- se mantiene en la autorización y no solo en la nomenclatura de las
+rutas.
+
+El cierre de una sesión admite dos caminos. El primero es automático: cuando el
+reconocedor entrega una matrícula, la política de emparejamiento busca entre las
+sesiones activas una coincidencia exacta de matrícula, exige que ambas lecturas
+---la del ingreso y la del egreso--- superen un umbral de confianza de $0{,}6$ y,
+si varias sesiones comparten la matrícula, cierra la más reciente. Si no hay
+coincidencia o la confianza es insuficiente, \textbf{no devuelve la mejor
+aproximación}: deja la sesión abierta. La decisión es deliberada y se midió antes
+de adoptarla. Se evaluó primero la alternativa barata, usar el extractor del
+clasificador de tipo como vector de identidad, sobre $400$ recortes del conjunto
+congelado: la similitud promedio entre el mismo vehículo fue $0{,}860$, mientras
+que entre vehículos distintos el percentil $90$ alcanzó $0{,}973$ y el $99$
+llegó a $0{,}991$. Es decir, el $19{,}9\%$ de los pares de vehículos diferentes
+supera el umbral de $0{,}95$, de modo que ningún punto de corte los separa: el
+extractor está entrenado para la silueta, no para la identidad. El segundo camino
+es el cierre manual por parte del operador, con motivo y responsable registrados
+en los campos de auditoría. La regla que gobierna ambos caminos es la misma: un
+egreso sin emparejar es visible en el nivel de ocupación, mientras que un
+emparejamiento incorrecto vacía el recinto de forma silenciosa.
+
+\subsection{Procesamiento asíncrono}
+
+La aplicación de tareas se configura con la cola como intermediario de mensajes y
+como almacén de resultados, serialización en formato de texto estructurado y
+tiempo universal coordinado como zona horaria de referencia. Se declaran dos
+tareas, correspondientes al procesamiento de una imagen de ingreso y de una
+imagen de salida, y se impone un límite temporal a su ejecución: cinco minutos
+como máximo absoluto y cuatro como límite flexible, de modo que una tarea
+bloqueada no ocupe indefinidamente al trabajador. El registro del inicio de cada
+tarea se encuentra habilitado, lo que permite distinguir una tarea encolada de
+una en ejecución.
+
+Las dos tareas se encuentran implementadas y su cuerpo está separado de la cola
+para poder ejercitarlo sin intermediario. La tarea decodifica el fotograma,
+interpreta el instante de captura y delega en un manejador que concentra la
+lógica: invoca al motor de visión y mide la latencia de esa inferencia, agrega las
+detecciones por trayectoria hasta confirmar un evento, persiste el recorte,
+invoca al lector de placas sobre la caja del vehículo y registra la observación de
+forma atómica junto con la publicación del evento. El instante que se persiste es
+el de muestreo del fotograma y no el de ejecución de la tarea: un atraso en la
+cola no debe desplazar un vehículo a una hora posterior. Un fotograma que no
+puede decodificarse se informa y no produce efecto alguno. La agregación por
+trayectoria garantiza la idempotencia del camino de escritura: tres fotogramas de
+un mismo vehículo producen un vehículo y una sesión, no tres.
+
+\subsection{Notificación en tiempo real}
+
+El canal de notificación se implementa mediante un gestor de conexiones que
+mantiene la lista de clientes suscritos, incorpora una conexión al aceptarla,
+la retira al cerrarse y difunde un mensaje a todos los suscriptores. La difusión
+es tolerante a fallos: si el envío a un cliente produce una excepción, esa
+conexión se marca como inactiva y se retira del conjunto, de manera que un
+cliente desconectado de forma abrupta no interrumpa la notificación al resto.
+
+Los mensajes se estructuran por tipo, distinguiendo el registro de un ingreso, el
+de una salida, la actualización del nivel de ocupación y un mensaje de
+mantenimiento del canal. Esta clasificación permite que el cliente actualice
+únicamente la porción de la interfaz afectada en lugar de recargar el estado
+completo.
+
+\subsection{Aplicación web}
+
+El cliente se construye con React y TypeScript sobre Vite, y organiza su
+navegación en un componente de disposición común que envuelve las vistas y
+redirige al panel cualquier ruta no reconocida. Se implementan seis vistas: el
+acceso con autenticación, el panel de monitoreo con el estado del recinto y el
+flujo de eventos, el historial de sesiones, la consulta de incidentes, el padrón
+de vehículos con su detalle e historial, y la vista de desempeño del modelo con la
+distribución de tipos y colores observados. El acceso a datos se centraliza en un
+servicio que declara tipos para cada respuesta de la interfaz de programación, de
+modo que el compilador detecte una discrepancia entre el contrato esperado y el
+recibido.
+
+La actualización en tiempo real se encapsula en un enlace que establece la
+conexión con el canal persistente al montar el componente y la libera al
+desmontarlo, exponiendo el último mensaje recibido. Se implementa además un
+mecanismo de consulta periódica como alternativa para los datos que no dependen
+de la notificación, lo que permite que la interfaz permanezca operativa aun si el
+canal persistente no está disponible.
+
+\subsection{Estado de implementación del subsistema}
+\label{sec:estado_gestion}
+
+La Tabla \ref{tab:estado_gestion} declara el estado de cada componente del
+subsistema de gestión y la evidencia que lo respalda. Se explicita con el
+propósito de que la evaluación posterior permita atribuir cada resultado al
+componente que efectivamente lo produjo.
+
+\begin{longtable}{
+        P{0.30}
+        P{0.15}
+        P{0.47}
+    }
+    \caption{Estado de implementación del subsistema de gestión}
+    \label{tab:estado_gestion}\\
+
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Componente} &
+    \textbf{Estado} &
+    \textbf{Observación} \\
+    \midrule
+    \endfirsthead
+
+    \multicolumn{3}{c}{\textit{Continuación de la Tabla
+    \ref{tab:estado_gestion}}} \\
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Componente} &
+    \textbf{Estado} &
+    \textbf{Observación} \\
+    \midrule
+    \endhead
+
+    Modelo de datos y esquema & Implementado & Las tres entidades se materializan
+    con sus restricciones e índices. \\
+    \midrule
+    Versionado de migraciones & Implementado & Tres revisiones aplicadas en orden;
+    la aplicación sobre una base vacía es reproducible y se ejercita en la
+    verificación automática. \\
+    \midrule
+    Registro de ingreso & Implementado & Crea el vehículo y la sesión, y responde
+    de inmediato. Verificado en pruebas de caso de uso y de integración. \\
+    \midrule
+    Registro de salida & Implementado & Emparejamiento por matrícula exacta con
+    umbral de confianza, y cierre manual auditado como alternativa. \\
+    \midrule
+    Control de autorización & Pendiente & El contraste contra un padrón
+    (RF-10) requiere una entidad de vehículos habilitados; la entidad actual
+    registra vehículos observados en los accesos. \\
+    \midrule
+    Recursos de consulta & Implementado & Ocupación, sesiones activas, historial
+    paginado, agregados diarios, padrón, detalle de vehículo y distribución de
+    atributos. \\
+    \midrule
+    Tareas de inferencia & Implementado & La tarea decodifica el fotograma, invoca
+    al motor de visión, agrega por trayectoria y persiste los eventos
+    confirmados con su latencia. \\
+    \midrule
+    Notificación en tiempo real & Implementado & Canal persistente con difusión
+    tolerante a desconexiones. \\
+    \midrule
+    Aplicación web & Implementado & Seis vistas: acceso, panel, historial,
+    incidentes, padrón con detalle y desempeño del modelo. \\
+    \midrule
+    Pruebas automatizadas & Implementado & $140$ pruebas unitarias y $4$ de
+    integración contra una base real con las migraciones aplicadas; cobertura
+    del $88\%$ sobre el total del código de la aplicación. \\*
+    \multicolumn{3}{r}{\footnotesize\textit{Fuente: Elaboración propia}} \\*
+    \bottomrule
+\end{longtable}

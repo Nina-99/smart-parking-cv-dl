@@ -1,0 +1,245 @@
+\section{Implementación del Subsistema de Visión Artificial}
+
+Este apartado describe la implementación del \textit{pipeline} de visión artificial,
+materializando el diseño establecido en la Sección \ref{fig:pipeline_vision}. A
+diferencia de soluciones basadas en servicios de terceros o librerías cerradas, los
+módulos de detección y reconocimiento óptico de caracteres fueron adaptados y
+entrenados a medida para operar con el formato alfanumérico y las condiciones de
+captura del proyecto.
+
+\subsection{Adquisición del flujo de video}
+
+La captura de video se implementa como un proceso independiente por cámara
+(\texttt{rtsp-capture/capture.py}). El módulo establece una conexión con el flujo
+RTSP del grabador digital, aplica un muestreo temporal configurable
+(\texttt{DETECTION\_INTERVAL\_MS = 500}) para evitar saturar el bus de datos y
+reencamisa las imágenes hacia la cola de procesamiento.
+
+Para tolerar cortes de red o caídas temporales de energía en el recinto, el
+capturador incorpora un mecanismo de reconexión automática que reintenta la lectura
+sin abortar la ejecución del servicio.
+
+\subsection{Detección de vehículos}
+
+La localización de los automóviles se ejecuta mediante el modelo YOLO26x en su
+variante de mayor capacidad. El modelo se carga en memoria empleando el formato de
+pesos nativo de PyTorch (\texttt{yolo26x.pt}) o su motor optimizado en TensorRT
+(\texttt{yolo26x.engine}) de acuerdo a la disponibilidad de hardware.
+
+La detección se restringe únicamente a las clases de transporte relevantes
+(\texttt{vehicle\_classes: [2, 3, 5, 7]}, correspondientes a automóvil, motocicleta,
+autobús y camión) con una confianza mínima de $0{,}35$ y un filtro de superficie
+que ignora detecciones menores a $3000$ píxeles cuadrados.
+
+\subsection{Seguimiento vehicular}
+
+El seguimiento multiobjeto se implementa integrando el algoritmo ByteTrack
+(\texttt{bytetrack.yaml}). El rastreador mantiene la continuidad espacial y
+temporal de los vehículos asignando un identificador numérico único (\texttt{track\_id})
+que se conserva a través de los fotogramas.
+
+A diferencia del algoritmo SORT convencional, ByteTrack aprovecha tanto las
+detecciones de alta confianza como las de baja confianza para recuperar trayectorias
+durante oclusiones parciales o momentos en que el vehículo pasa bajo sombras
+pronunciadas. El sistema requiere un mínimo de $3$ observaciones válidas
+(\texttt{min\_track\_hits}) para confirmar la validez de una trayectoria y acepta una
+tolerancia de hasta $30$ fotogramas perdidos (\texttt{grace\_frames}) antes de
+eliminar el identificador de la memoria.
+
+\subsection{Detección de placas de matrícula}
+\label{subsec:deteccion_placas}
+
+El reconocedor CRNN de la Subsección~\ref{subsec:ocr_crnn} opera sobre un recorte
+ajustado de la placa. El trabajador de visión, en cambio, dispone únicamente del
+recorte del vehículo que entrega el detector de la Subsección~3.4.2. Entre ambos
+media una etapa de localización que el diseño original delegaba en el motor
+PaddleOCR; medirla mostró que esa delegación era el eslabón más débil del
+\emph{pipeline}, por lo que se entrenó un detector propio.
+
+\subsubsection{Conjunto de datos y revisión humana}
+
+Se partió de los $4.006$ recortes de vehículo del pool congelado. Sobre ellos,
+PaddleOCR actuó como pseudo-etiquetador en el sentido estricto del
+término: propuso una caja delimitadora por recorte, sin que ninguna de esas cajas
+ingresara al conjunto de entrenamiento sin revisión humana.
+
+\begin{itemize}
+    \item \textbf{Propuestas automáticas:} $727$ de $4.006$ recortes ($18{,}1\%$)
+        contenían una región compatible con una placa. El $81{,}9\%$ restante
+        corresponde mayoritariamente a vistas laterales del vehículo, donde la
+        placa no es visible; por lo tanto no son fallos del etiquetador sino
+        negativos reales.
+    \item \textbf{Revisión humana:} se revisaron $1.127$ recortes (todas las
+        propuestas más una muestra aleatoria de $400$ negativos). El operador
+        aceptó, corrigió o descartó cada caja. El resultado fueron $868$ recortes
+        con placa ($77\%$) y $259$ sin placa ($23\%$). De las $700$ propuestas
+        automáticas que sí correspondían a una placa, solo $183$ ($26{,}1\%$)
+        resultaron geométricamente utilizables sin corrección: el etiquetador
+        automático encontraba la placa, pero su caja la recortaba.
+    \item \textbf{Participación:} $768$ recortes de entrenamiento, $181$ de
+        validación y $178$ de prueba. La partición se realizó por
+        \emph{bloque de grabación} y no por trayectoria, de modo que el conjunto
+        de prueba contenga horas de captura no vistas durante el entrenamiento.
+        No existe ningún bloque compartido entre entrenamiento y evaluación.
+\end{itemize}
+
+\subsubsection{Modelo y resultados}
+
+Se ajustó un detector YOLO26n preentrenado en COCO a una única clase
+(\texttt{plate}), durante $100$ épocas, con resolución de $640$ píxeles y lote de
+$8$. Sobre el conjunto de prueba ($178$ recortes, $140$ placas, $58$ bloques de
+grabación no vistos) se obtuvo precisión $0{,}986$, exhaustividad $0{,}971$,
+mAP@50 $0{,}990$ y mAP@50--95 $0{,}633$.
+
+La comparación con el etiquetador automático sobre el mismo conjunto de
+referencia humana es el argumento que justifica el detector propio: PaddleOCR
+alcanza una exhaustividad de $80{,}6\%$ y una precisión de $96{,}3\%$ como
+localizador, es decir, no encuentra una de cada cinco placas visibles para el
+operador. El detector entrenado eleva la exhaustividad a $97{,}1\%$.
+
+\subsection{Reconocimiento óptico de caracteres (CRNN + CTC)}
+\label{subsec:ocr_crnn}
+
+El módulo de reconocimiento de matrículas fue implementado desde cero mediante una
+arquitectura profunda combinada \textit{ResNet18 + BiLSTM + CTC}
+(\texttt{train\_ocr\_crnn.py}), reemplazando los motores genéricos de terceros por
+un modelo adaptado a la tipografía y formato de Bolivia.
+
+\subsubsection{Arquitectura del modelo ResNet-CRNN}
+
+La red se compone de tres bloques funcionales acoplados:
+
+\begin{enumerate}
+    \item \textbf{Extractor de características (Backbone CNN):} Basado en ResNet-18
+        modificada. Para evitar la pérdida de resolución horizontal crítica en
+        secuencias de texto, se alteró el avance (\textit{stride}) de las capas
+        convolucionales profundas a $(2, 1)$, reduciendo la altura a $1$ píxel
+        mientras se preserva el ancho espacial de $48$ vectores de características.
+        Se añade una capa de Normalización por Lotes (\textit{BatchNorm1d}) para
+        estabilizar las activaciones antes del bloque recurrente.
+
+    \item \textbf{Modelador de secuencias (RNN):} Red LSTM bidireccional de 2 capas
+        (\textit{BiLSTM}) con $512$ unidades ocultas, encargada de modelar las
+        dependencias contextuales entre caracteres contiguos de izquierda a derecha.
+
+    \item \textbf{Clasificador y decodificador CTC:} Capa lineal final con una tasa
+        de desacople (\textit{Dropout}) de $0{,}3$ conectada a una función de pérdida
+        CTC (\textit{Connectionist Temporal Classification}). El alfabeto se define
+        con $37$ símbolos: $10$ dígitos ($0$--$9$), $26$ letras mayúsculas ($A$--$Z$)
+        y $1$ token de espacio en blanco (\textit{blank}) en el índice $0$.
+\end{enumerate}
+
+\subsubsection{Preprocesamiento: normalización de contraste}
+
+Antes de ingresar a la red, cada recorte se normaliza con ecualización adaptativa
+de contraste (CLAHE, \textit{Contrast Limited Adaptive Histogram Equalization})
+sobre el canal de luminancia del espacio CIELAB, con límite de recorte $2{,}0$ y
+retícula de $4 \times 4$ píxeles. El paso no es opcional.
+
+La justificación es empírica y cuantificable. Los recortes reales del parqueadero
+son capturas nocturnas: su luminancia mediana es de $76{,}6$ contra $106{,}4$ en
+las sintéticas, y su desviación estándar de $20{,}7$ contra $34{,}4$. Sin
+normalización, el modelo recibe una distribución de entrada que no vio durante el
+entrenamiento. Medido sobre $32$ placas reales con la misma configuración de
+entrenamiento y el mismo número de iteraciones, el modelo pasa de $64{,}3\%$ a
+$99{,}6\%$ de exactitud por carácter al incorporar CLAHE. En la corrida completa
+de dos etapas, la diferencia es de $14\%$ a $67{,}6\%$ de exactitud por carácter
+sobre el conjunto de prueba congelado.
+
+El mismo paso se aplica en producción
+(\texttt{preprocess()} en \texttt{backend/adapters/outbound/ml/plate\_crnn.py}).
+Un reentrenamiento del modelo con CLAHE servido sin CLAHE reintroduce exactamente
+el problema que motivó su incorporación, razón por la cual el preprocesamiento
+está duplicado en el adaptador y cubierto por una prueba automática.
+
+\subsubsection{Estrategia de transferencia en dos etapas (Two-Stage Transfer Learning)}
+
+Para superar la limitación del tamaño reducido de las muestras reales, el
+entrenamiento se ejecuta en dos etapas diferenciadas:
+
+\begin{itemize}
+    \item \textbf{Etapa 1 (preentrenamiento sintético):} $8$ épocas sobre
+        $359.992$ matrículas sintéticas con formato boliviano. Se congelan las
+        capas iniciales del extractor (desde \texttt{conv1} hasta
+        \texttt{layer2}) y se habilitan \texttt{layer3} y \texttt{layer4}, con
+        tasas de aprendizaje diferenciadas: $3 \times 10^{-4}$ para el backbone
+        y $3 \times 10^{-3}$ para la cabeza BiLSTM-clasificador.
+    \item \textbf{Etapa 2 (ajuste fino real):} $500$ épocas sobre las $395$
+        placas reales, con el backbone completamente descongelado, tasa de
+        aprendizaje $1 \times 10^{-3}$ constante y aumento de datos geométrico
+        (\textit{crop jitter}): cada recorte se desplaza y escala aleatoriamente
+        entre $0{,}90$ y $1{,}12$ antes de normalizarse.
+\end{itemize}
+
+Cada una de estas decisiones reemplaza una configuración anterior que fue medida
+y descartada, y la sustitución se documenta porque el resultado sin ellas era
+sistemáticamente peor:
+
+\begin{itemize}
+    \item \textbf{Congelar todo el backbone} en la etapa 1 limita la exactitud por
+        carácter al $55\%$: solo $10{,}5$ de $21{,}7$ millones de parámetros
+        resultan entrenables, y la cabeza no puede reconfigurar características
+        genéricas de ImageNet en representaciones de glifos.
+    \item \textbf{Uniformar la tasa de aprendizaje} en $3 \times 10^{-3}$ para
+        todos los parámetros provoca el colapso de CTC hacia la secuencia vacía:
+        pérdida plana en $2{,}83$ y $0\%$ de coincidencia exacta durante $14$
+        épocas consecutivas.
+    \item \textbf{Un planificador de tasa por meseta} (\textit{ReduceLROnPlateau})
+        en la etapa 2 reduce la tasa a $6 \times 10^{-7}$ en aproximadamente $60$
+        épocas, porque la pérdida es ruidosa. El entrenamiento se congela sin
+        emitir ningún aviso.
+    \item \textbf{Entrenar $30$ épocas reales} equivale a $360$ pasos de
+        gradiente para $21{,}7$ millones de parámetros: insuficiente por dos
+        órdenes de magnitud frente a la etapa 1.
+\end{itemize}
+
+El \textit{crop jitter} merece una nota aparte porque su efecto fue el mayor de
+todos. Los recortes de entrenamiento fueron producidos por la caja de PaddleOCR,
+ajustada a los glifos efectivamente reconocidos; en producción los recorta el
+detector propio, con otra geometría. Esa discrepancia se midió sobre $88$ recortes
+de vehículo con texto verificado por un operador: el sistema completo pasó de
+$59{,}4\%$ a $73{,}7\%$ de exactitud por carácter al incorporar el aumento
+geométrico, y de $9{,}1\%$ a $26{,}1\%$ de coincidencia exacta. Es decir, una
+parte sustancial del error atribuido al reconocimiento era en realidad
+sensibilidad al encuadre.
+
+\subsubsection{Post-procesamiento sintáctico: medido y desactivado}
+
+El sistema incluye un post-procesamiento determinista
+(\texttt{post\_process\_bolivian\_plate}) basado en la gramática oficial, que
+reescribe las posiciones numéricas y alfabéticas según las confusiones visuales
+más frecuentes.
+
+Su evaluación sobre el conjunto de prueba congelado arroja un resultado contrario
+al esperado: reduce la exactitud por carácter de $78{,}9\%$ a $78{,}6\%$. La causa
+es que el formato boliviano admite letras dentro del bloque numérico ---por
+ejemplo \texttt{216OZAC}--- y la regla convierte una lectura correcta en
+incorrecta. En consecuencia, el post-procesamiento queda desactivado por defecto
+tanto en el entrenamiento como en el adaptador de producción, y se conserva en el
+código únicamente como referencia de la regla sintáctica.
+
+\subsection{Determinación de eventos y trayectorias}
+
+La conversión de trayectorias en eventos de acceso se realiza en el módulo
+\texttt{tracking.py}. Se definen dos zonas clave sobre la escena: \texttt{street\_zone}
+(vía pública) e \texttt{inside\_zone} (rampa interior del parqueadero), divididas por
+la línea virtual de control (\texttt{tripwire}).
+
+El sistema monitorea la posición del punto de contacto con el suelo (centro inferior de
+la caja del vehículo). Un vehículo se clasifica como evento de \textit{ingreso} únicamente
+si su trayectoria nace o atraviesa la zona de vía y su punto inferior cruza la línea
+virtual penetrando en la zona interior. Las trayectorias que permanecen paralelas a la
+vía o no alcanzan la zona interior se clasifican como \textit{tránsito} y se guardan como
+negativos duros para evitar falsos registros.
+
+\subsection{Clasificación de atributos del vehículo}
+
+Los atributos del vehículo (tipo de carrocería y color) se obtienen procesando los
+recortes generados por la detección de YOLO con dos clasificadores ResNet18
+independientes, entrenados sobre el mismo pool congelado de atributos y con
+aumento de datos diferenciado por tarea. El clasificador de tipo distingue cinco
+categorías (automóvil, camioneta, minibús, moto y vagoneta) y admite variación de
+color, porque su criterio es la silueta; el de color distingue once categorías y
+aplica únicamente variación de exposición, nunca de saturación ni de tono, porque
+el tono es la etiqueta que debe predecir. Los resultados medidos de ambos se
+reportan en las Subsecciones~3.7.3 y~3.7.4.
