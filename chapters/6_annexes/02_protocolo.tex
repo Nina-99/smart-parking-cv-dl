@@ -1,0 +1,238 @@
+\chapter{Protocolo de anotación y verificación humana}
+
+Este anexo documenta el procedimiento con el que se construyeron las etiquetas
+del conjunto de datos. Se incluye porque los resultados del capítulo de
+implementación dependen de él: cuando el texto afirma que una muestra fue
+``verificada por un operador'', el procedimiento que define qué significa eso es
+este.
+
+\section{Principios}
+
+El objetivo del protocolo no es que el anotador acierte, sino que dos anotadores
+---o la misma persona en días distintos--- elijan la misma clase ante la misma
+imagen. La consistencia tiene prioridad sobre el criterio individual: un conjunto
+consistente vale más que uno perfecto pero ruidoso, porque el ruido de etiqueta
+impone un techo de desempeño que ningún modelo supera.
+
+De ese principio se derivan tres reglas de aplicación obligatoria:
+
+\begin{enumerate}
+    \item La etiqueta se asigna por la \textbf{silueta completa} del vehículo, no
+        por una parte, por el color ni por la marca. Reconocer un modelo
+        comercial no decide la clase.
+    \item Una muestra contiene un vehículo principal. Si hay varios, se etiqueta
+        el que domina la imagen.
+    \item Ante la duda no se adivina: la muestra se \textbf{descarta}. Una imagen
+        descartada no cuesta nada; una mal etiquetada enseña al modelo un error.
+\end{enumerate}
+
+\section{Participación de los conjuntos}
+
+Ninguna partición se realizó por imagen. Un mismo vehículo aparece en decenas de
+fotogramas consecutivos, y distribuirlos al azar entre entrenamiento y prueba
+haría que el modelo memorice el vehículo en lugar de generalizar. La partición se
+establece por \textbf{sesión de grabación} y por \textbf{bloque horario}, y se
+verificó que no exista ninguna sesión compartida entre entrenamiento y prueba: el
+número de sesiones compartidas reportado es cero.
+
+Para el conjunto de placas se aplicó el mismo criterio sobre bloques de grabación,
+de modo que el conjunto de prueba contenga horas de captura no vistas durante el
+entrenamiento.
+
+\section{Etiquetado del tipo de vehículo}
+
+La taxonomía comprende cinco clases. La Tabla~\ref{tab:taxonomia_tipo} resume el
+criterio y la pista decisiva de cada una.
+
+\begin{longtable}{
+        P{0.15}
+        P{0.38}
+        P{0.37}
+    }
+    \caption{Clases de tipo de vehículo y criterio de asignación}
+    \label{tab:taxonomia_tipo}\\
+
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Clase} &
+    \textbf{Qué incluye} &
+    \textbf{Pista decisiva} \\
+    \midrule
+    \endfirsthead
+
+    \multicolumn{3}{c}{\textit{Continuación de la Tabla
+    \ref{tab:taxonomia_tipo}}} \\
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Clase} &
+    \textbf{Qué incluye} &
+    \textbf{Pista decisiva} \\
+    \midrule
+    \endhead
+
+    moto & Motocicleta. & Dos ruedas. \\
+    \midrule
+
+    automóvil & Sedán de tres volúmenes. &
+    Capó, cabina y \textbf{baúl saliente}; techo bajo. \\
+    \midrule
+
+    vagoneta & Todoterreno, \textit{hatchback}, rural y van de carga o familiar. &
+    Techo alto que llega hasta el portón trasero, \textbf{sin baúl saliente}. \\
+    \midrule
+
+    camioneta & Camioneta de caja abierta. &
+    \textbf{Caja de carga abierta} atrás, incluso en cabina doble. \\
+    \midrule
+
+    minibús & Van o minibús de pasajeros. &
+    Van \textbf{con ventanas} laterales traseras y muchas plazas. \\
+    \bottomrule
+    \multicolumn{3}{r}{\footnotesize\textit{Fuente: Elaboración propia}} \\*
+\end{longtable}
+
+\subsection{Árbol de decisión}
+
+El orden de las preguntas es parte del protocolo: si se responden en otro orden,
+dos anotadores pueden llegar a clases distintas. Se aplica de arriba hacia abajo y
+gana la primera condición que se cumpla.
+
+\begin{enumerate}
+    \item ¿Tiene dos ruedas? Es \textbf{moto}.
+    \item ¿Tiene caja de carga abierta atrás? Es \textbf{camioneta}.
+    \item ¿Es un camión o un bus grande, de chasis pesado y muchas ruedas? Se
+        \textbf{descarta}: no pertenece a ninguna clase de la taxonomía.
+    \item ¿Es una van? Con ventanas y muchas plazas es \textbf{minibús}; cerrada o
+        de uso particular es \textbf{vagoneta}.
+    \item ¿Es un auto pequeño? Con baúl saliente y techo bajo es
+        \textbf{automóvil}; con el techo continuo hasta el portón, sin baúl, es
+        \textbf{vagoneta}.
+\end{enumerate}
+
+\subsection{Las dos confusiones reales}
+
+El error del clasificador se concentra en dos pares, y ambos tienen una regla de
+corte explícita:
+
+\begin{itemize}
+    \item \textbf{automóvil $\leftrightarrow$ vagoneta.} ¿Hay un baúl que
+        sobresale? Es automóvil. ¿No lo hay? Es vagoneta. Un \textit{hatchback}
+        pequeño no es automóvil: es vagoneta.
+    \item \textbf{vagoneta $\leftrightarrow$ minibús.} La vagoneta es un
+        todoterreno o una van pequeña de uso particular; el minibús es una van de
+        transporte de pasajeros, con fila de ventanas y muchas plazas.
+\end{itemize}
+
+\subsection{La clase fusionada}
+
+Hasta el 23 de octubre de 2026 existió una sexta clase, \textit{furgón}, destinada
+a la van de carga sin ventanas laterales traseras. Se fusionó con
+\textit{vagoneta} porque su única pista distintiva ---la ventana trasera--- no es
+visible de noche, con el vehículo de cola o con el portón tapado; el F1 de prueba
+de esa clase era $0{,}16$ frente a $0{,}66$ de macro. Los $98$ recortes
+etiquetados como furgón se reauditaron individualmente: $23$ se reasignaron a
+camioneta, $20$ a vagoneta, $6$ a minibús y $49$ se descartaron por no ser
+identificables. La taxonomía publicada tiene cinco clases.
+
+\section{Etiquetado del color}
+
+El color se etiqueta como tono predominante de la carrocería sobre once clases. El
+criterio es el tono percibido, no el nivel de brillo: por eso un vehículo gris
+claro bajo sol directo y el mismo vehículo a la sombra comparten etiqueta. Esa
+ambigüedad es la que explica la confusión medida entre las clases acromáticas y se
+declara en el análisis de resultados.
+
+A diferencia del tipo, el aumento de datos del clasificador de color aplica
+únicamente variación de exposición y nunca de saturación ni de tono: el tono es la
+etiqueta que el modelo debe predecir, de modo que perturbarlo sería perturbar la
+respuesta correcta.
+
+Se conservan las once clases, pero el informe distingue las que alcanzan soporte
+suficiente en prueba (al menos $40$ ejemplares) de las que no. Promediar clases con
+una o dos imágenes produce un macro que no describe el desempeño del modelo.
+
+\section{Localización de placas}
+
+El etiquetado de placas se realizó en tres etapas encadenadas, con intervención
+humana en la segunda.
+
+\subsection{Propuesta automática}
+
+Un motor de reconocimiento de texto de terceros actuó como
+\textbf{pseudo-etiquetador} en el sentido estricto del término: propuso una caja
+delimitadora por recorte de vehículo, sin que ninguna de esas cajas ingresara al
+conjunto de entrenamiento sin revisión. De $4.006$ recortes, $727$ ($18{,}1\%$)
+contenían una región compatible con una placa; el resto corresponde en su mayoría
+a vistas laterales donde la placa no es visible, es decir, negativos reales y no
+fallos del etiquetador.
+
+\subsection{Revisión humana}
+
+Un operador revisó $1.127$ recortes ---todas las propuestas más una muestra
+aleatoria de $400$ negativos--- y aceptó, corrigió, redibujó o descartó cada caja.
+El resultado fueron $868$ recortes con placa ($77\%$) y $259$ sin placa
+($23\%$). De las $700$ propuestas que sí correspondían a una placa, solo $183$
+($26{,}1\%$) resultaron geométricamente utilizables sin corrección: el
+etiquetador encontraba la placa, pero su caja recortaba los glifos.
+
+Una caja rechazada no se descarta del todo: se conserva como \textbf{negativo},
+que es lo que impide que el detector aprenda a alucinar una placa sobre cualquier
+vehículo. La participación resultante fue de $768$ recortes de entrenamiento, $181$
+de validación y $178$ de prueba.
+
+\section{Verificación del texto de matrícula}
+
+La revisión de cajas responde \emph{dónde} está la placa; el reconocedor responde
+\emph{qué} dice. Ninguna de las dos mide el sistema ensamblado sobre un recorte de
+vehículo real, porque para eso hace falta el texto de una placa que el sistema no
+haya visto y la revisión de cajas nunca lo pidió.
+
+Por eso se agregó una tercera etapa: un operador escribe el texto de las placas ya
+verificadas, sobre una muestra acotada. Esa muestra no es un conjunto de
+entrenamiento, es la regla con la que se mide el sistema completo. De las $100$
+placas propuestas para verificación, $88$ resultaron legibles y conformaron el
+conjunto de medición de extremo a extremo.
+
+\section{Registro y trazabilidad}
+
+Cada muestra se inscribe en un archivo de manifiesto que conserva su ruta, su
+etiqueta y, cuando corresponde, una marca que la identifica como sintética. Esa
+marca es la que permite separar en cualquier momento el material real del generado
+y auditar qué proporción del entrenamiento provino de cada origen.
+
+Los conteos publicados de cada conjunto son verificables contra el manifiesto y
+contra los archivos de imagen, y se resumen en la Tabla~\ref{tab:anexo_conteos}.
+
+\begin{table}[H]
+    \centering
+    \caption{Composición de los conjuntos construidos}
+    \label{tab:anexo_conteos}
+    \begin{tabular}{P{0.43}P{0.25}P{0.23}}
+        \toprule
+        \textbf{Conjunto} & \textbf{Muestras} & \textbf{Origen} \\
+        \midrule
+        Pool de atributos & 4.006 & 5 clases \\
+        Tipo: entrenamiento & 2.783 & Pool congelado \\
+        Tipo: validación & 590 & Pool congelado \\
+        Tipo: prueba & 633 & Pool congelado \\
+        Color: entrenamiento & 2.482 & Pool congelado \\
+        Color: validación & 539 & Pool congelado \\
+        Color: prueba & 551 & Pool congelado \\
+        Recortes de placa verificados & 868 & Revisión humana \\
+        Placas: entrenamiento & 395 & Texto confirmado \\
+        Placas: prueba & 101 & Texto confirmado \\
+        Placas sintéticas & 359.992 & Formato boliviano \\
+        Medición de extremo a extremo & 88 & Texto verificado \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\section{Reproductibilidad del etiquetado}
+
+El protocolo se apoya en dos decisiones que lo hacen repetible. La primera es que
+las herramientas de revisión son deterministas sobre la misma entrada: la propuesta
+automática, la lista de candidatos y la partición por sesión se regeneran igual
+mientras el material de origen no cambie. La segunda es que la partición de
+ablación queda fijada por una semilla declarada y un archivo de protocolo que
+registra semilla y tamaños, de modo que cualquier medición posterior pueda
+repetirse sobre exactamente los mismos subconjuntos.

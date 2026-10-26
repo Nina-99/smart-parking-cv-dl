@@ -1,0 +1,237 @@
+\chapter{Manual de usuario}
+
+Este anexo describe el uso operativo del sistema para el personal del
+parqueadero. Está dirigido a quien supervisa el acceso, no a quien administra la
+infraestructura: se supone que el sistema ya está desplegado y funcionando.
+
+\section{Requisitos y acceso}
+
+El único requisito del lado del usuario es un navegador actualizado con acceso a
+la red local donde se ejecuta la aplicación. En el entorno de desarrollo la
+interfaz se sirve en el puerto $5173$ y la interfaz de programación en el $8000$;
+el despliegue con contenedores publica la aplicación en el puerto $8080$.
+
+El acceso exige credenciales. El sistema rechaza las solicitudes de consulta que
+no presenten una sesión válida, de modo que la pantalla de acceso
+(Figura~\ref{fig:if_login}) es el punto de entrada obligatorio.
+
+\begin{enumerate}
+    \item Abrir la dirección de la aplicación en el navegador.
+    \item Introducir usuario y contraseña provistos por el administrador.
+    \item Confirmar. La aplicación abre en el panel de monitoreo.
+\end{enumerate}
+
+La sesión se conserva en una cookie que el código del navegador no puede leer, y
+se cierra desde el botón de salida del encabezado. Tras varios intentos fallidos,
+el servicio aplica una espera antes de admitir un nuevo intento.
+
+\section{Panel de monitoreo}
+
+El panel (Figura~\ref{fig:if_panel}) es la vista que el operador mantiene abierta
+durante el turno. La Tabla~\ref{tab:manual_panel} describe cada elemento y qué
+acción corresponde cuando el valor no es el esperado.
+
+\begin{longtable}{
+        P{0.24}
+        P{0.34}
+        P{0.32}
+    }
+    \caption{Elementos del panel de monitoreo}
+    \label{tab:manual_panel}\\
+
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Elemento} &
+    \textbf{Qué indica} &
+    \textbf{Qué hacer} \\
+    \midrule
+    \endfirsthead
+
+    \multicolumn{3}{c}{\textit{Continuación de la Tabla
+    \ref{tab:manual_panel}}} \\
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Elemento} &
+    \textbf{Qué indica} &
+    \textbf{Qué hacer} \\
+    \midrule
+    \endhead
+
+    Medidor de ocupación &
+    Vehículos dentro del recinto sobre la capacidad total, y el porcentaje
+    correspondiente. &
+    Contrastar con lo que se observa. Si no coincide, revisar las sesiones
+    activas y las sesiones huérfanas. \\
+    \midrule
+
+    Ingresos del último día y estadía promedio &
+    Cantidad de vehículos confirmados en las últimas $24$ horas y duración media
+    de las sesiones cerradas. &
+    Sirve de control de tendencia; no requiere acción. \\
+    \midrule
+
+    Latencia p95 &
+    Tiempo de inferencia por fotograma en el percentil $95$. &
+    Un aumento sostenido indica carga en el equipo o un modelo más pesado.
+    Consultar la vista de desempeño del modelo. \\
+    \midrule
+
+    Cámaras en línea &
+    Cámaras que reportan latido, sobre el total configurado. &
+    Si el número baja, verificar el proceso de captura del punto de acceso y la
+    conectividad de la cámara. \\
+    \midrule
+
+    Tarjetas de cámara &
+    Puerta asignada, estado y hora del último latido. &
+    Es el diagnóstico por cámara: identifica cuál dejó de reportar. \\
+    \midrule
+
+    Vehículos activos &
+    Matrícula, tipo, color, puerta de ingreso, hora de entrada y tiempo
+    transcurrido de cada sesión abierta. &
+    Es la lista sobre la que se opera: permite cerrar una sesión manualmente. \\
+    \midrule
+
+    Marca de sesión huérfana &
+    Sesión cuya permanencia excede el umbral configurado, probablemente sin
+    egreso registrado. &
+    Buscar el vehículo en el historial y cerrar la sesión con el motivo
+    correspondiente. \\
+    \midrule
+
+    Panel en vivo &
+    Eventos de ingreso, salida y variaciones de ocupación recibidos por el canal
+    persistente. &
+    No requiere acción; confirma que el sistema está recibiendo eventos. \\
+    \midrule
+
+    Ingresos de los últimos siete días &
+    Vehículos confirmados por día. &
+    Control de tendencia y de estacionalidad semanal. \\
+    \bottomrule
+    \multicolumn{3}{r}{\footnotesize\textit{Fuente: Elaboración propia}} \\*
+\end{longtable}
+
+\section{Búsqueda de incidentes}
+
+Es el procedimiento que se sigue cuando hay que averiguar qué vehículo pasó por el
+acceso en un momento determinado, por ejemplo ante un reclamo o un incidente.
+
+\begin{enumerate}
+    \item Abrir la vista de incidentes (Figura~\ref{fig:if_incidentes}).
+    \item Ajustar el intervalo \emph{Desde} y \emph{Hasta}. Por omisión comprende
+        la hora anterior y la siguiente al instante actual; conviene centrarlo en
+        el momento recordado.
+    \item Elegir un color si se conoce, o dejar \emph{todos}. El filtro es blando
+        a propósito: incluye los vehículos cuyo color estimado está próximo al
+        pedido, porque el clasificador confunde tonos claros y oscuros y un
+        filtro estricto ocultaría al candidato buscado.
+    \item Pulsar \emph{Buscar}. Los candidatos aparecen ordenados por cercanía al
+        instante consultado, con su recorte, matrícula, tipo, color y confianza.
+    \item Identificar el vehículo por la imagen. Los casos sin matrícula
+        reconocida permanecen en la lista: son los que requieren revisión visual.
+    \item Seleccionar la tarjeta para abrir el detalle.
+\end{enumerate}
+
+\section{Detalle del vehículo y cierre manual}
+
+El detalle (Figura~\ref{fig:if_vehiculo}) presenta el recorte de mayor tamaño
+disponible, los atributos con su confianza, el identificador interno y la tabla de
+sesiones con ingreso, salida, duración, estado y responsable del cierre.
+
+El cierre manual se usa cuando el sistema no pudo cerrar la sesión por sí mismo,
+situación habitual cuando el vehículo egresa sin que la matrícula se lea. El
+procedimiento es el siguiente:
+
+\begin{enumerate}
+    \item Desde el panel, localizar la sesión en la lista de vehículos activos.
+    \item Pulsar \emph{Cerrar}.
+    \item Escribir el motivo del cierre, o aceptar el texto sugerido. El motivo y
+        el usuario quedan registrados junto con el instante de salida.
+    \item Confirmar. La ocupación se actualiza y el evento se difunde a los demás
+        clientes conectados.
+\end{enumerate}
+
+El motivo no es un trámite: es el dato que permite auditar después por qué una
+sesión se cerró sin egreso automático. Un cierre sin motivo convierte la
+ocupación en un número sin trazabilidad.
+
+\section{Historial de sesiones}
+
+La vista de historial presenta las sesiones registradas, de la más reciente a la
+más antigua, con matrícula, tipo, color, ingreso, salida, duración, estado y
+responsable del cierre. El campo de búsqueda filtra por matrícula, tipo o color.
+La vista solicita las doscientas sesiones más recientes; para intervalos mayores
+se consulta el historial paginado del servicio.
+
+\section{Resolución de problemas frecuentes}
+
+\begin{longtable}{
+        P{0.22}
+        P{0.33}
+        P{0.35}
+    }
+    \caption{Situaciones frecuentes y acción recomendada}
+    \label{tab:manual_problemas}\\
+
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Situación} &
+    \textbf{Causa probable} &
+    \textbf{Acción} \\
+    \midrule
+    \endfirsthead
+
+    \multicolumn{3}{c}{\textit{Continuación de la Tabla
+    \ref{tab:manual_problemas}}} \\
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Situación} &
+    \textbf{Causa probable} &
+    \textbf{Acción} \\
+    \midrule
+    \endhead
+
+    Una cámara figura fuera de línea &
+    El proceso de captura se detuvo o la cámara no responde. &
+    Verificar el proceso de captura del punto de acceso y la conectividad de la
+    cámara; el panel toma el último latido recibido. \\
+    \midrule
+
+    Vehículo registrado sin matrícula &
+    Resolución insuficiente, placa obstruida o lectura por debajo del umbral. &
+    Buscar por ventana horaria y color; la imagen del recorte es la evidencia
+    disponible. \\
+    \midrule
+
+    Sesión abierta sin egreso &
+    El vehículo salió sin que se registrara la salida. &
+    Verificar en el historial y cerrar manualmente con el motivo. \\
+    \midrule
+
+    Color informado que no coincide &
+    Confusión entre tonos claros y oscuros, frecuente de noche. &
+    Priorizar la imagen sobre el atributo; el color es un auxiliar de búsqueda,
+    no una prueba. \\
+    \midrule
+
+    Latencia p95 elevada &
+    Carga del equipo o ejecución sin motor compilado. &
+    Consultar la vista de desempeño del modelo y verificar que el motor
+    especializado esté disponible en el equipo. \\
+    \midrule
+
+    La consulta responde con error de autorización &
+    Sesión vencida o inexistente. &
+    Volver a iniciar sesión. \\
+    \bottomrule
+    \multicolumn{3}{r}{\footnotesize\textit{Fuente: Elaboración propia}} \\*
+\end{longtable}
+
+\section{Límites del manual}
+
+Este anexo describe la operación, no la administración del sistema. La creación de
+usuarios, la configuración de las cámaras, la calibración de zonas, el
+despliegue de los modelos y la política de retención de datos corresponden a
+tareas de administración que exceden el alcance de este documento.

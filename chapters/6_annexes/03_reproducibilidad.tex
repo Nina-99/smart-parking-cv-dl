@@ -1,0 +1,223 @@
+\chapter{Reproducibilidad}
+
+Este anexo reúne lo necesario para repetir la construcción de los conjuntos, el
+entrenamiento de los modelos y la verificación del sistema. No es un manual de
+instalación: es la lista de condiciones y comandos que determinan los resultados
+reportados.
+
+\section{Entorno de ejecución}
+
+El entorno se declara con archivo de bloqueo de dependencias, de modo que las
+versiones efectivamente usadas quedan registradas y no dependen de la fecha de
+instalación. La Tabla~\ref{tab:anexo_entorno} resume el entorno de entrenamiento y
+el de operación.
+
+\begin{longtable}{
+        P{0.23}
+        P{0.43}
+        P{0.25}
+    }
+    \caption{Entorno de entrenamiento y de operación}
+    \label{tab:anexo_entorno}\\
+
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Componente} &
+    \textbf{Versión y condición} &
+    \textbf{Uso} \\
+    \midrule
+    \endfirsthead
+
+    \multicolumn{3}{c}{\textit{Continuación de la Tabla
+    \ref{tab:anexo_entorno}}} \\
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Componente} &
+    \textbf{Versión y condición} &
+    \textbf{Uso} \\
+    \midrule
+    \endhead
+
+    Python & $3{,}12$, con gestor de dependencias y archivo de bloqueo &
+    Servicios, trabajador y herramientas \\
+    \midrule
+
+    PyTorch y torchvision & $\geq 2{,}4$ y $\geq 0{,}19$ &
+    Entrenamiento e inferencia \\
+    \midrule
+
+    Ultralytics & $\geq 8{,}4$ & Detección de vehículos y de placas \\
+    \midrule
+
+    OpenCV & $\geq 4{,}10$, sin interfaz gráfica &
+    Captura, preprocesamiento y calibración \\
+    \midrule
+
+    Acelerador & GPU de $4$ GB de memoria de video &
+    Entrenamiento y compilación de motores \\
+    \midrule
+
+    Almacenamiento & NVMe para conjuntos, recortes y pesos &
+    Fuente de verdad del material \\
+    \midrule
+
+    Servicios de operación & PostgreSQL $16$ y Redis $7$ en contenedores &
+    Persistencia y cola de tareas \\
+    \midrule
+
+    Compilación de modelos & ONNX, ONNX Runtime y TensorRT &
+    Motor especializado por dispositivo \\
+    \bottomrule
+    \multicolumn{3}{r}{\footnotesize\textit{Fuente: Elaboración propia}} \\*
+\end{longtable}
+
+\section{Semillas y determinismo}
+
+La partición de ablación del reconocimiento de matrículas se fija con semilla
+$7$ y proporción de prueba del $20\%$, y el archivo de protocolo generado registra
+la semilla y los tamaños resultantes. La generación de placas sintéticas usa la
+misma semilla, de modo que el conjunto sintético es reproducible byte a byte
+mientras no cambie el generador.
+
+Los conjuntos de tipo y color no se remuestrean: se derivan del pool congelado de
+recortes, y la partición se establece por sesión de grabación. Cambiar la semilla
+en esos conjuntos no cambia los resultados, porque la partición no es aleatoria por
+imagen.
+
+\section{Comandos por etapa}
+
+Los comandos se ejecutan desde el directorio del software. Cada bloque produce un
+artefacto verificable.
+
+\subsection{Construcción y verificación de los conjuntos}
+
+\begin{verbatim}
+# Reconstruye los conjuntos de tipo y color desde el pool.
+FORCE=1 ./train_all.sh datasets
+
+# Verifica clases y tamaños antes de entrenar.
+for d in "type dataset v3" "color dataset v5"; do
+  grep '^nc:' "$DATASETS/$d/data.yaml"
+  for s in train valid test; do
+    ls "$DATASETS/$d/$s/images" | wc -l
+  done
+done
+\end{verbatim}
+
+El valor esperado es $5$ clases con $2.783$, $590$ y $633$ muestras para tipo, y
+$11$ clases con $2.482$, $539$ y $551$ para color. La verificación es obligatoria
+porque el script de construcción omite un directorio existente sin comprobar su
+integridad: un conjunto truncado por una copia fallida se saltearía en silencio.
+
+\subsection{Ablación y entrenamiento del reconocimiento}
+
+\begin{verbatim}
+uv run python tools/prepare_ocr_ablation.py --dataset "$DATASETS"
+uv run python tools/generate_synth_plates.py \
+    --dataset "$DATASETS" --count 360000 --seed 7
+
+uv run python -u tools/train_ocr_crnn.py \
+    --dataset "$DATASETS" \
+    --stage stage1_synth --epochs-synth 8 \
+    --lr-schedule fixed --save-dir "$RUNS/ocr_v2"
+
+uv run python -u tools/train_ocr_crnn.py \
+    --dataset "$DATASETS" \
+    --stage stage2_real --epochs-real 500 \
+    --lr-real 1e-3 --lr-schedule fixed --synth-mix-ratio 0 \
+    --save-dir "$RUNS/ocr_v2"
+\end{verbatim}
+
+Las banderas no son arbitrarias: cada una reemplaza una configuración que se midió
+y se descartó. La tasa de aprendizaje fija evita el colapso del decodificador hacia
+la secuencia vacía que produjo el planificador por meseta, y la ausencia de mezcla
+sintética en la segunda etapa mantiene el ajuste fino sobre material real.
+
+\subsection{Clasificadores, detector de placas y evaluación}
+
+\begin{verbatim}
+./train_all.sh type       # clasificador de tipo
+./train_all.sh color      # clasificador de color
+./train_all.sh platedet   # detector de placas
+./train_all.sh all        # todas las etapas en orden
+
+uv run python tools/eval_type_classifier.py \
+    --dataset "$DATASETS/color dataset v5" \
+    --checkpoint "$DATASETS/runs/resnet18_final_color_v5_best.pt" \
+    --split test
+
+uv run python tools/report_metrics.py \
+    --metrics "$DATASETS"/runs/*_metrics.json \
+    --title "Clasificadores" --out ../reports/clasificadores.md
+\end{verbatim}
+
+Cada checkpoint se acompaña de su archivo de métricas. El archivo no es un adorno:
+el motor de inferencia lee de allí el orden de las clases, de modo que un peso sin
+su archivo de métricas no puede servirse y el trabajador se niega a arrancar.
+
+\section{Artefactos}
+
+La Tabla~\ref{tab:anexo_artefactos} enumera los artefactos que un tercero necesita
+para auditar los resultados, con su ubicación relativa al directorio del material.
+
+\begin{table}[H]
+    \centering
+    \caption{Artefactos y contenido}
+    \label{tab:anexo_artefactos}
+    \begin{tabular}{ll}
+        \toprule
+        \textbf{Artefacto} & \textbf{Contenido} \\
+        \midrule
+        \texttt{pool\_20261021} & Recortes de vehículo congelados, $5$ clases \\
+        \texttt{type dataset v3} & Partición de tipo con archivo de clases \\
+        \texttt{color dataset v5} & Partición de color con archivo de clases \\
+        \texttt{plates/} & Placas reales y sintéticas, manifiesto \\
+        \texttt{plates\_det/} & Cajas propuestas, verificadas y texto \\
+        \texttt{runs/} & Pesos de los clasificadores y métricas \\
+        \texttt{runs/ocr\_v2/} & Etapas del reconocedor y métricas finales \\
+        \texttt{ablation/protocol.json} & Semilla y tamaños de la ablación \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\section{Verificación del sistema}
+
+El software del sistema de gestión se verifica con su propio banco de pruebas. La
+ejecución completa comprende las pruebas unitarias y las de integración; estas
+últimas requieren un servidor PostgreSQL accesible y se omiten cuando no lo hay,
+de modo que la suite puede correr en un equipo sin servicios levantados.
+
+\begin{verbatim}
+uv run pytest            # unitarias; omite integración sin base
+uv run pytest -m integration       # requiere PostgreSQL accesible
+uv run alembic -c backend/alembic.ini upgrade head
+\end{verbatim}
+
+El resultado reportado en este trabajo es de $140$ pruebas unitarias y $4$ de
+integración aprobadas, con una cobertura del $88\%$ sobre el código de la
+aplicación. Las pruebas de integración aplican las migraciones sobre una base
+vacía, ejercitan el registro y el cierre de una sesión y verifican el efecto en la
+base de datos.
+
+\section{Condiciones que limitan la reproducción}
+
+\begin{itemize}
+    \item \textbf{Los motores compilados son específicos del dispositivo.} Un
+        motor generado para un acelerador y un controlador determinados no es
+        portable a otro equipo, por lo que cada destino requiere su propia
+        compilación. Los resultados de latencia no son trasladables entre equipos.
+    \item \textbf{El material de origen no se distribuye con el documento.} Las
+        imágenes provienen de las cámaras del recinto y su publicación está sujeta
+        a las condiciones de tratamiento de datos descritas en el capítulo de
+        diseño. Lo reproducible sin ellas son los procedimientos, las particiones
+        y las métricas.
+    \item \textbf{Una corrida no es un resultado.} La varianza medida entre
+        corridas idénticas es de $1$ a $3{,}4$ puntos de F1 macro, de modo que una
+        diferencia menor a ese rango no debe interpretarse como mejora. Reproducir
+        un valor puntual exige repetir la corrida, no solo el comando.
+    \item \textbf{El episodio de integridad del almacenamiento.} El disco externo
+        de trabajo devolvió errores de entrada y salida en una fracción de los
+        recortes y truncó archivos durante la transferencia. El material se migró
+        a almacenamiento NVMe, que pasó a ser la única fuente de verdad; cualquier
+        reproducción debe partir de esa copia y no del disco original.
+\end{itemize}
