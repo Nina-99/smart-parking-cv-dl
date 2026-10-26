@@ -49,3 +49,11 @@ Thumbs.db
 # ==========================================
 .atl/
 openspec/
+
+# ==========================================
+# Material de referencia de terceros
+# ==========================================
+guia/
+
+# Restos de compilaciones fallidas
+*-SAVE-ERROR
