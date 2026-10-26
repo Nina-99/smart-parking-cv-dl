@@ -1,4 +1,4 @@
-\documentclass[12pt, a4paper]{report}
+\documentclass[12pt, letterpaper]{report}
 
 % *** ESSENTIAL PACKAGES ***
 \usepackage[utf8]{inputenc}
@@ -9,7 +9,10 @@
 \usepackage[backend=biber, style=ieee]{biblatex}
 \addbibresource{references.bib}
 \usepackage{url}
+\usepackage{xurl}
+% \usepackage{microtype}
 \usepackage{graphicx}
+\emergencystretch=3em
 
 % *** MÁRGINS (Ajust) ***
 \usepackage{geometry}
@@ -36,9 +39,11 @@
 % *** TABLES ***
 \usepackage{tabularx}
 \usepackage{booktabs}
+\usepackage{float}
 \usepackage{array}
 \usepackage{makecell}
 \usepackage{longtable}
+\newcolumntype{P}[1]{>{\raggedright\arraybackslash}m{#1\dimexpr\textwidth\relax}}
 
 % *** COLOR & CODE CONFIGURATION ***
 \usepackage[table]{xcolor}
@@ -110,8 +115,13 @@
 
 \end{titlepage}
 
-% *** INDICES ***
+% *** FRONT MATTER ***
 \pagenumbering{roman}
+\setcounter{page}{2}
+\input{chapters/frontmatter/resumen}
+
+% *** INDICES ***
+\clearpage
 \tableofcontents
 \listoffigures
 \listoftables
@@ -123,8 +133,13 @@
 \renewcommand{\thesection}{\arabic{chapter}.\arabic{section}}
 \renewcommand{\thefigure}{\arabic{chapter}.\arabic{figure}}
 \renewcommand{\theequation}{\arabic{chapter}.\arabic{equation}}
+\renewcommand{\thetable}{\arabic{chapter}.\arabic{table}}
 \include{chapters/preliminary}
 \include{chapters/1_theorical_framework}
+\include{chapters/2_system_design}
+\include{chapters/3_implementation}
+\include{chapters/4_cost_estimation}
+\include{chapters/5_conclusions}
 
 % *** REFERENCES (FORMAT IEEE) ***
 \clearpage
@@ -132,4 +147,8 @@
 %\bibliographystyle{ieeetr} % MAGIC LINE: Le dice a LaTeX que use el estándar IEEE
 %\addbibresource{references.bib} % Call to file references.bib
 \printbibliography
+
+% *** ANEXOS ***
+\clearpage
+\include{chapters/6_annexes}
 \end{document}
