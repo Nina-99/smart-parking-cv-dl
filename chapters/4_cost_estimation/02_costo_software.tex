@@ -1,0 +1,252 @@
+\section{Estimación del Costo de Software}
+
+La valoración del software construido se apoya en el \textbf{análisis de puntos
+de función}, método estandarizado que mide el tamaño de un sistema a partir de las
+funciones que ofrece al usuario y no de su implementación. Esta propiedad es la
+que lo hace adecuado para el presente caso: permite valorar el sistema a partir
+de los requerimientos y de la arquitectura documentados en los capítulos
+precedentes, con independencia del lenguaje empleado y del estilo de codificación
+del desarrollador.
+
+Se descarta explícitamente el uso de modelos paramétricos de estimación
+construidos para proyectos industriales. Esos modelos se calibran sobre equipos de
+desarrollo, ciclos de vida prolongados y procesos organizacionales formalizados,
+condiciones que no se verifican en un proyecto de grado de desarrollo individual.
+Aplicarlos produciría una sobreestimación sin sustento; en su lugar se emplea un
+método de medición funcional cuyo resultado es verificable.
+
+\subsection{Tamaño funcional del sistema}
+
+El recuento clasifica cada función en una de cinco categorías ---archivos lógicos
+internos, archivos de interfaz externa, entradas externas, salidas externas y
+consultas externas--- y le asigna una complejidad según la cantidad de tipos de
+registro y de elementos de dato que manipula. La Tabla \ref{tab:puntos_funcion}
+presenta el recuento resultante.
+
+\begin{longtable}{
+        P{0.10}
+        P{0.55}
+        P{0.16}
+        P{0.09}
+    }
+    \caption{Recuento de puntos de función sin ajustar}
+    \label{tab:puntos_funcion}\\
+
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Tipo} &
+    \textbf{Función} &
+    \textbf{Complejidad} &
+    \textbf{Puntos} \\
+    \midrule
+    \endfirsthead
+
+    \multicolumn{4}{c}{\textit{Continuación de la Tabla
+    \ref{tab:puntos_funcion}}} \\
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Tipo} &
+    \textbf{Función} &
+    \textbf{Complejidad} &
+    \textbf{Puntos} \\
+    \midrule
+    \endhead
+
+    Archivo lógico & Vehículos: padrón y atributos identificados & Baja & 7 \\
+    \midrule
+    Archivo lógico & Sesiones de estacionamiento: ingreso, salida y permanencia & Media & 10 \\
+    \midrule
+    Archivo lógico & Detecciones: bitácora de inferencia & Media & 10 \\
+    \midrule
+    Entrada externa & Registro de ingreso en el punto de acceso & Media & 4 \\
+    \midrule
+    Entrada externa & Registro de salida en el punto de acceso & Baja & 3 \\
+    \midrule
+    Entrada externa & Procesamiento del video archivado por el extractor & Media & 4 \\
+    \midrule
+    Salida externa & Agregados diarios de ocupación y permanencia & Media & 5 \\
+    \midrule
+    Salida externa & Notificación de variaciones de ocupación & Baja & 4 \\
+    \midrule
+    Salida externa & Generación del conjunto de datos anotado & Media & 5 \\
+    \midrule
+    Consulta externa & Sesiones actualmente activas & Baja & 3 \\
+    \midrule
+    Consulta externa & Historial de sesiones con paginación & Media & 4 \\
+    \midrule
+    Consulta externa & Nivel de ocupación del recinto & Baja & 3 \\
+    \midrule
+    \multicolumn{3}{r}{\textbf{Total sin ajustar}} & \textbf{62} \\*
+    \multicolumn{4}{r}{\footnotesize\textit{Fuente: Elaboración propia}} \\*
+    \bottomrule
+\end{longtable}
+
+La complejidad se asignó según el número de tipos de registro y de elementos de
+dato que cada función manipula. Se clasificaron como de complejidad baja las
+funciones que operan sobre una única estructura de datos con un número reducido
+de campos, y como de complejidad media aquellas que involucran una relación entre
+dos entidades o que devuelven información derivada de un cálculo agregado. No se
+clasificó ninguna función como de complejidad alta, dado que la estructura de
+datos del sistema es acotada y no contiene relaciones de tercer nivel ni
+agrupaciones jerárquicas complejas.
+
+Al recuento sin ajustar se aplica el factor de ajuste que pondera catorce
+características generales del sistema. Su valor se adopta como la unidad por las
+siguientes razones: las características que incrementarían el factor ---exigencia
+de desempeño, procesamiento complejo derivado del tratamiento de imágenes, y
+facilidad de operación e instalación--- se compensan con aquellas que lo
+reducirían ---ausencia de procesamiento distribuido, de operación en múltiples
+sitios y de necesidad de integración con sistemas externos---. El tamaño funcional
+ajustado resulta, en consecuencia, de \textbf{62 puntos de función}.
+
+\subsection{Contraste con el tamaño medido del código}
+
+Una verificación independiente del recuento anterior se obtiene midiendo el
+código fuente efectivamente escrito. La Tabla \ref{tab:lineas_codigo} presenta el
+resultado del conteo por área.
+
+\begin{longtable}{
+        P{0.64}
+        P{0.14}
+        P{0.14}
+    }
+    \caption{Tamaño del código fuente por área}
+    \label{tab:lineas_codigo}\\
+
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Área} &
+    \textbf{Archivos} &
+    \textbf{Líneas} \\
+    \midrule
+    \endfirsthead
+
+    \multicolumn{3}{c}{\textit{Continuación de la Tabla
+    \ref{tab:lineas_codigo}}} \\
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Área} &
+    \textbf{Archivos} &
+    \textbf{Líneas} \\
+    \midrule
+    \endhead
+
+    Dominio (reglas de negocio y puertos) & 10 & 615 \\
+    \midrule
+    Aplicación (casos de uso) & 2 & 182 \\
+    \midrule
+    Adaptadores (base de datos, cola, bus y modelos) & 18 & 1.234 \\
+    \midrule
+    Entrada HTTP (rutas, esquemas y configuración) & 18 & 1.408 \\
+    \midrule
+    Trabajador de inferencia & 5 & 349 \\
+    \midrule
+    Migraciones del esquema & 4 & 236 \\
+    \midrule
+    Captura de flujos de video & 2 & 361 \\
+    \midrule
+    Cliente web & 29 & 2.561 \\
+    \midrule
+    \textbf{Subtotal del producto} & \textbf{88} & \textbf{6.946} \\
+    \midrule
+    Pruebas del servicio y de las herramientas & 40 & 3.537 \\
+    \midrule
+    Herramientas de datos y entrenamiento & 31 & 6.225 \\
+    \midrule
+    \textbf{Total entregado} & \textbf{159} & \textbf{16.708} \\*
+    \multicolumn{3}{r}{\footnotesize\textit{Fuente: Elaboración propia}} \\*
+    \bottomrule
+\end{longtable}
+
+El código se mide sobre los archivos fuente efectivamente entregados, excluyendo
+las dependencias de terceros, los artefactos generados y los archivos de
+inicialización de paquete, que no contienen lógica. El conteo distingue dos
+naturalezas: el \textbf{producto}, que implementa las funciones del sistema, y el
+material de \textbf{verificación y de construcción de datos}, que sostiene el
+trabajo pero no forma parte de la interfaz ofrecida al usuario.
+
+Ambas mediciones son independientes entre sí: el tamaño funcional se derivó de
+las funciones documentadas y el tamaño del código, de los archivos fuente. La
+relación obtenida sobre el producto ---$6.946$ líneas para $62$ puntos de
+función, es decir aproximadamente $112$ líneas por punto de función--- constituye
+una verificación de consistencia interna del análisis. Las pruebas y las
+herramientas de datos se informan por transparencia, pero se excluyen de esa
+relación: contarlas elevaría el cociente a cerca de $270$ líneas por punto de
+función y describiría el esfuerzo de construcción del conjunto de datos, no el
+tamaño funcional del sistema entregado.
+
+\subsection{Esfuerzo y costo de desarrollo}
+
+El esfuerzo de desarrollo se obtiene a partir del tamaño funcional y de una
+productividad de referencia, y el costo, a partir del esfuerzo y de una tarifa:
+
+\begin{equation}
+    E = TFA \cdot P \qquad\qquad C_{\text{software}} = E \cdot T
+\end{equation}
+
+donde $TFA$ es el tamaño funcional ajustado ---$62$ puntos de función---, $P$ la
+productividad expresada en horas por punto de función, $E$ el esfuerzo en horas,
+$C_{\text{software}}$ el costo de desarrollo y $T$ la tarifa horaria.
+
+Los dos parámetros de valoración ---productividad y tarifa--- dependen de
+condiciones locales de mercado y de la experiencia del desarrollador, y no son
+derivables del análisis técnico. Se declaran de forma explícita en la Tabla
+\ref{tab:parametros_costo} para que la estimación pueda reproducirse y
+recalcularse.
+
+\begin{longtable}{
+        P{0.30}
+        P{0.12}
+        P{0.12}
+        P{0.36}
+    }
+    \caption{Parámetros de valoración del costo de software}
+    \label{tab:parametros_costo}\\
+
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Parámetro} &
+    \textbf{Símbolo} &
+    \textbf{Valor} &
+    \textbf{Procedencia} \\
+    \midrule
+    \endfirsthead
+
+    \multicolumn{4}{c}{\textit{Continuación de la Tabla
+    \ref{tab:parametros_costo}}} \\
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Parámetro} &
+    \textbf{Símbolo} &
+    \textbf{Valor} &
+    \textbf{Procedencia} \\
+    \midrule
+    \endhead
+
+    Tamaño funcional ajustado & $TFA$ & 62 puntos & Calculado en el apartado anterior. \\
+    \midrule
+    Productividad & $P$ & $12$ horas por punto & Parámetro declarado. \\
+    \midrule
+    Esfuerzo & $E$ & $744$ horas & $TFA \cdot P$. \\
+    \midrule
+    Tarifa horaria & $T$ & Bs $30$ & Parámetro declarado. \\
+    \midrule
+    Costo de desarrollo & $C_{\text{software}}$ & Bs 22.320 & $E \cdot T$. \\*
+    \multicolumn{4}{r}{\footnotesize\textit{Fuente: Elaboración propia}} \\*
+    \bottomrule
+\end{longtable}
+
+Los valores adoptados se declaran de la siguiente forma. La productividad se fija
+en $12$ horas por punto de función, equivalentes a $744$ horas de dedicación para
+el tamaño calculado; el valor se adopta por analogía con proyectos de magnitud
+comparable desarrollados en lenguajes de alto nivel, y es coherente con un
+desarrollo individual de varios meses. La tarifa se fija en Bs $30$ por hora, que
+corresponde a un salario mensual de referencia de Bs 4.800 sobre una jornada de
+$160$ horas. Con ambos parámetros, el costo de desarrollo resulta de Bs 22.320.
+
+La estimación es sensible a la tarifa y no al tamaño: con una tarifa de Bs $20$
+el costo de software desciende a Bs 14.880, y con Bs $40$ asciende a Bs 29.760,
+mientras que el tamaño funcional permanece fijo porque se deriva de las
+funciones documentadas y no del esfuerzo invertido. Los dos parámetros son de
+mercado y deben reemplazarse por la cotización vigente al momento de la
+presentación; la estructura del cálculo no cambia al hacerlo.

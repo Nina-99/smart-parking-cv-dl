@@ -1,0 +1,115 @@
+\section{Estimación del Equipamiento}
+
+La estimación del equipamiento parte de una condición favorable del proyecto: la
+infraestructura de captura ya existe en el recinto y se reutiliza. El sistema no
+requiere la instalación de cámaras nuevas, sino que consume el flujo de video
+producido por el grabador digital que opera el parqueadero. En consecuencia, la
+inversión se concentra en la capacidad de cómputo necesaria para ejecutar la
+inferencia y en el almacenamiento requerido para el material de video y los
+conjuntos de datos derivados.
+
+La Tabla \ref{tab:equipamiento} enumera los elementos considerados. Se distingue
+entre los elementos que representan un desembolso atribuible al proyecto y
+aquellos que se reutilizan de la infraestructura existente y que, por tanto, no
+se computan como inversión.
+
+\begin{longtable}{
+        P{0.25}
+        P{0.35}
+        P{0.12}
+        P{0.18}
+    }
+    \caption{Equipamiento requerido por el proyecto}
+    \label{tab:equipamiento}\\
+
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Elemento} &
+    \textbf{Especificación} &
+    \textbf{Cantidad} &
+    \textbf{Costo} \\
+    \midrule
+    \endfirsthead
+
+    \multicolumn{4}{c}{\textit{Continuación de la Tabla
+    \ref{tab:equipamiento}}} \\
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Elemento} &
+    \textbf{Especificación} &
+    \textbf{Cantidad} &
+    \textbf{Costo} \\
+    \midrule
+    \endhead
+
+    Equipo de cómputo con acelerador gráfico &
+    GPU NVIDIA GeForce RTX 3050 (4 GB de memoria), procesador de 12 núcleos,
+    15 GiB de memoria principal &
+    1 & Bs 10.000 \\
+    \midrule
+
+    Almacenamiento externo &
+    Unidad de $1{,}9$ TB destinada al material de video y a los conjuntos de datos &
+    1 & Bs 850 \\
+    \midrule
+
+    Infraestructura de captura &
+    Grabador digital y cámaras de los puntos de acceso, preexistentes en el
+    recinto &
+    --- & Sin desembolso \\
+    \midrule
+
+    Red y energía &
+    Infraestructura de red local y suministro eléctrico del recinto &
+    --- & Sin desembolso \\
+    \midrule
+
+    Licencias de software &
+    Totalidad del componente de software bajo licencias de código abierto &
+    --- & Sin desembolso \\
+    \midrule
+
+    \multicolumn{3}{r}{\textbf{Total de equipamiento}} & \textbf{Bs 10.850} \\*
+    \multicolumn{4}{r}{\footnotesize\textit{Fuente: Elaboración propia}} \\*
+    \bottomrule
+\end{longtable}
+
+El dimensionamiento del almacenamiento se deriva del volumen efectivo del
+material procesado. La captura del recinto se realiza a una resolución de
+$1280 \times 720$ píxeles, a una tasa de quince fotogramas por segundo y con
+codificación de alta eficiencia, lo que produce aproximadamente 6,7 GB por cada
+treinta horas de registro. La generación de los conjuntos de datos añade, a su
+vez, poco más de 3 GB derivados del mismo material. Estas cifras sitúan los
+requerimientos de almacenamiento muy por debajo de la capacidad disponible, pero
+justifican su consideración explícita: el proceso de extracción recorre
+repetidamente el archivo de video y requiere conservar simultáneamente las
+muestras emitidas.
+
+El equipo de cómputo merece una precisión. El acelerador gráfico empleado dispone
+de apenas 4 GB de memoria, un orden de magnitud inferior al de los equipos
+habitualmente asociados al entrenamiento de modelos de detección. Esta
+restricción no es un inconveniente del proyecto sino su condición de contorno:
+constituye la evidencia de que el sistema puede operar sobre hardware de gama
+moderada, que es precisamente el escenario de despliegue para el que se diseñó la
+estrategia de optimización descrita en el capítulo anterior. El mismo equipo
+ejecuta el servicio de gestión, el trabajador de inferencia y la base de datos
+como contenedores, sin requerir un servidor dedicado, lo que elimina una partida
+de inversión que el diseño evita por construcción.
+
+Respecto de las licencias, la totalidad de los componentes empleados ---lenguaje,
+marco de trabajo web, motor de base de datos, cola de tareas, bibliotecas de
+aprendizaje profundo, motor de reconocimiento de texto y biblioteca de interfaz---
+se distribuye bajo licencias de código abierto, de modo que no generan costo de
+adquisición. Se deja constancia, no obstante, de que la biblioteca de detección
+empleada se distribuye bajo una licencia con obligaciones de reciprocidad que
+condicionan su uso en un producto comercial cerrado; esta consideración no afecta
+al presente proyecto, de carácter académico, pero resulta relevante para una
+eventual explotación comercial del sistema.
+
+Los precios unitarios se declaran a la fecha de cierre del documento: Bs 10.000
+para el equipo de cómputo y Bs 850 para la unidad de almacenamiento, lo que
+arroja un total de Bs 10.850. Al igual que la tarifa horaria, son parámetros de
+mercado sujetos a variación y deben reemplazarse por cotización formal antes de la
+presentación. La partida es pequeña frente al costo de desarrollo, de modo que una
+variación de precios en el equipamiento no altera la conclusión del análisis
+económico.
