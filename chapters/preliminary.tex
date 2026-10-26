@@ -159,7 +159,7 @@ correspondiente. Esta práctica genera tiempos de atención variables, errores
 en el registro y dificultades para disponer de información confiable sobre
 los vehículos que ingresan y salen del recinto.
 
-En el parqueadero objeto de estudio, la ausencia de un mecanismo automatizado
+En el parqueadero, la ausencia de un mecanismo automatizado
 para identificar las características de los vehículos limita el registro
 sistemático de información como el tipo de vehículo, el color predominante
 y la placa de matrícula. Asimismo, la falta de un registro asociado a la
@@ -471,10 +471,10 @@ color predominante, la fecha, la hora y el punto de acceso permitirá disponer d
 evidencia digital asociada a los eventos vehiculares.
 
 La disponibilidad de esta información puede facilitar la consulta ante incidentes
-y mejorar el control de acceso mediante la identificación de vehículos que no se
-encuentren autorizados en los registros del sistema. De esta manera, la propuesta
-busca contribuir a un proceso de control vehicular más organizado, trazable y
-basado en información.
+y aportar evidencia para el control de acceso, en tanto deja registro de cada
+vehículo identificado con su fecha, hora y punto de acceso. De esta manera, la
+propuesta busca contribuir a un proceso de control vehicular más organizado,
+trazable y basado en información.
 
 \section*{ALCANCES Y LIMITACIONES}
 \addcontentsline{toc}{section}{ALCANCES Y LIMITACIONES}
@@ -508,10 +508,6 @@ presenta los siguientes alcances
         \textbf{Determinación de eventos:} registro de los eventos de ingreso y
         salida asociados a los vehículos, considerando fecha, hora y cámara
         correspondiente.
-    \item
-        \textbf{Control de autorización:} comparación de la matrícula reconocida
-        con los registros de autorización definidos en la base de datos para
-        identificar accesos no autorizados.
     \item
         \textbf{Gestión de información:} almacenamiento estructurado de los
         datos obtenidos y disponibilidad de mecanismos de consulta y
@@ -548,6 +544,13 @@ presenta los siguientes alcances
         \textbf{Representatividad del conjunto de datos:} el desempeño obtenido
         estará condicionado por la diversidad y calidad de las imágenes utilizadas
         para el entrenamiento y evaluación de los modelos.
+    \item
+        \textbf{Control de autorización:} el contraste de la matrícula reconocida
+        contra un padrón de vehículos habilitados no forma parte del alcance
+        implementado en esta entrega. El sistema registra el evento y su
+        evidencia, de modo que el contraste queda disponible para una etapa
+        posterior, pero no clasifica por sí mismo un acceso como autorizado o no
+        autorizado.
     \item
         \textbf{Capacidad computacional:} el tiempo de inferencia y el rendimiento
         del sistema dependerán de las características del equipo usado para ejecutar
@@ -604,10 +607,11 @@ artificial aplicada en la Carrera de Ingeniería Informática.
 \addcontentsline{toc}{subsection}{INGENIERÍA DEL PROYECTO}
 
 \renewcommand{\arraystretch}{1.3}
+\newcolumntype{P}[1]{>{\raggedright\arraybackslash}m{#1\dimexpr\textwidth\relax}}
 \begin{longtable}{
-        m{4.5cm}
-        m{5cm}
-        m{5.5cm}
+        P{0.27}
+        P{0.28}
+        P{0.37}
     }
     \caption{Ingeniería del Proyecto}
     \label{tab:ingenieria_del_proyecto}\\
@@ -693,7 +697,7 @@ artificial aplicada en la Carrera de Ingeniería Informática.
     Diseñar la arquitectura del sistema; implementar el procesamiento de video;
     integrar los modelos; desarrollar la API; diseñar la base de datos;
     implementar el registro de vehículos y eventos; implementar consultas,
-    control de autorización y visualización de información.
+    control de acceso y visualización de información.
     \\
 
     \midrule
@@ -706,6 +710,7 @@ artificial aplicada en la Carrera de Ingeniería Informática.
     identificación, OCR y eventos; medir latencia, FPS y consumo de recursos;
     aplicar optimización/cuantización; comparar modelo original y optimizado;
     analizar resultados y limitaciones.
-    \\
+    \\*
+    \multicolumn{3}{r}{\footnotesize\textit{Fuente: Elaboración propia}} \\*
     \bottomrule
 \end{longtable}
