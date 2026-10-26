@@ -1,0 +1,35 @@
+\section{Introducción}
+
+El presente capítulo define la arquitectura del sistema inteligente de gestión
+de parqueaderos, traduciendo los fundamentos teóricos desarrollados en el
+capítulo anterior en decisiones concretas de diseño. Mientras el marco teórico
+estableció \textit{qué} técnicas de visión artificial y aprendizaje profundo
+existen y \textit{por qué} resultan adecuadas para el problema planteado, este
+capítulo responde a las preguntas de \textit{cómo} se organizan dichas técnicas
+en una solución integrada, \textit{qué} componentes la conforman y \textit{cómo}
+interactúan entre sí para automatizar la identificación vehicular y el registro
+de eventos de ingreso y salida.
+
+El diseño se estructura de forma descendente (\textit{top-down}), partiendo de
+una visión global del sistema y refinando progresivamente cada uno de sus
+subsistemas. En primer lugar, se especifican los requerimientos funcionales, no
+funcionales y de infraestructura que delimitan el alcance del sistema y sirven
+como criterio de aceptación para las etapas posteriores de implementación y
+evaluación. A continuación, se describe la arquitectura general, identificando
+los componentes principales y las interfaces de comunicación entre el punto de
+captura, el motor de percepción y la plataforma de gestión.
+
+Posteriormente, el capítulo profundiza en el diseño del subsistema de visión
+artificial, que constituye el núcleo del proyecto y articula el \textit{pipeline}
+de detección, reconocimiento y seguimiento vehicular descrito en el marco
+teórico. Luego se aborda el diseño del subsistema de gestión, compuesto por la
+interfaz de programación de aplicaciones (API), el modelo de datos y los
+mecanismos de persistencia de la información. Finalmente, se presenta el diseño
+de la interfaz de usuario orientada al operador del recinto.
+
+Es importante destacar que este capítulo se limita a la fase de diseño y
+modelado: no incluye código fuente ni resultados experimentales, los cuales
+corresponden al capítulo de implementación y pruebas. Las decisiones aquí
+documentadas, tales como los umbrales de desempeño, los diagramas de
+arquitectura y los modelos de datos, constituyen la referencia formal contra la
+cual se verificará el sistema construido.

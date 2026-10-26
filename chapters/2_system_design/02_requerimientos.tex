@@ -1,0 +1,300 @@
+\section{Requerimientos del Sistema}
+
+La especificación de requerimientos constituye el contrato técnico que delimita
+el alcance del sistema y establece los criterios verificables de aceptación. A
+partir de los objetivos planteados y de las condiciones de operación del
+parqueadero, los requerimientos se clasifican en funcionales, no funcionales y
+de infraestructura.
+
+\subsection{Requerimientos funcionales}
+
+Los requerimientos funcionales describen las capacidades que el sistema debe
+proporcionar para cumplir con su propósito operativo. La Tabla
+\ref{tab:requerimientos_funcionales} los enumera y describe.
+
+\begin{longtable}{
+        P{0.07}
+        P{0.35}
+        P{0.50}
+    }
+    \caption{Requerimientos funcionales del sistema}
+    \label{tab:requerimientos_funcionales}\\
+
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{ID} &
+    \textbf{Requerimiento} &
+    \textbf{Descripción} \\
+    \midrule
+    \endfirsthead
+
+    \multicolumn{3}{c}{\textit{Continuación de la Tabla
+    \ref{tab:requerimientos_funcionales}}} \\
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{ID} &
+    \textbf{Requerimiento} &
+    \textbf{Descripción} \\
+    \midrule
+    \endhead
+
+    RF-01 & Adquisición de video &
+    Recibir y procesar el flujo de video proveniente de las cámaras ubicadas en
+    los puntos de acceso del parqueadero, con capacidad de operación continua.
+    \\
+
+    \midrule
+    RF-02 & Detección de vehículos &
+    Detectar y localizar cada vehículo presente en el área de aproximación,
+    representándolo mediante una caja delimitadora.
+    \\
+
+    \midrule
+    RF-03 & Identificación del tipo de vehículo &
+    Clasificar el vehículo detectado en las categorías definidas para el entorno
+    de estudio (por ejemplo, sedán, camioneta, minibús o motocicleta).
+    \\
+
+    \midrule
+    RF-04 & Identificación del color predominante &
+    Determinar el color predominante de la carrocería del vehículo dentro de un
+    conjunto de clases cromáticas previamente definido.
+    \\
+
+    \midrule
+    RF-05 & Detección de la placa de matrícula &
+    Localizar la región de la placa de matrícula dentro de la caja del vehículo
+    mediante una caja delimitadora específica.
+    \\
+
+    \midrule
+    RF-06 & Reconocimiento de la matrícula &
+    Reconocer los caracteres alfanuméricos de la placa detectada y construir la
+    cadena de texto correspondiente al formato de matrícula vigente.
+    \\
+
+    \midrule
+    RF-07 & Seguimiento del vehículo &
+    Asignar y mantener un identificador temporal único a cada vehículo mientras
+    permanece en el campo de visión de la cámara.
+    \\
+
+    \midrule
+    RF-08 & Determinación de eventos &
+    Clasificar el movimiento del vehículo como ingreso o salida a partir del
+    cruce de una línea virtual de control y del sentido de su trayectoria.
+    \\
+
+    \midrule
+    RF-09 & Registro del evento &
+    Almacenar cada evento con la placa reconocida, el tipo y color del vehículo,
+    la fecha, la hora, la cámara y el sentido correspondiente.
+    \\
+
+    \midrule
+    RF-10 & Control de autorización &
+    Verificar la matrícula reconocida contra los registros de vehículos
+    autorizados y reportar los accesos no autorizados.
+    \\
+
+    \midrule
+    RF-11 & Consulta de información &
+    Permitir la consulta y visualización del historial de eventos vehiculares
+    registrados por el sistema.
+    \\
+
+    \midrule
+    RF-12 & Generación de estadísticas &
+    Producir información estadística a partir de los registros históricos, como
+    afluencia vehicular y tiempos de permanencia.
+    \\
+
+    \midrule
+    RF-13 & Gestión de usuarios &
+    Administrar el acceso de los usuarios al sistema web conforme a roles
+    definidos (administrador y operador).
+    \\*
+    \multicolumn{3}{r}{\footnotesize\textit{Fuente: Elaboración propia}} \\*
+    \bottomrule
+\end{longtable}
+
+El requerimiento RF-10 se conserva en la especificación por trazabilidad con el
+perfil del proyecto, pero se declara \textbf{fuera del alcance implementado}: el
+contraste contra un padrón de vehículos habilitados exige un registro previo que
+esta entrega no construye, de modo que el sistema documenta el acceso sin
+clasificarlo como autorizado. La limitación correspondiente se declara en el
+capítulo introductorio y el estado del componente, en el capítulo de
+implementación.
+
+\subsection{Requerimientos no funcionales}
+
+Los requerimientos no funcionales establecen restricciones de calidad y
+condiciones de operación. Su cumplimiento se verifica en la fase de evaluación
+mediante las métricas descritas en el marco teórico; los valores objetivo son
+coherentes con las hipótesis planteadas en el perfil del proyecto.
+
+\begin{longtable}{
+        P{0.09}
+        P{0.28}
+        P{0.55}
+    }
+    \caption{Requerimientos no funcionales del sistema}
+    \label{tab:requerimientos_no_funcionales}\\
+
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{ID} &
+    \textbf{Categoría} &
+    \textbf{Criterio de cumplimiento} \\
+    \midrule
+    \endfirsthead
+
+    \multicolumn{3}{c}{\textit{Continuación de la Tabla
+    \ref{tab:requerimientos_no_funcionales}}} \\
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{ID} &
+    \textbf{Categoría} &
+    \textbf{Criterio de cumplimiento} \\
+    \midrule
+    \endhead
+
+    RNF-01 & Rendimiento temporal &
+    El \textit{pipeline} completo de visión debe procesar un evento de acceso con
+    una latencia promedio igual o inferior a un segundo.
+    \\
+
+    \midrule
+    RNF-02 & Exactitud de detección &
+    El modelo de detección de vehículos debe alcanzar un mAP@50 igual o superior
+    al 80\,\%.
+    \\
+
+    \midrule
+    RNF-03 & Exactitud de clasificación &
+    Los modelos de identificación de tipo y color predominante deben alcanzar un
+    F1-score macro igual o superior al 85\,\%.
+    \\
+
+    \midrule
+    RNF-04 & Exactitud de reconocimiento &
+    El módulo de reconocimiento de placas debe alcanzar un Recall igual o
+    superior al 90\,\% en la detección y una exactitud por carácter igual o
+    superior al 90\,\% en la lectura.
+    \\
+
+    \midrule
+    RNF-05 & Exactitud de eventos &
+    La determinación de los eventos de ingreso y salida debe alcanzar una
+    exactitud igual o superior al 90\,\%.
+    \\
+
+    \midrule
+    RNF-06 & Disponibilidad &
+    El sistema debe operar de forma continua durante la jornada de operación del
+    parqueadero, resistiendo reinicios controlados de sus componentes.
+    \\
+
+    \midrule
+    RNF-07 & Escalabilidad &
+    La arquitectura debe permitir incorporar nuevos puntos de acceso sin
+    modificar el núcleo del subsistema de visión ni degradar el rendimiento.
+    \\
+
+    \midrule
+    RNF-08 & Eficiencia en el borde &
+    El motor de percepción debe ejecutarse en hardware con recursos
+    restringidos, empleando modelos optimizados y cuantizados.
+    \\
+
+    \midrule
+    RNF-09 & Seguridad y privacidad &
+    El acceso a la información y a las imágenes debe estar protegido, y el
+    tratamiento de datos debe considerar las disposiciones aplicables sobre
+    protección de datos personales.
+    \\
+
+    \midrule
+    RNF-10 & Trazabilidad &
+    El sistema debe registrar eventos y errores en bitácoras que permitan
+    auditar su comportamiento y reconstruir un evento ante una incidencia.
+    \\*
+    \multicolumn{3}{r}{\footnotesize\textit{Fuente: Elaboración propia}} \\*
+    \bottomrule
+\end{longtable}
+
+\subsection{Requerimientos de infraestructura y entorno}
+
+El sistema se despliega sobre una infraestructura física mínima compuesta por
+dispositivos de captura en los puntos de acceso, una unidad de procesamiento en
+el borde encargada de la inferencia, un servidor para la plataforma de gestión y
+la base de datos, y la red local que interconecta estos componentes. La Tabla
+\ref{tab:infraestructura} resume la función esperada de cada componente.
+
+\begin{longtable}{
+        P{0.22}
+        P{0.35}
+        P{0.35}
+    }
+    \caption{Componentes de infraestructura y entorno}
+    \label{tab:infraestructura}\\
+
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Componente} &
+    \textbf{Función en el sistema} &
+    \textbf{Consideración de diseño} \\
+    \midrule
+    \endfirsthead
+
+    \multicolumn{3}{c}{\textit{Continuación de la Tabla
+    \ref{tab:infraestructura}}} \\
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Componente} &
+    \textbf{Función en el sistema} &
+    \textbf{Consideración de diseño} \\
+    \midrule
+    \endhead
+
+    Cámara del punto de acceso &
+    Capturar las imágenes y el video de los vehículos que aproximan a la
+    barrera. &
+    La posición, altura y ángulo de montaje determinan la calidad de la placa en
+    el encuadre.
+    \\
+
+    \midrule
+    Unidad de procesamiento en el borde &
+    Ejecutar los modelos de detección, reconocimiento y seguimiento. &
+    Recursos limitados de cómputo y memoria; requiere modelos cuantizados.
+    \\
+
+    \midrule
+    Servidor de aplicación y base de datos &
+    Alojar la API de gestión, la lógica de autorización y la persistencia de los
+    eventos. &
+    Debe garantizar disponibilidad durante la operación y respaldo de la
+    información.
+    \\
+
+    \midrule
+    Red local &
+    Transportar el video desde la cámara y los eventos hacia el servidor. &
+    El ancho de banda y la estabilidad condicionan la latencia del sistema.
+    \\
+
+    \midrule
+    Almacenamiento &
+    Conservar los registros de eventos y, cuando corresponda, la evidencia
+    visual asociada. &
+    La política de retención debe equilibrar trazabilidad y privacidad.
+    \\*
+    \multicolumn{3}{r}{\footnotesize\textit{Fuente: Elaboración propia}} \\*
+    \bottomrule
+\end{longtable}
+
+Las características técnicas concretas de los dispositivos (modelo de cámara,
+capacidad de cómputo del equipo de borde y dimensionamiento del servidor) se
+determinan en la fase de análisis de las condiciones del parqueadero y se
+documentan en el capítulo de implementación.

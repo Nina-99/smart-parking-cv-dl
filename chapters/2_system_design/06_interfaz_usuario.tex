@@ -1,0 +1,298 @@
+\section{Diseño de la Interfaz de Usuario}
+
+La interfaz de usuario constituye la capa de presentación del sistema y tiene
+como propósito poner a disposición del personal del parqueadero la información
+generada por el motor de percepción. Su diseño se subordina a tres criterios: la
+separación de funciones según el rol del usuario, la prioridad de la información
+operativa sobre la información histórica, y la reducción del número de
+interacciones necesarias para resolver una incidencia de acceso.
+
+\subsection{Criterios de diseño y estructura de navegación}
+
+La interfaz reconoce dos roles con capacidades diferenciadas. El
+\textbf{operador} accede a las vistas de monitoreo e historial, orientadas a la
+supervisión en tiempo real y a la resolución de incidencias; el
+\textbf{administrador} accede además a la gestión del padrón de vehículos, a la
+consulta estadística y a la configuración de los puntos de acceso. Esta
+separación responde al principio de menor privilegio, según el cual cada usuario
+dispone únicamente de las capacidades necesarias para cumplir su función.
+
+La navegación se organiza de forma plana a partir de un menú principal que se
+construye dinámicamente según el rol autenticado, evitando niveles de anidamiento
+que dificulten el acceso a las vistas de uso frecuente. La Figura
+\ref{fig:navegacion} presenta la estructura de navegación resultante.
+
+Un criterio transversal a todas las vistas es la actualización sin intervención
+del usuario. El cliente mantiene un canal persistente con el servicio y recibe
+por esa vía las variaciones del estado del recinto, de modo que el panel refleja
+un ingreso o una salida en el instante en que el sistema lo consolida, sin
+sondeo periódico ni acción manual de refresco. La consulta histórica, en cambio,
+se resuelve bajo demanda contra los recursos de la API, ya que su naturaleza no
+requiere actualización continua.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}
+        \spBlock{session}{0,0}{4.0cm}{rosa}
+            {Inicio de sesión}{Autenticación del personal}
+
+        \spBlock{menu}{0,-1.9}{5.0cm}{rosa}
+            {Menú principal}{Construido según el rol}
+
+        \spBlock{vistaMonitoreo}{-5.1,-4.0}{3.0cm}{cielo}
+            {Monitoreo}{Tiempo real}
+        \spBlock{vistaHistorial}{-1.7,-4.0}{3.0cm}{cielo}
+            {Historial}{Eventos}
+        \spBlock{vistaPadron}{1.7,-4.0}{3.0cm}{purpura}
+            {Padrón}{Vehículos}
+        \spBlock{vistaEstadistica}{5.1,-4.0}{3.0cm}{purpura}
+            {Estadísticas}{Afluencia}
+
+        \draw[spflow] (session.south) -- (menu.north);
+
+        \draw[spflow] (menu.south) -- (vistaMonitoreo.north);
+        \draw[spflow] (menu.south) -- (vistaHistorial.north);
+        \draw[spflow] (menu.south) -- (vistaPadron.north);
+        \draw[spflow] (menu.south) -- (vistaEstadistica.north);
+
+    \end{tikzpicture}
+    \caption{Estructura de navegación de la aplicación web.}
+    \label{fig:navegacion}
+\end{figure}
+
+\subsection{Vistas de operación}
+
+Las vistas de operación concentran las funciones de supervisión. La Figura
+\ref{fig:wireframes_operacion} presenta sus maquetas esquemáticas. La vista de
+monitoreo en tiempo real (Figura \ref{fig:wire_monitoreo}) presenta el flujo de
+video del punto de acceso con las cajas delimitadoras superpuestas, el nivel de
+ocupación del recinto y, de forma simultánea, el resultado del último evento
+procesado: matrícula reconocida, tipo, color y sentido del cruce. Esta
+disposición permite al operador verificar en un solo golpe de
+vista si la identificación del sistema coincide con lo que observa en la imagen,
+y detectar de inmediato una eventual discrepancia entre la ocupación registrada y
+la ocupación real.
+
+La vista de historial (Figura \ref{fig:wire_historial}) ofrece una consulta
+tabular de los eventos registrados, habilitando filtros por rango de fechas, por
+punto de acceso y por matrícula. Cada fila expone la marca temporal, la
+matrícula, la cámara de origen, el sentido del cruce y el estado de la sesión, de
+modo que el operador pueda localizar y auditar un acceso
+específico sin recurrir a la base de datos.
+
+\begin{figure}[htbp]
+    \centering
+
+    % ********************** (a) Monitoreo **********************
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \begin{tikzpicture}
+            \spScreen{wA}{0,0}{7.0}{4.6}{Monitoreo en tiempo real}
+
+            % Panel de video
+            \spPanel{-1.85,-0.35}{3.2}{3.6}{Video en vivo}
+            \draw[draw=black!40, fill=black!12, line width=0.4pt]
+                (-3.25,-1.55) rectangle (-0.45,1.05);
+
+            % Caja delimitadora del vehículo
+            \draw[draw=matblue, line width=0.9pt]
+                (-2.75,-1.25) rectangle (-1.35,0.05);
+            \node[font=\tiny\sffamily, text=matblue!60!black]
+                at (-2.05,0.20) {vehículo};
+
+            % Recorte de la placa
+            \draw[draw=purpura, fill=yellow!45, line width=0.5pt]
+                (-2.55,-0.95) rectangle (-1.55,-0.62);
+            \node[font=\tiny\bfseries\sffamily, text=black!75]
+                at (-2.05,-0.785) {1234ABC};
+
+            \node[font=\tiny\sffamily, text=black!55]
+                at (-1.85,-1.85) {Cámara: ACC-01};
+
+            % Panel del último evento
+            \spPanel{1.75,-0.35}{3.4}{3.6}{Último evento}
+            \node[anchor=north west, align=left, font=\tiny\sffamily,
+                  text=black!75, inner sep=0pt] at (0.20,1.10)
+                {Matrícula: \textbf{1234ABC}\\Tipo: Sedán\\Color: Rojo\\
+                 Sentido: Ingreso};
+
+            \draw[black!25, line width=0.4pt] (0.20,-0.10) -- (3.30,-0.10);
+
+            \node[font=\tiny\sffamily, text=black!55] at (1.75,-0.42)
+                {Estado de la sesión};
+            \spBadge{1.75,-0.78}{green}{REGISTRADO}
+            \node[font=\tiny\itshape, text=black!55] at (1.75,-1.30)
+                {Sesión creada};
+
+        \end{tikzpicture}
+        \caption{Monitoreo en tiempo real.}
+        \label{fig:wire_monitoreo}
+    \end{subfigure}
+    \hfill
+    % ********************** (b) Historial **********************
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \begin{tikzpicture}
+            \spScreen{wB}{0,0}{7.0}{4.6}{Historial de eventos}
+
+            % Barra de filtros
+            \spField{-2.45,1.45}{1.3}{Desde: 01/09}
+            \spField{-1.05,1.45}{1.3}{Hasta: 30/09}
+            \spField{0.45,1.45}{1.4}{Cámara: todas}
+            \spField{2.00,1.45}{1.2}{Matrícula}
+            \spBadge{3.05,1.45}{cielo}{Buscar}
+
+            % Cabecera de la tabla
+            \draw[draw=black!30, fill=black!10, line width=0.4pt]
+                (-3.30,0.80) rectangle (3.30,1.08);
+            \foreach \x/\t in {-2.70/Fecha y hora, -1.45/Matrícula,
+                               -0.15/Cámara, 1.15/Sentido, 2.60/Estado} {
+                \node[font=\tiny\bfseries\sffamily, text=black!65]
+                    at (\x,0.94) {\t};
+            }
+
+            % Filas de datos
+            \foreach \y in {0.44,0.08,-0.28,-0.64,-1.00,-1.36} {
+                \draw[black!18, line width=0.3pt] (-3.30,\y) -- (3.30,\y);
+            }
+
+            \foreach \i/\hora/\placa/\cam/\sen/\est/\col in {%
+                1/08:14/1234ABC/ACC-01/Ingreso/AUT/green!45!black,%
+                2/08:22/456DEF/ACC-01/Salida/AUT/green!45!black,%
+                3/08:35/789GHI/ACC-02/Ingreso/AUT/green!45!black,%
+                4/08:41/321JKL/ACC-01/Ingreso/DEN/red!65!black,%
+                5/08:59/654MNO/ACC-02/Salida/AUT/green!45!black,%
+                6/09:07/987PQR/ACC-01/Ingreso/AUT/green!45!black%
+            } {
+                \node[font=\tiny\sffamily, text=black!75]
+                    at (-2.70,{0.98-0.36*\i}) {\hora};
+                \node[font=\tiny\sffamily, text=black!75]
+                    at (-1.45,{0.98-0.36*\i}) {\placa};
+                \node[font=\tiny\sffamily, text=black!75]
+                    at (-0.15,{0.98-0.36*\i}) {\cam};
+                \node[font=\tiny\sffamily, text=black!75]
+                    at (1.15,{0.98-0.36*\i}) {\sen};
+                \node[font=\tiny\bfseries\sffamily, text=\col]
+                    at (2.60,{0.98-0.36*\i}) {\est};
+            }
+
+            \node[font=\tiny\sffamily, text=black!55] at (0,-1.65)
+                {\textless{} \quad 1 \quad 2 \quad 3 \quad \textgreater{}};
+
+        \end{tikzpicture}
+        \caption{Historial de eventos.}
+        \label{fig:wire_historial}
+    \end{subfigure}
+
+    \caption{Maquetas de las vistas de operación.}
+    \label{fig:wireframes_operacion}
+\end{figure}
+
+\subsection{Vistas de administración y análisis}
+
+Las vistas de administración y análisis están reservadas al rol de
+administrador. La Figura \ref{fig:wireframes_admin} presenta sus maquetas. La
+vista de padrón (Figura \ref{fig:wire_padron}) permite registrar, modificar
+y desactivar vehículos autorizados, así como consultar su estado de
+autorización. La vista de estadísticas (Figura \ref{fig:wire_estadistica})
+resume indicadores agregados de la operación ---ingresos y salidas del día y
+tiempo de permanencia promedio--- y presenta la distribución de la afluencia por
+día de la semana, información que sustenta la toma de decisiones sobre la
+operación del recinto.
+
+\begin{figure}[htbp]
+    \centering
+
+    % ********************** (c) Padrón **********************
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \begin{tikzpicture}
+            \spScreen{wC}{0,0}{7.0}{4.6}{Padrón de vehículos}
+
+            \node[anchor=west, font=\tiny\sffamily, text=black!60]
+                at (-3.30,1.50) {Vehículos registrados};
+            \spBadge{2.35,1.50}{matblue}{+ Nuevo vehículo}
+
+            % Cabecera de la tabla
+            \draw[draw=black!30, fill=black!10, line width=0.4pt]
+                (-3.30,0.80) rectangle (3.30,1.08);
+            \foreach \x/\t in {-2.75/Matrícula, -1.55/Tipo,
+                               -0.45/Color, 0.75/Estado, 2.30/Acciones} {
+                \node[font=\tiny\bfseries\sffamily, text=black!65]
+                    at (\x,0.94) {\t};
+            }
+
+            \foreach \y in {0.44,0.08,-0.28,-0.64,-1.00,-1.36} {
+                \draw[black!18, line width=0.3pt] (-3.30,\y) -- (3.30,\y);
+            }
+
+            \foreach \i/\placa/\tip/\col/\est in {%
+                1/1234ABC/Sedán/Rojo/Activo,%
+                2/456DEF/Camioneta/Blanco/Activo,%
+                3/789GHI/Minibús/Azul/Activo,%
+                4/321JKL/Sedán/Negro/Inactivo,%
+                5/654MNO/Motocicleta/Gris/Activo,%
+                6/112PQR/Camioneta/Plomo/Activo%
+            } {
+                \node[font=\tiny\sffamily, text=black!75]
+                    at (-2.75,{0.98-0.36*\i}) {\placa};
+                \node[font=\tiny\sffamily, text=black!75]
+                    at (-1.55,{0.98-0.36*\i}) {\tip};
+                \node[font=\tiny\sffamily, text=black!75]
+                    at (-0.45,{0.98-0.36*\i}) {\col};
+                \node[font=\tiny\sffamily, text=black!75]
+                    at (0.75,{0.98-0.36*\i}) {\est};
+                \node[font=\tiny\sffamily, text=matblue!60!black]
+                    at (2.30,{0.98-0.36*\i}) {Editar};
+            }
+
+            \node[font=\tiny\sffamily, text=black!55] at (0,-1.62)
+                {Mostrando 6 de 42 vehículos registrados};
+
+        \end{tikzpicture}
+        \caption{Padrón de vehículos.}
+        \label{fig:wire_padron}
+    \end{subfigure}
+    \hfill
+    % ********************** (d) Estadísticas **********************
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \begin{tikzpicture}
+            \spScreen{wD}{0,0}{7.0}{4.6}{Estadísticas de operación}
+
+            % Tarjetas de indicadores
+            \foreach \x/\tit/\val in {-2.35/Ingresos hoy/128,
+                                      0/Salidas hoy/115,
+                                      2.35/Permanencia/42 min} {
+                \draw[draw=black!35, fill=black!4, rounded corners=2pt,
+                      line width=0.5pt]
+                    (\x-1.05,0.80) rectangle (\x+1.05,1.50);
+                \node[font=\tiny\sffamily, text=black!55]
+                    at (\x,1.34) {\tit};
+                \node[font=\scriptsize\bfseries\sffamily, text=matblue!55!black]
+                    at (\x,1.02) {\val};
+            }
+
+            % Panel del gráfico de afluencia
+            \spPanel{0,-0.85}{6.6}{2.4}{Afluencia por día de la semana}
+
+            \draw[black!45, line width=0.6pt] (-3.05,-1.75) -- (3.05,-1.75);
+
+            \foreach \i/\lab/\val in {1/Lu/85,2/Ma/80,3/Mi/96,
+                                       4/Ju/76,5/Vi/66,6/Sá/96} {
+                \pgfmathsetmacro{\bh}{\val/96*1.5}
+                \draw[draw=matblue!70!black, fill=matblue!35, line width=0.4pt]
+                    ({-2.40+(\i-1)*0.96-0.32},-1.75)
+                    rectangle ({-2.40+(\i-1)*0.96+0.32},{-1.75+\bh});
+                \node[font=\tiny\sffamily, text=black!60]
+                    at ({-2.40+(\i-1)*0.96},-1.92) {\lab};
+            }
+
+        \end{tikzpicture}
+        \caption{Estadísticas de operación.}
+        \label{fig:wire_estadistica}
+    \end{subfigure}
+
+    \caption{Maquetas de las vistas de administración y análisis.}
+    \label{fig:wireframes_admin}
+\end{figure}

@@ -1,0 +1,363 @@
+\section{Diseño del Subsistema de Visión Artificial}
+
+El subsistema de visión artificial concentra la funcionalidad central del
+proyecto: transformar el material visual capturado en los accesos en información
+estructurada y verificable. A diferencia de un detector aislado, este subsistema
+se organiza como un \textit{pipeline} en el que la salida de cada etapa alimenta
+a la siguiente, por lo que sus interfaces de datos se especifican de forma
+explícita para garantizar la trazabilidad y la verificabilidad de cada
+componente.
+
+\subsection{Arquitectura de los pipelines de visión}
+
+El subsistema de visión comprende dos \textit{pipelines} con propósitos y
+regímenes de ejecución distintos, cuya separación es deliberada.
+
+El primero es el \textbf{pipeline de operación}, que se ejecuta en tiempo real
+sobre el flujo de video de cada punto de acceso y conserva un estado por cámara
+mientras un vehículo permanece dentro del campo de visión. Es el responsable de
+producir los eventos de acceso, y es el que se describe en esta sección.
+
+El segundo es el \textbf{pipeline de construcción del conjunto de datos}, que se
+ejecuta fuera de línea sobre el material de video archivado. Su propósito no es
+operar el parqueadero, sino producir las muestras etiquetadas con las que se
+entrenan y evalúan los modelos; constituye, por tanto, un instrumento
+metodológico, y se documenta junto con la construcción efectiva del conjunto de
+datos en el Capítulo III.
+
+Ambos comparten los módulos de detección y de reconocimiento, pero difieren en su
+régimen de ejecución y en su producto: el primero emite eventos de acceso, el
+segundo emite muestras anotadas. La Figura \ref{fig:pipeline_vision} presenta el
+pipeline de operación, cuyas etapas y artefactos de datos se detallan en la Tabla
+\ref{tab:modulos_vision}.
+
+El pipeline de operación se organiza en seis etapas secuenciales. Dado que la
+determinación de eventos depende de la trayectoria del vehículo, estas etapas se
+ejecutan sobre una secuencia de fotogramas y no sobre capturas aisladas: el
+estado de cada vehículo se conserva entre fotogramas dentro del alcance de su
+cámara, lo que habilita el seguimiento y la interpretación de la trayectoria. El
+servicio admite además un modo de captura puntual, en el que se recibe una única
+imagen del vehículo; ese modo cubre las etapas de detección, reconocimiento de
+placa y clasificación de atributos, pero no la determinación de eventos por
+trayectoria, que requiere continuidad temporal.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}
+        % *** Entrada del pipeline ***
+        \spData{entrada}{-2.6,1.15}{imagen del acceso}
+
+        % *** Etapas del pipeline ***
+        \spBlock{etapa1}{-2.6,0}{7.4cm}{matblue}
+            {Captura y preprocesamiento}{RTSP, ROI y enmascarado}
+        \spBlock{etapa2}{-2.6,-1.35}{7.4cm}{matblue}
+            {Detección de vehículos}{YOLO26}
+        \spBlock{etapa3}{-2.6,-2.70}{7.4cm}{matblue}
+            {Seguimiento}{ByteTrack}
+        \spBlock{etapa4}{-2.6,-4.05}{7.4cm}{matblue}
+            {Localización y reconocimiento de placa}{YOLO26n + CRNN}
+        \spBlock{etapa5}{-2.6,-5.40}{7.4cm}{matblue}
+            {Clasificación de atributos}{Tipo y color}
+        \spBlock{etapa6}{-2.6,-6.75}{7.4cm}{matblue}
+            {Determinación de eventos}{Línea virtual}
+
+        % *** Artefactos de datos ***
+        \spData{d1}{4.5,0}{fotograma normalizado}
+        \spData{d2}{4.5,-1.35}{cajas y clases}
+        \spData{d3}{4.5,-2.70}{trayectoria con ID}
+        \spData{d4}{4.5,-4.05}{texto de matrícula}
+        \spData{d5}{4.5,-5.40}{atributos del vehículo}
+        \spData{d6}{4.5,-6.75}{evento de acceso}
+
+        % *** Flujo secuencial ***
+        \draw[spflow] (entrada.south) -- (etapa1.north);
+        \draw[spflow] (etapa1.south) -- (etapa2.north);
+        \draw[spflow] (etapa2.south) -- (etapa3.north);
+        \draw[spflow] (etapa3.south) -- (etapa4.north);
+        \draw[spflow] (etapa4.south) -- (etapa5.north);
+        \draw[spflow] (etapa5.south) -- (etapa6.north);
+
+        % *** Artefactos emitidos por cada etapa ***
+        \draw[spflow] (etapa1.east) -- (d1.west);
+        \draw[spflow] (etapa2.east) -- (d2.west);
+        \draw[spflow] (etapa3.east) -- (d3.west);
+        \draw[spflow] (etapa4.east) -- (d4.west);
+        \draw[spflow] (etapa5.east) -- (d5.west);
+        \draw[spflow] (etapa6.east) -- (d6.west);
+
+    \end{tikzpicture}
+    \caption{Pipeline de operación del subsistema de visión artificial.}
+    \label{fig:pipeline_vision}
+\end{figure}
+
+\begin{longtable}{
+        P{0.18}
+        P{0.20}
+        P{0.20}
+        P{0.32}
+    }
+    \caption{Módulos del pipeline de percepción}
+    \label{tab:modulos_vision}\\
+
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Módulo} &
+    \textbf{Entrada} &
+    \textbf{Salida} &
+    \textbf{Restricción de diseño} \\
+    \midrule
+    \endfirsthead
+
+    \multicolumn{4}{c}{\textit{Continuación de la Tabla
+    \ref{tab:modulos_vision}}} \\
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Módulo} &
+    \textbf{Entrada} &
+    \textbf{Salida} &
+    \textbf{Restricción de diseño} \\
+    \midrule
+    \endhead
+
+    Captura y preprocesamiento &
+    Imagen del acceso &
+    Fotograma normalizado &
+    Debe recortar la región de interés y enmascarar la información incrustada
+    por el grabador.
+    \\
+
+    \midrule
+    Detección de vehículos &
+    Fotograma normalizado &
+    Cajas con clase y confianza &
+    Debe operar sin post-procesamiento dependiente del número de objetos para
+    mantener latencia constante.
+    \\
+
+    \midrule
+    Seguimiento &
+    Cajas detectadas &
+    Trayectoria con identificador &
+    Debe sobrevivir a oclusiones breves sin perder la identidad del vehículo.
+    \\
+
+    \midrule
+    Localización y reconocimiento de placa &
+    Recorte del vehículo &
+    Cadena de matrícula &
+    Debe localizar la placa dentro del vehículo y transcribirla sin requerir
+    segmentación individual de caracteres ni depender de un umbral de
+    binarización fijo.
+    \\
+
+    \midrule
+    Clasificación de atributos &
+    Recorte del vehículo &
+    Tipo y color &
+    Debe ser robusto frente a reflejos especulares y variaciones de iluminación.
+    \\
+
+    \midrule
+    Determinación de eventos &
+    Trayectoria del vehículo &
+    Evento de ingreso o salida &
+    Debe evitar disparos múltiples para un mismo vehículo.
+    \\*
+    \multicolumn{4}{r}{\footnotesize\textit{Fuente: Elaboración propia}} \\*
+    \bottomrule
+\end{longtable}
+
+\subsection{Detección de vehículos}
+
+Este módulo constituye la puerta de entrada analítica del sistema. Recibe el
+fotograma normalizado y emite el conjunto de cajas delimitadoras con su clase y
+su nivel de confianza, distinguiendo entre la silueta completa del vehículo y la
+región de la placa de matrícula. La decisión de diseño central es el empleo de
+un detector de una sola etapa con inferencia libre de supresión no máxima, lo
+que garantiza que el tiempo de cómputo no dependa del número de objetos
+presentes en la escena. Esta propiedad resulta indispensable en un acceso
+vehicular, donde dos o tres vehículos pueden solaparse en el encuadre y la
+supresión no máxima convencional podría descartar una detección válida o
+introducir una latencia variable, tal como se fundamentó en el capítulo
+anterior.
+
+La salida de este módulo se organiza como una lista de detecciones, cada una
+compuesta por la clase, las coordenadas de la caja, la confianza asociada y un
+identificador de fotograma, lo que permite reconstruir posteriormente el origen
+de cualquier decisión del sistema.
+
+\subsection{Seguimiento vehicular}
+
+El módulo de seguimiento asigna y mantiene un identificador único por vehículo a
+lo largo del tiempo. Su función es impedir que un mismo automóvil sea tratado
+como una sucesión de detecciones independientes, situación que generaría
+registros duplicados de un único evento de acceso. Para ello, el módulo modela
+el movimiento de cada caja mediante un estimador de estado que predice su
+posición en el fotograma siguiente y la corrige con cada nueva detección,
+combinando dicha predicción con la similitud geométrica entre las cajas.
+
+La asociación entre predicciones y detecciones se resuelve priorizando las
+coincidencias de alta confianza y recurriendo a las de confianza menor solo para
+completar las trayectorias que permanecen sin asignar. Este criterio, propio del
+enfoque de seguimiento en dos etapas, reduce las fragmentaciones de identidad
+cuando un vehículo atraviesa oclusiones parciales provocadas por peatones, por
+la propia barrera o por destellos de luz. Las trayectorias que dejan de recibir
+detecciones se conservan durante un número limitado de fotogramas antes de
+descartarse, y aquellas con un número insuficiente de observaciones se
+consideran ruido y se eliminan. La salida del módulo es una trayectoria con
+identificador, compuesta por la secuencia temporal de las posiciones del
+vehículo y los atributos reconocidos.
+
+\subsection{Reconocimiento de matrículas}
+
+El módulo de reconocimiento recibe el recorte del vehículo y devuelve la cadena
+alfanumérica correspondiente. Comprende dos etapas: la localización de la placa
+dentro del recorte y la transcripción de la región localizada. Su diseño adopta
+un enfoque libre de segmentación: en lugar de aislar y clasificar cada carácter,
+un modelo de secuencia ---una red convolucional recurrente con decodificación
+CTC--- procesa la imagen completa de la placa y emite la transcripción de forma
+directa. Esta decisión responde a las condiciones reales del entorno, donde la
+suciedad, los marcos metálicos o las sombras degradan la separación entre
+caracteres y provocan el colapso de los enfoques clásicos por segmentación.
+
+El módulo incorpora, además, un criterio de calidad previo al reconocimiento:
+los recortes cuya resolución o nitidez resultan insuficientes, o cuya posición
+en el encuadre no corresponde a la franja esperada de la placa, se descartan
+antes de invocar al motor de reconocimiento. Se prevé también una etapa de
+validación sintáctica opcional que contrasta el resultado con la gramática formal
+de las matrículas del contexto de estudio. Su efecto no se presume: se mide sobre
+el conjunto de prueba, porque una regla que reescribe posiciones puede convertir
+una lectura correcta en incorrecta cuando el formato admite letras dentro del
+bloque numérico. La implementación reporta ese resultado y la decisión adoptada
+(Sección~\ref{sec:resultados_ocr}). La salida del módulo comprende la matrícula
+reconocida, su cadena original y un indicador de confianza.
+
+\subsection{Clasificación de atributos del vehículo}
+
+Una vez localizado el vehículo, el sistema recorta su región y la somete a un
+módulo de clasificación encargado de determinar el tipo de carrocería y el color
+predominante.
+Este módulo no interviene en la decisión de apertura, pero aporta una capa de
+verificación cruzada: si la matrícula reconocida corresponde a un vehículo
+registrado con un tipo o un color distintos a los observados, el sistema puede
+señalar una posible suplantación de matrícula.
+
+Para reducir la sensibilidad a los reflejos y a la iluminación variable, el
+recorte se transforma a un espacio cromático que desacopla la información de
+color de la intensidad luminosa antes de ingresar al clasificador. El resultado
+se expresa como la categoría más probable junto con su confianza, y se conserva
+únicamente si dicha confianza supera un umbral configurable; en caso contrario,
+el atributo se registra como no determinado, evitando incorporar información
+poco fiable al registro del evento.
+
+\subsection{Determinación de eventos y contrato de datos}
+
+La etapa final interpreta la trayectoria para decidir si el vehículo ingresó o
+salió del recinto. Para ello se define una línea virtual sobre la calzada frente
+a la barrera, complementada con dos regiones de control que delimitan el espacio
+exterior y el interior del recinto. El evento se genera cuando el centro de la
+caja del vehículo cruza dicha línea, y el sentido se determina a partir del
+vector de desplazamiento respecto de la normal de la línea y de la región de
+origen y destino de la trayectoria. Este criterio garantiza que cada vehículo
+produzca exactamente un evento por cruce, evitando las falsas activaciones que
+produciría un disparo basado únicamente en la presencia dentro de una región.
+
+El resultado del \textit{pipeline} alimenta el registro de la sesión de
+estacionamiento, que constituye la interfaz formal entre el subsistema de visión
+y la capa de persistencia. La Tabla \ref{tab:contrato_evento} define sus campos,
+los cuales son consumidos por el servicio de gestión y almacenados en la base de
+datos.
+
+\begin{longtable}{
+        P{0.16}
+        P{0.18}
+        P{0.58}
+    }
+    \caption{Contrato de datos de la sesión de estacionamiento}
+    \label{tab:contrato_evento}\\
+
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Campo} &
+    \textbf{Tipo} &
+    \textbf{Descripción} \\
+    \midrule
+    \endfirsthead
+
+    \multicolumn{3}{c}{\textit{Continuación de la Tabla
+    \ref{tab:contrato_evento}}} \\
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Campo} &
+    \textbf{Tipo} &
+    \textbf{Descripción} \\
+    \midrule
+    \endhead
+
+    id\_sesion & UUID &
+    Identificador único de la sesión de estacionamiento.
+    \\
+
+    \midrule
+    id\_vehiculo & UUID &
+    Vehículo asociado a la sesión.
+    \\
+
+    \midrule
+    matricula & texto &
+    Cadena de matrícula resultante del reconocimiento y de la validación
+    sintáctica.
+    \\
+
+    \midrule
+    tipo\_vehiculo & texto &
+    Categoría de carrocería identificada, o valor nulo si la confianza resulta
+    insuficiente.
+    \\
+
+    \midrule
+    color & texto &
+    Color predominante identificado, o valor nulo si la confianza resulta
+    insuficiente.
+    \\
+
+    \midrule
+    puerta\_ingreso & texto &
+    Identificador del punto de acceso por el que se registró el ingreso.
+    \\
+
+    \midrule
+    puerta\_salida & texto &
+    Identificador del punto de acceso por el que se registró la salida; nulo
+    mientras la sesión permanece activa.
+    \\
+
+    \midrule
+    hora\_ingreso & marca temporal &
+    Instante en que se determinó el cruce de entrada.
+    \\
+
+    \midrule
+    hora\_salida & marca temporal &
+    Instante en que se determinó el cruce de salida; nulo mientras la sesión
+    permanece activa.
+    \\
+
+    \midrule
+    duracion & entero &
+    Tiempo de permanencia en segundos, calculado al cierre de la sesión.
+    \\
+
+    \midrule
+    autorizado & booleano &
+    Resultado de la verificación de la matrícula contra el padrón de vehículos
+    habilitados.
+    \\
+
+    \midrule
+    estado & enumeración &
+    Situación de la sesión: activa, completada o cancelada.
+    \\*
+    \multicolumn{3}{r}{\footnotesize\textit{Fuente: Elaboración propia}} \\*
+    \bottomrule
+\end{longtable}

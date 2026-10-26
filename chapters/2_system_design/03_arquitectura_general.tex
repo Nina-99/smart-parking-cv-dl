@@ -1,0 +1,152 @@
+\section{Descripción de la Arquitectura General}
+
+El sistema se organiza bajo una arquitectura en capas (\textit{layered
+architecture}) que separa las responsabilidades de captura, servicios,
+procesamiento, persistencia y presentación. Esta organización responde a la
+naturaleza asimétrica de la carga de trabajo: la recepción de solicitudes es
+ligera y debe permanecer siempre disponible, mientras que la inferencia de los
+modelos de aprendizaje profundo es intensiva en cómputo y su duración es
+variable. Separar ambas responsabilidades permite que el servicio de recepción
+responda de inmediato y delegue la inferencia a un proceso trabajador
+independiente, evitando que una ráfaga de vehículos bloquee la atención de las
+solicitudes.
+
+La Figura \ref{fig:arquitectura_general} presenta la arquitectura general del
+sistema, en la que cada capa se apoya exclusivamente en las interfaces públicas
+de la capa adyacente. El flujo de información es descendente en el sentido de la
+percepción ---desde la imagen capturada hacia el registro persistido--- y
+ascendente en el sentido de la supervisión, a través de las consultas y de las
+notificaciones en tiempo real que el sistema envía al panel de monitoreo.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}
+
+        % *** Capas arquitectónicas ***
+        \spLayer{capaCaptura}{0,0}{13cm}{1.4cm}{cielo}{Capa de Captura}
+        \spLayer{capaServicios}{0,-2.3}{13cm}{1.7cm}{purpura}{Capa de Servicios}
+        \spLayer{capaProceso}{0,-4.8}{13cm}{1.7cm}{matblue}
+            {Capa de Procesamiento Asíncrono}
+        \spLayer{capaDatos}{0,-7.0}{13cm}{1.4cm}{purpura}{Capa de Persistencia}
+        \spLayer{capaPresent}{0,-9.2}{13cm}{1.7cm}{rosa}{Capa de Presentación}
+
+        % *** Componentes: captura ***
+        \spBlock{camara}{0,0}{4.6cm}{cielo}
+            {Cámara de acceso}{Captura del vehículo}
+
+        % *** Componentes: servicios ***
+        \spBlock{notif}{-2.0,-2.3}{3.8cm}{purpura}
+            {Notificador}{WebSocket}
+        \spBlock{api}{2.0,-2.3}{3.8cm}{purpura}
+            {API REST}{FastAPI}
+
+        % *** Componentes: procesamiento ***
+        \spBlock{cola}{-2.0,-4.8}{3.8cm}{matblue}
+            {Cola de tareas}{Redis}
+        \spBlock{worker}{2.0,-4.8}{3.8cm}{matblue}
+            {Worker de inferencia}{YOLO26 + detector de placa + CRNN}
+
+        % *** Componentes: persistencia ***
+        \spBlock{bd}{0,-7.0}{5.4cm}{purpura}
+            {PostgreSQL}{Vehículos y sesiones}
+
+        % *** Componentes: presentación ***
+        \spBlock{web}{-2.0,-9.2}{3.8cm}{rosa}
+            {Aplicación Web}{React}
+        \spBlock{operador}{2.0,-9.2}{3.8cm}{rosa}
+            {Operador}{Supervisión}
+
+        % *** Flujo principal entre capas ***
+        \draw[spflow] (capaCaptura.south) --
+            node[right, font=\tiny\itshape, text=black!70] {imagen}
+            (capaServicios.north);
+        \draw[spflow] (capaServicios.south) --
+            node[right, font=\tiny\itshape, text=black!70] {tarea}
+            (capaProceso.north);
+        \draw[spflow] (capaProceso.south) --
+            node[right, font=\tiny\itshape, text=black!70] {resultados}
+            (capaDatos.north);
+        \draw[spflow] (capaDatos.south) --
+            node[right, font=\tiny\itshape, text=black!70] {consultas}
+            (capaPresent.north);
+
+        % *** Relaciones internas ***
+        \draw[spflow] (cola.east) -- (worker.west);
+        \draw[spboth] (web.east) -- (operador.west);
+
+        % *** Notificación en tiempo real ***
+        \draw[spflow] (notif.west) -- (-6.9,-2.3) -- (-6.9,-9.2) --
+            (web.west);
+        \node[above, font=\tiny\itshape, text=black!70]
+            at (-5.4,-2.3) {notificación};
+
+    \end{tikzpicture}
+    \caption{Arquitectura general en capas del sistema de gestión inteligente de
+    parqueaderos.}
+    \label{fig:arquitectura_general}
+\end{figure}
+
+\subsection{Capa de captura}
+
+Constituye el punto de entrada de información al sistema y está conformada por
+las cámaras instaladas en los accesos del parqueadero. Su responsabilidad es
+adquirir la imagen del vehículo que aproxima a la barrera y remitirla al
+servicio de gestión. El diseño de esta capa se mantiene deliberadamente simple
+para favorecer la reutilización de la infraestructura de captura existente y
+para desacoplar el sistema de un modelo específico de cámara: basta con que el
+dispositivo de captura pueda entregar una imagen en un formato conocido.
+
+\subsection{Capa de servicios}
+
+Expone la interfaz pública del sistema y constituye el único punto de acceso a
+sus funcionalidades. La API REST recibe las solicitudes de registro de ingreso y
+de salida, valida su estructura y delega el trabajo pesado a la capa de
+procesamiento, respondiendo de inmediato con el identificador de la sesión
+creada. El notificador mantiene un canal persistente con los clientes web y
+propaga las actualizaciones de estado sin que estos deban consultar
+periódicamente al servidor. Esta capa no conoce los detalles internos de los
+modelos de visión, lo que permite evolucionar el motor de inferencia sin alterar
+el contrato expuesto a los clientes.
+
+\subsection{Capa de procesamiento asíncrono}
+
+Es el núcleo analítico del proyecto. La cola de tareas desacopla la recepción de
+la solicitud de su ejecución: cada solicitud de registro encola una tarea y el
+proceso trabajador la consume cuando dispone de capacidad. El trabajador de
+inferencia ejecuta la detección de vehículos, el seguimiento, el reconocimiento
+de la matrícula y la clasificación de atributos, y deposita el resultado en la
+capa de persistencia. Al residir en un proceso separado, esta capa puede
+desplegarse sobre hardware con aceleración gráfica ---incluso en equipos
+próximos al punto de captura--- y aprovechar modelos optimizados para reducir su
+latencia, sin condicionar la disponibilidad del servicio de recepción.
+
+\subsection{Capa de persistencia}
+
+Almacena el estado del sistema: los vehículos registrados, las sesiones de
+estacionamiento con sus marcas temporales de ingreso y salida, y la bitácora de
+detecciones producida por el proceso de inferencia. La base de datos relacional
+actúa como fuente única de verdad y es manipulada exclusivamente por los
+servicios de la capa superior, garantizando que las reglas de integridad se
+apliquen en un único punto.
+
+\subsection{Capa de presentación}
+
+Ofrece la interfaz mediante la cual el personal del parqueadero supervisa la
+operación. La aplicación web consume la API REST para las consultas históricas y
+mantiene una conexión de notificación para recibir las actualizaciones en
+tiempo real. Al ser una capa puramente de consumo, puede desplegarse de forma
+independiente y ser reemplazada o ampliada sin impacto sobre el resto de la
+arquitectura.
+
+\subsection{Flujo de comunicación}
+
+La comunicación entre capas sigue un contrato estricto. La imagen capturada se
+remite al servicio de gestión, que crea el registro de la sesión y encola la
+tarea de inferencia; el trabajador consume la tarea, ejecuta los modelos y
+actualiza la sesión con los resultados obtenidos. Una vez consolidado el
+resultado, el notificador propaga el cambio a la aplicación web. Esta secuencia
+garantiza que ningún componente acceda directamente a los datos de otro: la base
+de datos es manipulada por los servicios, y los modelos de visión no conocen la
+estructura del almacenamiento. Dicha separación de responsabilidades simplifica
+el mantenimiento, facilita las pruebas por componente y sostiene la escalabilidad
+del sistema ante la incorporación de nuevos puntos de acceso.

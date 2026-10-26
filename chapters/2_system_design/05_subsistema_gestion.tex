@@ -1,0 +1,300 @@
+\section{Diseño del Subsistema de Gestión}
+
+El subsistema de gestión recibe las imágenes capturadas en los accesos, coordina
+su procesamiento y convierte el resultado en información persistente,
+consultable y auditable. Su diseño se rige por el principio de responsabilidad
+única: la base de datos es manipulada exclusivamente por los servicios, y los
+servicios no conocen los detalles internos de los modelos de visión. De este
+modo, el reentrenamiento o la sustitución de un modelo no impacta sobre las
+reglas de negocio ni sobre la estructura de los datos.
+
+\subsection{Arquitectura del subsistema de gestión}
+
+El subsistema se organiza en cuatro componentes. La interfaz de programación de
+aplicaciones (API REST) expone los servicios del sistema, valida la estructura
+de las solicitudes y constituye el único punto de acceso a los datos. El
+notificador mantiene los canales persistentes con los clientes web y propaga las
+actualizaciones de estado. La cola de tareas desacopla la recepción de una
+solicitud de su procesamiento, y el trabajador de inferencia consume las tareas
+encoladas y deposita sus resultados en la capa de persistencia. Esta separación
+permite que las reglas de negocio evolucionen sin alterar el motor de
+inferencia, y que el motor de inferencia se optimice sin reescribir la lógica de
+gestión.
+
+\subsection{Modelo entidad-relación}
+
+El modelo de datos se estructura en tres entidades. La entidad
+\textit{vehículo} representa a cada automóvil observado en los accesos y
+conserva los atributos visuales reconocidos en su primera aparición. La entidad
+\textit{sesión} representa una visita al recinto: se crea en el cruce de ingreso
+y se cierra en el cruce de salida, registrando la duración de la permanencia, el
+estado del cierre y, cuando el cierre es manual, el operador y el motivo. La
+entidad \textit{detección} constituye la bitácora de inferencia: conserva cada
+observación producida por el modelo, con su clase, confianza, latencia y
+trayectoria asociada. La Figura \ref{fig:modelo_er} presenta las entidades y sus
+relaciones con la cardinalidad correspondiente.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}
+        % *** Entidades ***
+        \spEntity{entVehiculo}{-5.4,0}{3.8cm}{purpura}{vehículo}
+            {id (PK)\\matricula\\tipo, color\\creado\_en}
+
+        \spEntity{entSesion}{0,0}{3.8cm}{purpura}{sesión}
+            {id (PK)\\id\_vehiculo (FK)\\puerta\_ingreso\\puerta\_salida\\
+             hora\_ingreso, hora\_salida\\duracion, estado\\cierre\_motivo}
+
+        \spEntity{entDeteccion}{5.4,0}{3.8cm}{matblue}{detección}
+            {id (PK)\\id\_sesion (FK)\\camara, marca temporal\\
+             modelo, clase\\confianza, caja\\track\_id, latencia}
+
+        % *** Relaciones ***
+        \draw[spflow] (entVehiculo.east) --
+            node[above, font=\tiny\bfseries, text=black!70] {1:N}
+            (entSesion.west);
+
+        \draw[spflow] (entSesion.east) --
+            node[above, font=\tiny\bfseries, text=black!70] {1:N}
+            (entDeteccion.west);
+
+    \end{tikzpicture}
+    \caption{Modelo entidad-relación del subsistema de gestión.}
+    \label{fig:modelo_er}
+\end{figure}
+
+La Tabla \ref{tab:diccionario_datos} detalla el diccionario de datos,
+especificando para cada campo su tipo y sus restricciones de integridad. Las
+claves foráneas preservan la consistencia referencial y permiten reconstruir la
+trazabilidad completa de una visita, desde el vehículo identificado hasta cada
+una de las observaciones que sustentaron su identificación. El esquema se
+gestiona mediante migraciones versionadas, de modo que toda modificación
+estructural quede registrada y pueda reproducirse sobre cualquier entorno de
+despliegue.
+
+\begin{longtable}{
+        P{0.22}
+        P{0.18}
+        P{0.52}
+    }
+    \caption{Diccionario de datos del subsistema de gestión}
+    \label{tab:diccionario_datos}\\
+
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Campo} &
+    \textbf{Tipo} &
+    \textbf{Restricción} \\
+    \midrule
+    \endfirsthead
+
+    \multicolumn{3}{c}{\textit{Continuación de la Tabla
+    \ref{tab:diccionario_datos}}} \\
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Campo} &
+    \textbf{Tipo} &
+    \textbf{Restricción} \\
+    \midrule
+    \endhead
+
+    \multicolumn{3}{l}{\textbf{vehículo}} \\
+    \midrule
+    id & UUID & Clave primaria. \\
+    matricula & VARCHAR(20) & Indexado; nulo si no pudo reconocerse. \\
+    confianza\_matricula & REAL & Puede ser nulo. \\
+    tipo & VARCHAR(50) & Puede ser nulo. \\
+    confianza\_tipo & REAL & Puede ser nulo. \\
+    color & VARCHAR(30) & Puede ser nulo. \\
+    confianza\_color & REAL & Puede ser nulo. \\
+    ruta\_imagen & TEXT & Puede ser nulo. \\
+    creado\_en & TIMESTAMP & No nulo. \\
+    actualizado\_en & TIMESTAMP & No nulo; se actualiza en cada modificación. \\
+    \midrule
+
+    \multicolumn{3}{l}{\textbf{sesión}} \\
+    \midrule
+    id & UUID & Clave primaria. \\
+    id\_vehiculo & UUID & Clave foránea a vehículo; no nulo e indexado. \\
+    puerta\_ingreso & VARCHAR(20) & Puede ser nulo. \\
+    puerta\_salida & VARCHAR(20) & Puede ser nulo. \\
+    hora\_ingreso & TIMESTAMP & No nulo. \\
+    hora\_salida & TIMESTAMP & Nulo mientras la sesión permanece activa. \\
+    duracion & INTEGER & Segundos de permanencia; calculado al cierre. \\
+    estado & ENUM & Activa, completada o cancelada; indexado. \\
+    cierre\_motivo & VARCHAR(50) & Nulo cuando la sesión sigue activa; motivo del cierre. \\
+    cierre\_operador & VARCHAR(50) & Nulo cuando el cierre es automático; operador que cerró. \\
+    \midrule
+
+    \multicolumn{3}{l}{\textbf{detección}} \\
+    \midrule
+    id & UUID & Clave primaria. \\
+    id\_sesion & UUID & Clave foránea a sesión; puede ser nulo e indexado. \\
+    camara & VARCHAR(50) & No nulo e indexado. \\
+    marca\_temporal & TIMESTAMP & No nulo. \\
+    modelo & VARCHAR(20) & Identificador del modelo empleado. \\
+    clase & VARCHAR(50) & Clase detectada. \\
+    confianza & REAL & No nulo. \\
+    caja & JSONB & Coordenadas normalizadas de la caja delimitadora. \\
+    ruta\_recorte & TEXT & Puede ser nulo. \\
+    latencia & REAL & Tiempo de inferencia en milisegundos. \\
+    version\_modelo & VARCHAR(20) & Puede ser nulo. \\
+    track\_id & INTEGER & Identificador de trayectoria asignado por el seguimiento. \\*
+    \multicolumn{3}{r}{\footnotesize\textit{Fuente: Elaboración propia}} \\*
+    \bottomrule
+\end{longtable}
+
+Para sostener el desempeño de las consultas sobre un volumen creciente de
+registros, el esquema define índices sobre la matrícula, sobre el identificador
+del vehículo en la sesión, sobre el estado de la sesión, sobre la cámara de
+origen y sobre el identificador de sesión en la bitácora de detecciones. Estos
+índices responden a los patrones de consulta predominantes del sistema: la
+recuperación del historial de un vehículo, la consulta de las sesiones activas
+para el cálculo de la ocupación, y la revisión de las observaciones asociadas a
+una visita determinada.
+
+\subsection{Especificación de la interfaz de programación}
+
+La API se diseña siguiendo el estilo REST y expone sus servicios bajo un prefijo
+versionado, de modo que futuras modificaciones no invaliden a los clientes
+existentes. La Tabla \ref{tab:endpoints} especifica los recursos implementados.
+Nótese que el registro de ingreso y de salida está reservado a los dispositivos
+de captura, mientras que las operaciones de consulta se restringen a los
+usuarios autenticados. Los recursos de registro responden de forma inmediata con
+el identificador de la sesión creada, sin esperar a que concluya la inferencia,
+que se ejecuta de manera asíncrona.
+
+\begin{longtable}{
+        P{0.10}
+        P{0.27}
+        P{0.38}
+        P{0.15}
+    }
+    \caption{Especificación de los recursos de la API}
+    \label{tab:endpoints}\\
+
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Método} &
+    \textbf{Ruta} &
+    \textbf{Descripción} &
+    \textbf{Acceso} \\
+    \midrule
+    \endfirsthead
+
+    \multicolumn{4}{c}{\textit{Continuación de la Tabla
+    \ref{tab:endpoints}}} \\
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Método} &
+    \textbf{Ruta} &
+    \textbf{Descripción} &
+    \textbf{Acceso} \\
+    \midrule
+    \endhead
+
+    POST & /api/v1/entry &
+    Recibe la imagen del vehículo en el acceso, crea la sesión y encola la
+    inferencia. &
+    Dispositivo de captura \\
+    \midrule
+
+    POST & /api/v1/exit &
+    Recibe la imagen del vehículo en la salida y solicita el cierre de la
+    sesión. &
+    Dispositivo de captura \\
+    \midrule
+
+    GET & /api/v1/vehiculos &
+    Consulta los vehículos registrados con sus atributos visuales y su
+    historial. &
+    Operador \\
+    \midrule
+
+    POST & /api/v1/vehiculos &
+    Registra o actualiza un vehículo en el padrón del recinto. &
+    Administrador \\
+    \midrule
+
+    GET & /api/v1/stats/active &
+    Lista las sesiones actualmente activas dentro del recinto. &
+    Operador \\
+    \midrule
+
+    GET & /api/v1/stats/history &
+    Consulta el historial de sesiones con filtros por fecha. &
+    Operador \\
+    \midrule
+
+    GET & /api/v1/stats/occupancy &
+    Devuelve el nivel de ocupación del recinto. &
+    Operador \\
+    \midrule
+
+    GET & /api/v1/stats/daily &
+    Devuelve los indicadores agregados del día en curso. &
+    Operador \\
+    \midrule
+
+    WS & /api/v1/ws/occupancy &
+    Canal persistente que propaga las variaciones de ocupación en tiempo real. &
+    Operador \\*
+    \multicolumn{4}{r}{\footnotesize\textit{Fuente: Elaboración propia}} \\*
+    \bottomrule
+\end{longtable}
+
+La especificación formal de estos recursos se publica de forma automática a
+partir de las definiciones de tipo del propio servicio, lo que garantiza que la
+documentación de la interfaz permanezca sincronizada con su implementación.
+
+\subsection{Procesamiento asíncrono y notificación en tiempo real}
+
+La inferencia de los modelos de visión es intensiva en cómputo y de duración
+variable, por lo que no puede ejecutarse dentro del ciclo de atención de una
+solicitud HTTP sin comprometer la disponibilidad del servicio. Ambos
+requerimientos se resuelven mediante dos mecanismos complementarios.
+
+El primero es la ejecución asíncrona: al recibir una imagen, el servicio crea el
+registro de la sesión en estado activo y encola una tarea de inferencia,
+respondiendo de inmediato al dispositivo de captura. El trabajador consume la
+tarea cuando dispone de capacidad y, al concluir, actualiza la sesión con los
+atributos reconocidos. De este modo, una ráfaga de vehículos se traduce en una
+cola de tareas pendientes y no en una degradación del tiempo de respuesta de la
+API.
+
+El segundo es la notificación en tiempo real. La aplicación web mantiene un
+canal persistente con el servicio, a través del cual recibe las variaciones de
+ocupación sin necesidad de consultar periódicamente al servidor. Este diseño
+reduce el tráfico de red y, sobre todo, elimina el retardo inherente al sondeo:
+el panel de monitoreo refleja el cambio en el instante en que el sistema lo
+consolida. Ante una interrupción del canal, el cliente restablece la conexión y
+reconcilia su estado consultando los recursos de historial y de ocupación.
+
+\subsection{Trazabilidad y control de autorización}
+
+La trazabilidad se garantiza en tres niveles. En el nivel de integridad, las
+claves foráneas y las restricciones del esquema impiden la existencia de
+sesiones sin vehículo asociado. En el nivel de evidencia, la bitácora de
+detecciones conserva cada observación producida por los modelos junto con su
+confianza, su latencia de inferencia y el identificador de la versión del modelo
+empleado, lo que permite reconstruir con qué versión del sistema se tomó cada
+decisión. En el nivel de correlación, cada sesión queda vinculada al vehículo
+identificado, a la puerta de acceso y a las detecciones que sustentaron la
+lectura de su matrícula.
+
+El contraste de la matrícula reconocida contra un padrón de vehículos
+autorizados está previsto como requerimiento (RF-10) y \textbf{no forma parte del
+esquema entregado}. La entidad \textit{vehículo} registra los vehículos
+observados en los accesos, no un padrón previo, y la sesión no conserva un
+indicador de autorización. Incorporarlo exige una entidad de vehículos
+habilitados, la consulta de contraste en el momento del registro y el reporte de
+los accesos no autorizados al operador. Se declara aquí como capacidad
+pendiente, y no como capacidad disponible, porque el registro de un acceso no
+autorizado sin el padrón que lo define no es verificable.
+
+Dado que el trabajador de inferencia puede reintentar la actualización de una
+sesión tras una interrupción, la operación de cierre se diseña como idempotente:
+la marca temporal de salida y la duración se calculan una única vez, y los
+reintentos posteriores sobre una sesión ya cerrada se ignoran. Esta decisión
+evita que una falla de comunicación derive en una duración inconsistente o en un
+cierre duplicado.
