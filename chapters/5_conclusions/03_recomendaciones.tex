@@ -1,0 +1,205 @@
+\section{Recomendaciones}
+
+Las recomendaciones se ordenan por aquello que las origina: primero las que
+habilitan el funcionamiento del sistema como un todo, luego las que atacan la
+causa de la brecha de reconocimiento, después las que completan la medición
+pendiente y, finalmente, las que desbordan el alcance de este trabajo y
+constituyen líneas de continuidad.
+
+\subsection{Validación de extremo a extremo y puesta en operación}
+
+\begin{enumerate}
+    \item \textbf{Ejecutar la simulación de extremo a extremo con las dos
+        cámaras.} La cadena técnica está integrada y probada por componente, pero
+        el sistema no fue ejercitado sobre una secuencia completa de ingresos y
+        salidas con las dos fuentes sincronizadas. Esa corrida es la que sostiene
+        la medición de $H_{1.5}$ y la que permite afirmar que el conjunto opera
+        como un todo continuo. La infraestructura de simulación ya existe y opera
+        sobre el material grabado; lo pendiente es su ejecución con registro de
+        resultados.
+
+    \item \textbf{Validar en campo contra la infraestructura del recinto.} La
+        simulación no reproduce la negociación con el grabador real ni el
+        comportamiento de la red local. Un despliegue piloto en un punto de
+        acceso, con supervisión y sin sustituir el control manual, es la
+        instancia que expone las diferencias entre el laboratorio y la operación.
+
+    \item \textbf{Completar el banco comparativo de latencia y tasa de
+        fotogramas.} El sistema ya registra la latencia de inferencia por
+        fotograma, de modo que el dato se acumula desde la primera corrida. Lo
+        que resta es la comparación controlada entre formatos de modelo y
+        variantes de escala sobre el hardware de destino, con la degradación de
+        exactitud atribuible a la media precisión.
+
+    \item \textbf{Calibrar el umbral de confianza del emparejamiento.} El valor
+        de $0{,}6$ se adoptó como política de rechazo y no como resultado de una
+        curva. Calibrarlo sobre el conjunto de prueba congelado permite fijarlo
+        con una tasa de error conocida, y revisar el criterio de abstención con
+        datos en lugar de con criterio.
+
+    \item \textbf{Cubrir la ruta de captura con pruebas automatizadas.} La
+        verificación alcanza el dominio, los recursos y el ciclo de persistencia.
+        El lector RTSP y el muestreo de fotogramas operan como proceso separado y
+        no disponen de pruebas propias: es la única pieza del camino de escritura
+        que se apoya en verificación manual.
+
+    \item \textbf{Revalidar la valoración económica.} La estimación quedó cerrada
+        con parámetros declarados ---$62$ puntos de función, $12$ horas por punto
+        y una tarifa de Bs $30$ por hora--- que arrojan Bs 33.170. Los tres
+        valores son de mercado: conviene reemplazarlos por la cotización vigente
+        al momento de la presentación, sin rehacer el análisis.
+\end{enumerate}
+
+\subsection{Condiciones de captura}
+
+Es la recomendación de mayor impacto y la de menor costo relativo, porque no
+requiere modificar el software. La evidencia de la
+Subsección~\ref{subsec:brecha_ocr} fija una condición concreta: para que el
+reconocimiento alcance el umbral comprometido, la placa debe ocupar al menos $40$
+píxeles de altura en el punto de lectura. Por debajo de ese valor el sistema
+opera en un régimen donde la información se pierde antes de llegar al modelo.
+
+En términos de instalación, esa condición se traduce en cuatro decisiones:
+
+\begin{itemize}
+    \item \textbf{Cámara dedicada al punto de acceso}, en lugar de reutilizar la
+        toma general del grabador. La distancia y el ángulo deben elegirse para
+        que la placa ocupe la altura mínima indicada en el instante de lectura,
+        no en el mejor fotograma de la trayectoria.
+    \item \textbf{Iluminación controlada en el punto de lectura.} Las capturas
+        disponibles son nocturnas, con luminancia mediana de $76{,}6$ y
+        desviación estándar de $20{,}7$; esa dispersión es la que obliga a
+        normalizar contraste y la que degrada la lectura. Una fuente de
+        iluminación fija, con filtro infrarrojo si la cámara lo admite, reduce la
+        variabilidad de entrada.
+    \item \textbf{Exposición y balance de blancos fijos.} El mismo vehículo gris
+        claro aparece casi blanco bajo iluminación directa y casi negro a la
+        sombra. Sin una referencia de exposición absoluta, la separación entre
+        blanco, plata, gris y negro ---que concentra todo el error del
+        clasificador de color--- no es resoluble por el modelo.
+    \item \textbf{Evitar el ángulo oblicuo pronunciado.} La deformación
+        perspectiva del recorte reduce la altura efectiva de los glifos y
+        traslada el problema a la etapa de reconocimiento, donde ya no puede
+        corregirse.
+\end{itemize}
+
+\subsection{Reconocimiento de matrículas}
+
+Las acciones se ordenan por relación entre esfuerzo y efecto esperado, según lo
+medido:
+
+\begin{enumerate}
+    \item \textbf{Escalar el conjunto de datos reales.} Es la intervención con
+        mayor efecto potencial y la única que ataca la causa de fondo. La
+        infraestructura de extracción y los protocolos de evaluación ya están
+        construidos para escalar sin modificar el código; la tarea pendiente es
+        de recolección y verificación, no de desarrollo. El objetivo debería
+        fijarse en un orden de magnitud superior al volumen actual, con
+        verificación humana mantenida en cada lote.
+
+    \item \textbf{Votar sobre múltiples fotogramas de la trayectoria.} Hoy solo
+        el fotograma mejor puntuado de cada vehículo alcanza la etapa de
+        reconocimiento. El seguimiento ya produce decenas de observaciones por
+        trayectoria; consolidarlas por votación por posición o por consenso de
+        secuencia aprovecha información que el sistema ya captura y descarta.
+        Esta es la técnica con mejor relación entre costo de implementación y
+        ganancia esperada en coincidencia exacta.
+
+    \item \textbf{Restringir la decodificación solo donde la gramática no es
+        ambigua.} El post-procesamiento global falló porque el formato boliviano
+        admite letras en el bloque numérico. Una restricción aplicada únicamente
+        a las posiciones que el formato fija como numéricas, y desactivada en las
+        demás, evita el efecto contrario que se midió.
+
+    \item \textbf{Calibrar la confianza y publicar la incertidumbre.} La
+        coincidencia exacta de $0{,}261$ en el sistema ensamblado indica que la
+        mayoría de las lecturas contiene al menos un carácter erróneo. Reportar
+        la confianza por carácter permite que el operador distinga entre una
+        lectura utilizable y una que requiere confirmación.
+
+    \item \textbf{Mantener la revisión humana como parte del ciclo.} El
+        pseudo-etiquetado automático fue útil como propuesta, pero solo el
+        $26{,}1\%$ de sus cajas resultó utilizable sin corrección. La revisión
+        humana no es una etapa transitoria: es el mecanismo que garantiza la
+        calidad del conjunto y debe presupuestarse como tal.
+\end{enumerate}
+
+\subsection{Medición pendiente de las hipótesis no evaluadas}
+
+\begin{itemize}
+    \item \textbf{Detección de vehículos ($H_{1.1}$).} La medición requiere cajas
+        de referencia humana, que no existen para los vehículos. La línea de
+        trabajo inmediata es anotar una muestra del pool congelado siguiendo el
+        mismo procedimiento de revisión aplicado a las placas: propuesta
+        automática, aceptación, corrección o descarte por un operador, y
+        partición por bloque de grabación. Sin esa anotación, el error de la
+        etapa de detección seguirá propagándose sin cuantificar al resto del
+        pipeline.
+
+    \item \textbf{Determinación de eventos ($H_{1.5}$).} La medición depende de
+        la simulación de extremo a extremo con las dos cámaras sincronizadas. La
+        lógica de zonas y línea virtual está implementada; lo que falta es el
+        escenario de prueba con verdad de referencia sobre una secuencia
+        completa de ingresos y salidas.
+
+    \item \textbf{Rendimiento y optimización.} Las transformaciones aplicadas
+        ---exportación a formatos intermedios, media precisión y compilación de
+        motores--- reducen la huella en disco en un $75\%$, pero su efecto sobre
+        latencia, tasa de fotogramas y exactitud no fue medido. Corresponde
+        completar el banco de pruebas por formato y por variante de escala sobre
+        el hardware de despliegue, e incluir la degradación de exactitud
+        atribuible a la media precisión, que es el dato que permite decidir si el
+        intercambio es aceptable.
+\end{itemize}
+
+\subsection{Líneas de continuidad}
+
+\begin{enumerate}
+    \item \textbf{Contraste contra un padrón de vehículos habilitados (RF-10).}
+        Es la capacidad prevista que la entrega no incluye. Requiere una entidad
+        de vehículos autorizados, la consulta de contraste en el momento del
+        registro y el reporte de accesos no autorizados al operador. Mientras el
+        padrón no exista, el sistema documenta el acceso pero no puede
+        clasificarlo como permitido o no permitido.
+
+    \item \textbf{Clasificación de color con referencia de exposición.} El error
+        se concentra en el bloque acromático y no es de tono sino de nivel de
+        brillo. Un modelo que reciba una referencia de exposición ---una región
+        de calibración en la escena o una tarjeta de grises--- podría separar
+        blanco, plata, gris y negro con un criterio distinto al actual.
+
+    \item \textbf{Reidentificación y seguimiento entre cámaras.} La arquitectura
+        prevé dos puntos de acceso. La asociación de una misma visita entre
+        cámaras permitiría determinar eventos sin depender exclusivamente de la
+        lectura de matrícula, lo que reduce la exposición a la brecha de
+        reconocimiento.
+
+    \item \textbf{Despliegue en hardware de borde.} Los motores compilados son
+        específicos del dispositivo y del controlador con que se generaron. Un
+        procedimiento reproducible de compilación por equipo de destino es
+        condición para distribuir el sistema más allá del equipo de desarrollo.
+
+    \item \textbf{Tratamiento de datos personales.} Las matrículas y los registros
+        asociados constituyen datos personales. Antes de una operación real debe
+        definirse la base de licitud, el plazo de conservación, quién accede a la
+        información y cómo se atiende una solicitud de supresión. El sistema
+        almacena lo necesario para operar; la política de retención es una
+        decisión institucional que el software no resuelve por sí solo.
+
+    \item \textbf{Extensión del conjunto de datos a otros recintos.} Todas las
+        sesiones provienen de las mismas cámaras. La partición por bloque horario
+        controla la fuga por identidad, pero no la variabilidad entre modelos de
+        cámara o condiciones de instalación distintas. Un conjunto con material de
+        un segundo recinto permitiría medir la generalización, que es la pregunta
+        que un despliegue real plantea de inmediato.
+\end{enumerate}
+
+\subsection{Consideración final}
+
+El trabajo deja un sistema construido, un conjunto de datos verificado y un
+conjunto de mediciones que delimitan con precisión qué sabe hacer el sistema y
+qué no. De los siete términos de hipótesis, dos se respaldan, tres no se alcanzan y
+dos quedan sin evaluar; de los seis objetivos específicos, tres se cumplen y
+tres se cumplen parcialmente. Esa proporción no es un resultado adverso: es el
+mapa exacto del estado del arte alcanzado, y es la información que permite que
+cualquier trabajo posterior se apoye en lo construido sin repetir lo ya medido.
