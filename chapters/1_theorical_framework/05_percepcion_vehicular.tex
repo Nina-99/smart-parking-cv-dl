@@ -1,0 +1,224 @@
+\section{Percepción Vehicular y Reconocimiento de Matrículas}
+
+La automatización avanzada de un parqueadero inteligente requiere trascender la
+mera detección de presencia vehicular para implementar una capa de percepción
+integral. En este nivel, el sistema analiza múltiples dimensiones
+atributo-espaciales de los automóviles que aproximan a las barreras de acceso,
+combinando la clasificación cromática y tipológica del vehículo con la
+localización y lectura óptica de su placa de matrícula. Esta verificación
+multi-modal no solo agiliza el flujo de paso, sino que fortalece la seguridad al
+correlacionar las características físicas de la carrocería con el registro de la
+matrícula almacenado en la base de datos del recinto.
+
+\subsection{Clasificación de atributos visuales en espacios de características
+discriminativos}
+
+Como analizan Lima y Laroca \cite{lima2024vehiclecolor}, la categorización fina
+de vehículos (tipo de carrocería y color predominante) proporciona una capa de
+seguridad crítica en el control de acceso a parqueaderos. La identificación del
+tipo de vehículo (sedán, camioneta, minibús, motocicleta) y su color permite
+establecer mecanismos de auditoría cruzada: si un automóvil intenta ingresar
+utilizando una placa registrada a nombre de un vehículo de distinta categoría o
+tonalidad, el sistema detecta de inmediato la discrepancia y emite una alerta
+por posible clonación o intercambio de matrícula.
+
+Desde la perspectiva del procesamiento visual, la extracción de estos atributos
+enfrenta desafíos ópticos significativos en el punto de acceso, como sombras
+proyectadas por las casetas, reflejos solares en la pintura y variaciones en las
+luminarias nocturnas. Para resolver estas ambigüedades, las arquitecturas
+profundas modernas (como EfficientNet, ResNet o Vision Transformers) proyectan
+los recortes del vehículo hacia espacios de características latentes de alta
+dimensión. En estos espacios, la red aprende a aislar la cromaticidad intrínseca
+de la pintura frente a los brillos especulares, permitiendo separar con alta
+precisión clases no lineales en el espacio cromático y morfológico.
+
+\subsection{Localización de objetos pequeños con geometría específica: detección
+de matrículas}
+
+En el encuadre general de una cámara de supervisión instalada en la barrera de
+un parqueadero, la placa de matrícula ocupa únicamente una fracción diminuta del
+total de píxeles del fotograma (configurando el problema clásico de detección de
+objetos pequeños o \textit{small targets}). Como demuestran Laroca et al.
+\cite{laroca2018robust} y Auza Banegas et al. \cite{auzabanegas2026blpr},
+localizar con precisión esta subregión rectangular es una etapa crítica, pues
+cualquier desviación geométrica en el recubrimiento de la placa degrada
+drásticamente la tasa de éxito del módulo subsecuente de reconocimiento óptico
+de caracteres (OCR).
+
+Para superar la atenuación espacial que sufren los objetos pequeños al atravesar
+las capas profundas de submuestreo, los detectores modernos apoyan su
+arquitectura en Redes de Pirámide de Características (\textit{Feature Pyramid
+Networks}, FPN) y en el aprovechamiento de patrones geométricos a priori. La
+matrícula vehicular posee prioris estructurales altamente discriminativos, como
+una relación de aspecto rectangular definida (aproximadamente $3:1$ o $2:1$),
+bordes de alto contraste y una densidad interna de gradientes generada por los
+caracteres alfanuméricos. Los cabezales de detección adaptativos utilizan estas
+propiedades para predecir cajas delimitadoras precisas sobre la placa, aislando
+la Región de Interés (ROI) de forma resistente a las variaciones de distancia
+focal y altura de montaje de las cámaras.
+
+\subsection{Del OCR clásico por segmentación al modelado de secuencias}
+
+Como detallan las revisiones sistemáticas de Anagnostopoulos et al.
+\cite{anagnostopoulos2008lpr} y Shashirangana et al. \cite{shashirangana2021alpr},
+los sistemas tradicionales de reconocimiento de matrículas (ALPR) dependían de
+un enfoque secuencial en tres etapas: localización de la placa, 
+binarización/segmentación individual de cada carácter y clasificación mediante
+coincidencia de plantillas (\textit{template matching}) o redes densas simples. 
+
+Sin embargo, estos métodos clásicos por segmentación colapsan frecuentemente en
+las condiciones operativas reales de un parqueadero al aire libre o
+semiconstruido:
+\begin{itemize}
+    \item \textbf{Fallos por fusión de caracteres:} La presencia de suciedad,
+        barro o sombras sobre la placa provoca que dos letras contiguas se unan
+        en una sola máscara de binarización, imposibilitando su separación.
+        
+    \item \textbf{Fraccionamiento por imperfecciones:} Tornillos de sujeción,
+        marcos metálicos o peladuras en la pintura generan falsos fragmentos que
+        el algoritmo interpreta erróneamente como caracteres individuales.
+        
+    \item \textbf{Sensibilidad al umbral de binarización:} Cambios bruscos de
+        iluminación entre el día y la noche impiden definir un umbral estático
+        de Otsu o adaptativo que aísle limpiamente el texto sin deformarlo.
+\end{itemize}
+
+Para erradicar esta fragilidad, la visión por computadora moderna migró hacia
+modelos de reconocimiento de secuencias libres de segmentación
+(\textit{segmentation-free}). Arquitecturas como CRNN, propuestas por Shi, Bai y
+Yao \cite{shi2017crnn}, y los modelos desarrollados por Li y Wang 
+\cite{li2018reading}, tratan la lectura de la placa como un problema de
+traducción de secuencia a secuencia visual, procesando la imagen de la matrícula
+completa en una única pasada \textit{end-to-end} sin necesidad de cortar letra
+por letra.
+
+\subsection{Modelos de secuencias (RNN, LSTM) y alineación mediante CTC}
+
+Como establecen Li y Wang \cite{li2018reading}, la arquitectura de un
+reconocedor de matrículas libre de segmentación se compone de tres etapas
+acopladas: un extractor convolucional (CNN), un modelador contextual recurrente
+(RNN/LSTM) y una capa de decodificación y transcripción. El extractor CNN
+transforma el recorte rectangular de la placa en una secuencia horizontal de
+vectores de características alineados de izquierda a derecha. Posteriormente,
+redes recurrentes bidireccionales con memoria de largo-corto plazo
+(\textit{Bidirectional Long Short-Term Memory}, BLSTM) \cite{hochreiter1997lstm}
+analizan la secuencia para capturar dependencias contextuales entre los
+caracteres adyacentes.
+
+El desafío matemático central en este esquema radica en que la longitud de la
+secuencia de características generada por la CNN no coincide en dimensión con el
+número de caracteres reales impresos en la placa. Como resolvieron Graves et al.
+\cite{graves2006ctc}, el algoritmo de Clasificación Temporal Conexionista
+(\textit{Connectionist Temporal Classification}, CTC) resuelve intuitivamente
+este problema de alineación no supervisada sin requerir anotaciones a nivel de
+píxel para cada letra.
+
+Para entender la lógica del algoritmo CTC de forma intuitiva:
+\begin{enumerate}
+    \item A medida que el modelo desliza su ventana de análisis a lo largo de la
+        imagen de la placa, la red emite probabilidades de caracteres para
+        múltiples divisiones verticales delgadas.
+
+    \item Como el ancho de un carácter abarca varias divisiones verticales, la
+        red genera predicciones repetidas y espacios vacíos. Por ejemplo, al
+        leer la secuencia ``AB1'', la salida cruda fotograma a fotograma podría
+        resultar en la cadena emitidamente sobredimensionada:
+        \texttt{``A-A--B---1-1''}, donde el símbolo \texttt{``-''} representa una
+        etiqueta especial de espacio en blanco (\textit{blank}).
+
+    \item El algoritmo CTC aplica una función de mapeo de colapso condicional
+        ($\mathcal{B}$) que opera en dos pasos continuos: primero condensa las
+        repeticiones consecutivas de caracteres idénticos no separados por un
+        espacio (\texttt{``A-A--B---1-1''} $\rightarrow$ \texttt{``A-A-B-1-1''}), y
+        posteriormente elimina todos los símbolos vacíos (\texttt{``-''},
+        \texttt{``blank''}).
+\end{enumerate}
+
+Como resultado de esta condensación, la secuencia se transforma limpiamente en
+la cadena de texto final \texttt{``AB1''}. Esta operación permite entrenar el
+modelo de OCR directamente sobre imágenes de matrículas completas etiquetadas
+únicamente con su texto de referencia, dotando al sistema de una robustez
+extrema ante ligeras deformaciones geométricas o imperfecciones en el fondo de
+la placa.
+
+\subsection{Dominio de aplicación: estructura y gramática formal de las
+matrículas en Bolivia}
+
+Como documentan Auza Banegas et al. \cite{auzabanegas2026blpr} en el desarrollo
+del marco BLPR y la normativa del Registro Único para la Administración
+Tributaria Municipal (RUAT), el estándar de matrículas vehiculares en Bolivia
+(vigente desde 1997) sigue una estructura alfanumérica formalmente estandarizada.
+La placa convencional para automóviles se compone de tres a cuatro dígitos
+numéricos seguidos de tres letras mayúsculas (formatos habituales
+\texttt{``1234ABC''} o \texttt{``456DEF''}), estampadas en color azul sobre un fondo
+blanco reflectante con la leyenda \texttt{``BOLIVIA''} en la parte superior.
+
+Conocer a priori esta sintaxis matemática y gramatical permite implementar una
+capa de post-procesamiento determinista basada en reglas que corrige
+automáticamente posibles ambigüedades producidas por el reconocedor visual OCR:
+
+\begin{equation}
+    \text{Regla de Corrección Sintáctica} =
+    \begin{cases} 
+        \begin{array}{l}
+            \text{'O'} \rightarrow \text{'0'}, \; \text{'I'} \rightarrow \text{'1'}, \; \text{'B'} \rightarrow \text{'8'} \\
+            \text{si la posición } p \in \{1, 2, 3, 4\}
+        \end{array} \\[3ex]
+        \begin{array}{l}
+            \text{'0'} \rightarrow \text{'O'}, \; \text{'1'} \rightarrow \text{'I'}, \; \text{'8'} \rightarrow \text{'B'} \\
+            \text{si la posición } p \in \{5, 6, 7\}
+        \end{array}
+    \end{cases}
+\end{equation}
+
+Por ejemplo, si la cámara captura un vehículo ingresando al parqueadero y el
+modelo de OCR predice la cadena ambigua \texttt{``12O4ABC''}, el módulo de
+post-procesamiento evalúa la gramática oficial de Bolivia. Al detectar que la
+tercera posición corresponde estrictamente al bloque numérico inicial, el
+sistema fuerza la conversión del carácter alfabético ambiguo \texttt{``O''} hacia
+el dígito numérico equivalente \texttt{``0''}, corrigiendo la lectura a
+\texttt{``1204ABC''}. De forma análoga, si el reconocedor detecta un número
+\texttt{``1''} en el bloque posterior reservado para letras, el filtro lo mapea al
+carácter alfabético \texttt{``I''}. Esta validación gramatical previa a la
+consulta en la base de datos incrementa significativamente la tasa de
+coincidencia exacta (\textit{Exact Match}) y reduce el índice de error por
+carácter (CER) en el recinto.
+
+\subsection{Factores de degradación visual en el reconocimiento de matrículas}
+
+En la operación continua de un parqueadero real, la calidad de la imagen
+capturada en las barreras se ve afectada por múltiples factores ambientales y
+mecánicos. De acuerdo con las categorizaciones de anomalías desarrolladas por
+Auza Banegas et al. \cite{auzabanegas2026blpr} y Rio-Alvarez et al.
+\cite{rioalvarez2019effects}, los principales factores de degradación visual se
+estructuran en:
+
+\begin{enumerate}
+    \item \textbf{Distorsión por perspectiva y ángulo agudo (\textit{Skewed
+        Plates}):} Representa la degradación más frecuente. Debido a que las
+        cámaras suelen montarse en postes laterales o esquinas superiores de las
+        casetas, la imagen de la placa sufre una deformación perspectiva
+        pronunciada, deformando la geometría de los caracteres alfanuméricos.
+
+    \item \textbf{Desenfoque por movimiento (\textit{Motion Blur}):} Ocurre
+        cuando el vehículo aproxima a la barrera a una velocidad superior a la
+        tasa de refresco del obturador de la cámara, dispersando los bordes de
+        los caracteres a lo largo de la trayectoria.
+        
+    \item \textbf{Variaciones extremas de iluminación y brillos especulares
+        (\textit{Low-Illumination / Glare}):} Incluye desde la escasez de luz en
+        horarios nocturnos hasta el deslumbramiento provocado por las luces
+        delanteras del automóvil o el sol incidente de frente, eliminando el
+        contraste entre el texto azul y el fondo blanco.
+
+    \item \textbf{Oclusiones parciales, suciedad y deterioro físico
+        (\textit{Damaged / Occluded Plates}):} Placas dobladas, cubiertas por
+        barro en temporadas de lluvia o parcialmente tapadas por enganches de
+        remolque o marcos protectores de plástico.
+\end{enumerate}
+
+Para neutralizar estos factores sin sobrecargar la latencia del sistema, las
+soluciones modernas integran etapas de preprocesamiento condicional —como
+rectificación geométrica por homografía mediante detección de esquinas, ajuste
+dinámico de contraste (CLAHE/Gamma) y filtros de respuesta estocástica— antes de
+pasar la imagen normalizada al motor de OCR.

@@ -1,0 +1,38 @@
+\section{Introducción}
+
+El diseño e implementación de un sistema autónomo para el control de acceso e
+identificación vehicular en parqueaderos urbanos requiere una fundamentación 
+teórica multidisciplinaria dentro de la visión por computadora y el aprendizaje
+profundo. Este capítulo establece las bases conceptuales, los modelos
+matemáticos y las evoluciones algorítmicas que sustentan el flujo de
+procesamiento completo del proyecto: desde la captura del fotograma digital en
+las barreras de ingreso hasta la determinación automatizada de los eventos de
+acceso.
+
+El desarrollo temático de este marco teórico sigue una estructura jerárquica
+descendente (\textit{top-down}) organizada en seis secciones que avanzan desde
+los fundamentos físicos de la percepción visual hasta la evaluación cuantitativa
+del sistema.
+
+La primera sección examina los principios de la \textbf{visión artificial clásica
+y el procesamiento de imágenes}, abarcando las representaciones matriciales, los
+espacios cromáticos, el filtrado espacial y las transformaciones morfológicas
+orientadas al preprocesamiento de matrículas, así como sus limitaciones físicas
+ante variaciones de iluminación, sombras y oclusiones en entornos no
+controlados. La segunda establece los \textbf{fundamentos del aprendizaje
+automático y profundo}, desde el paradigma supervisado y la partición de datos
+hasta las redes neuronales convolucionales, el aprendizaje por transferencia y
+las técnicas de aumento de datos.
+
+Sobre esa base, la tercera sección aborda la \textbf{detección de objetos},
+justificando la adopción de arquitecturas de una sola etapa ---como la familia
+YOLO--- frente a las alternativas de dos etapas, y analizando los cuellos de
+botella computacionales que condicionan la inferencia en tiempo real. La cuarta
+se concentra en la \textbf{percepción vehicular y el reconocimiento de
+matrículas}, cubriendo la clasificación de atributos, la localización de objetos
+pequeños y los modelos de secuencia con alineación temporal. La quinta desarrolla
+el \textbf{seguimiento vehicular y la determinación de eventos}, desde la
+formulación del seguimiento multiobjeto hasta la interpretación de trayectorias.
+Finalmente, la sexta sección cierra con la \textbf{evaluación y optimización de
+los modelos}, definiendo las métricas de desempeño y las técnicas de compresión
+que habilitan su despliegue en hardware de borde.

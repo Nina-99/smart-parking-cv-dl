@@ -1,0 +1,339 @@
+\section{Evaluación y Optimización de Modelos de Visión Artificial}
+
+La validación cuantitativa y la preparación para el despliegue en producción
+representan la etapa final en el desarrollo de un sistema de percepción
+vehicular. En el control de acceso a estacionamientos, los modelos de aprendizaje
+profundo no solo deben alcanzar un alto grado de exactitud matemática, sino que
+deben operar bajo estrictas restricciones de latencia en dispositivos de cómputo
+embebidos. Esta sección examina las métricas estandarizadas para evaluar la
+detección, el reconocimiento secuencial y el seguimiento temporal, así como las
+técnicas de compresión de modelos necesarias para garantizar su rendimiento en
+tiempo real en el borde (\textit{Edge AI}).
+
+\subsection{Métricas de clasificación y detección: Precision, Recall, F1-Score,
+mAP}
+
+Como establecen Sokolova y Lapalme \cite{sokolova2009performance} y Padilla et
+al. \cite{padilla2021metrics}, la evaluación de clasificadores y detectores se
+fundamenta en la matriz de confusión, la cual categoriza las predicciones frente
+a las anotaciones de referencia (\textit{ground truth}) en cuatro cuadrantes:
+Verdaderos Positivos ($TP$), Falsos Positivos ($FP$), Falsos Negativos ($FN$) y
+Verdaderos Negativos ($TN$). 
+
+En la operación real de un parqueadero inteligente, la interpretación de estos
+errores adquiere un significado crítico para la seguridad y la calidad del
+servicio:
+\begin{itemize}
+    \item \textbf{Falso Positivo ($FP$):} Ocurre cuando el detector predice la
+        presencia de un vehículo o matrícula donde no existe, o cuando clasifica
+        erróneamente un automóvil no registrado como autorizado. En la práctica,
+        un $FP$ representa una \textbf{falla de seguridad grave}, pues implica
+        abrir automáticamente la barrera de acceso a un vehículo no permitido o
+        registrar un ingreso inexistente.
+        
+    \item \textbf{Falso Negativo ($FN$):} Ocurre cuando el modelo omite la
+        presencia de un automóvil en el carril o no logra detectar la matrícula
+        de un cliente registrado. Operativamente, un $FN$ genera congestión en
+        la barrera, ya que deja esperando injustificadamente al usuario
+        autorizado y requiere la intervención manual del operador.
+\end{itemize}
+
+A partir de estas categorías, se definen las métricas fundamentales de evaluación:
+
+\begin{equation}
+    \text{Precision}
+    =
+    \frac{TP}{TP + FP}, \quad \text{Recall}
+    =
+    \frac{TP}{TP + FN}, \quad \text{F1-Score}
+    =
+    2 \cdot \frac{\text{Precision} \cdot \text{Recall}}{\text{Precision} + \text{Recall}}
+\end{equation}
+
+Mientras que la \textit{Precision} mide la validez de las aperturas de barrera
+efectuadas (evitando falsos accesos), el \textit{Recall} mide la tasa de
+recuperación de vehículos autorizados (evitando demoras innecesarias). El
+\textit{F1-Score} constituye la media armónica entre ambas, proporcionando un
+indicador sintético del desempeño global.
+
+Para evaluar la localización espacial de las cajas delimitadoras
+(\textit{bounding boxes}) de los automóviles y sus matrículas, Padilla et al.
+\cite{padilla2021metrics} formulan la precisión media promedio 
+(\textit{Mean Average Precision}, mAP). El mAP evalúa el área bajo la curva de
+Precision-Recall considerando distintos umbrales de Intersección sobre Unión 
+(IoU). Típicamente, el $\text{mAP}@0.5$ evalúa la capacidad del detector para
+encerrar de forma aproximada el vehículo o la placa (IoU $\ge 0.5$), mientras que
+el $\text{mAP}@0.5:0.95$ promedia el desempeño en diez umbrales estrictos,
+midiendo la precisión geométrica del ajuste de la caja delimitadora.
+
+\subsection{Métricas de reconocimiento de secuencias: Exactitud por carácter y CER}
+
+En el módulo de Reconocimiento Óptico de Caracteres (OCR), la evaluación
+trasciende la clasificación de imágenes individuales para medir la fidelidad en
+la lectura de cadenas alfanuméricas continuas. Como detallan Shi et al.
+\cite{shi2017crnn} y Auza Banegas et al. \cite{auzabanegas2026blpr}, la métrica
+principal para evaluar la precisión del OCR es la Tasa de Error por Carácter
+(\textit{Character Error Rate}, CER), la cual se fundamenta en la distancia de
+edición de Levenshtein:
+
+\begin{equation}
+    \text{CER} = \frac{S + D + I}{N}
+\end{equation}
+
+donde $S$ representa el número de sustituciones de caracteres, $D$ las deleciones
+(caracteres omitidos), $I$ las inserciones (caracteres fantasma añadidos) y $N$
+la cantidad total de caracteres reales en la matrícula de referencia. 
+
+En la lectura de matrículas, el impacto de una sustitución es directo. Por
+ejemplo, si el motor de OCR confunde el carácter alfabético \texttt{``O''} con el
+dígito numérico \texttt{``0''} en una placa real (prediciendo \texttt{``12O4ABC'}
+en lugar de \texttt{``1204ABC''}), la distancia de Levenshtein contabiliza una
+sustitución ($S = 1$). Aunque la precisión a nivel de carácter sea elevada
+($6/7 = 85.7\%$), la métrica de coincidencia exacta (\textit{exact match})
+cae a cero. Dado que las consultas en la base de datos del parqueadero requieren
+una coincidencia alfanumérica exacta para autorizar el paso, minimizar el CER
+mediante reglas de corrección sintáctica es indispensable para garantizar el
+funcionamiento del sistema.
+
+\subsection{Métricas de seguimiento de objetos: MOTA, MOTP e IDF1}
+
+Para evaluar la estabilidad del módulo de seguimiento multiobjeto a lo largo del
+tiempo, Bernardin y Stiefelhagen \cite{bernardin2008clear} y Ristani et al.
+\cite{ristani2016performance} formalizaron el conjunto de métricas CLEAR MOT:
+
+\begin{enumerate}
+    \item \textbf{Precisión de Seguimiento Multiobjeto (\textit{Multiple Object
+        Tracking Precision}, MOTP):} Mide la precisión geométrica promedio en la
+        estimación de las posiciones de los vehículos coincidentes a lo largo de
+        la secuencia de video:
+        \begin{equation}
+            \text{MOTP} = \frac{\sum_{t, i} d_{t, i}}{\sum_t c_t}
+        \end{equation}
+        donde $d_{t, i}$ representa la distancia o desalineación espacial entre
+        la caja predicha y la real para la coincidencia $i$ en el fotograma $t$,
+        y $c_t$ es el número total de coincidencias.
+
+    \item \textbf{Exactitud de Seguimiento Multiobjeto (\textit{Multiple Object
+        Tracking Accuracy}, MOTA):} Evalúa la capacidad global del sistema para
+        mantener trayectorias continuas, integrando los tres tipos de errores
+        posibles:
+
+        \begin{equation}
+            \text{MOTA} = 1 - \frac{\sum_t (FN_t + FP_t + IDSW_t)}{\sum_t GT_t}
+        \end{equation}
+        donde $GT_t$ es la cantidad de vehículos reales en el fotograma $t$, y
+        $IDSW_t$ representa el número de cambios de identidad (\textit{Identity
+        Switches}). En el parqueadero, un cambio de ID erróneo ($IDSW$) ocurre
+        cuando el rastreador asigna un nuevo número de seguimiento a un automóvil
+        que avanza lentamente hacia la barrera, provocando registros duplicados
+        del mismo evento de ingreso.
+
+    \item \textbf{Puntuación IDF1 (\textit{Identification F1-Score}):} Mide la
+        proporción de detecciones correctamente identificadas a lo largo de toda
+        la trayectoria completa del vehículo, evaluando la consistencia del mapeo
+        de identidades a largo plazo frente a fragmentaciones u oclusiones
+        temporales \cite{ristani2016performance}.
+\end{enumerate}
+
+\subsection{Compromiso entre exactitud y latencia: Rendimiento en el Borde}
+
+En aplicaciones industriales de control de accesos, el desempeño de un algoritmo
+no se juzga únicamente por su exactitud en conjuntos de datos estáticos, sino por
+su capacidad para responder bajo límites temporales estrictos en el entorno
+operativo. Para garantizar una experiencia fluida al usuario y evitar
+embotellamientos en la vía pública, el pipeline completo de visión (detección de
+vehículo, localización de placa, lectura de OCR y decisión de barrera) debe
+ejecutarse con una \textbf{latencia total inferior a 1 segundo por evento}
+\cite{auzabanegas2026blpr}.
+
+El análisis experimental de rendimiento evalúa el compromiso (\textit{trade-off})
+entre exactitud y velocidad mediante dos indicadores clave:
+\begin{itemize}
+    \item \textbf{Tiempo de Inferencia ($\text{ms/img}$):} La latencia individual
+        requerida por la red neuronal para procesar una imagen de entrada en la
+        GPU o acelerador de cómputo.
+
+    \item \textbf{Fotogramas por Segundo (FPS):} La tasa de refresco continua que
+        puede sostener el pipeline en tiempo de ejecución.
+\end{itemize}
+
+El desafío reside en que los dispositivos de borde (\textit{Edge AI}) instalados
+en las casetas del parqueadero (tales como módulos NVIDIA Jetson u ordenadores
+embebidos) disponen de restricciones severas de consumo energético, memoria VRAM
+y capacidad de cómputo en comparación con servidores en la nube. Por ello, la
+arquitectura del detector debe equilibrar el número de parámetros y la cantidad
+de operaciones de punto flotante (GFLOPs) para sostener tasas superiores a 30 FPS
+en resolución de alta definición.
+
+\subsection{Compresión de modelos: Cuantización de pesos (FP32, FP16, INT8)}
+
+Para adaptar redes neuronales profundas y complejas a hardware embebido
+restringido sin sacrificar su precisión predictiva, Sapkota et al.
+\cite{sapkota2026yolo26} y Jocher et al. \cite{jocher2026yolo26} destacan la
+aplicación de técnicas de compresión de modelos, siendo la \textbf{cuantización
+de pesos} la más efectiva para acelerar la inferencia.
+
+La cuantización consiste en mapear la representación numérica de los parámetros y
+activaciones de la red desde formatos continuos de alta precisión hacia formatos
+discretos de menor ancho de banda de memoria:
+\begin{itemize}
+    \item \textbf{FP32 (Punto Flotante de 32 bits):} Es el formato de precisión
+        simple estándar utilizado durante el entrenamiento en GPU, ofreciendo un
+        amplio rango dinámico a costa de una elevada huella de memoria y mayor
+        consumo energético.
+
+    \item \textbf{FP16 (Media Precisión de 16 bits):} Reduce a la mitad el tamaño
+        del modelo en memoria RAM/VRAM y acelera la inferencia en aceleradores
+        modernos con unidades de tensor nativas, conservando prácticamente el
+        $100\%$ de la precisión original.
+
+    \item \textbf{INT8 (Enteros de 8 bits):} Mapea los pesos de 32 bits a valores
+        enteros discretos dentro del rango $[-128, 127]$. 
+\end{itemize}
+
+Pasar un modelo de detección u OCR desde FP32 a INT8 reduce la huella de memoria
+del archivo de pesos en un $75\%$ y triplica la velocidad de inferencia (FPS) en
+aceleradores como TensorRT, OpenVINO o ONNX Runtime. Dado que la cuantización
+transforma operaciones de multiplicación matricial complejas en aritmética de
+enteros de bajo consumo, los dispositivos de borde pueden procesar los flujos de
+video con una latencia de milisegundos, experimentando una degradación en la
+precisión (mAP) casi imperceptible ($\le 1\%$). Esta optimización permite
+desplegar modelos de vanguardia (como la familia YOLO) directamente en las
+casetas del estacionamiento, garantizando un control de acceso autónomo, robusto
+y eficiente.
+
+\subsection{Valores de referencia y umbrales de aceptación del proyecto}
+
+Las métricas definidas en los apartados precedentes carecen de poder de decisión
+mientras no se establezca un valor de referencia que permita calificar el
+desempeño de un modelo como suficiente o insuficiente. Un umbral desprovisto de
+justificación constituye un criterio arbitrario, por lo que en este apartado se
+explicitan los valores adoptados y su procedencia.
+
+La justificación combina dos fuentes complementarias. La primera es el rango de
+desempeño reportado en la literatura para tareas equivalentes, que sitúa el
+umbral dentro de lo que la comunidad científica considera alcanzable. La segunda
+es el requisito operativo del sistema: el nivel de error a partir del cual el
+control de acceso deja de ser confiable y exige intervención manual. Cuando la
+literatura revisada no reporta un rango directamente comparable, el umbral se
+sustenta exclusivamente en la segunda fuente y así se declara de forma explícita.
+
+La Tabla \ref{tab:umbrales} resume los umbrales adoptados, el valor de referencia
+que los respalda y su procedencia.
+
+\begin{longtable}{
+        P{0.25}
+        P{0.10}
+        P{0.35}
+        P{0.20}
+    }
+    \caption{Umbrales de aceptación y valores de referencia}
+    \label{tab:umbrales}\\
+
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Indicador} &
+    \textbf{Umbral} &
+    \textbf{Valor de referencia} &
+    \textbf{Procedencia} \\
+    \midrule
+    \endfirsthead
+
+    \multicolumn{4}{c}{\textit{Continuación de la Tabla
+    \ref{tab:umbrales}}} \\
+    \toprule
+    \rowcolor{gray!20}
+    \textbf{Indicador} &
+    \textbf{Umbral} &
+    \textbf{Valor de referencia} &
+    \textbf{Procedencia} \\
+    \midrule
+    \endhead
+
+    mAP@50 (detección de vehículos) & $\geq 80\%$ &
+    Entre $40{,}9$ y $57{,}5$ de mAP@50--95 en COCO para la familia YOLO26. &
+    \cite{jocher2026yolo26, sapkota2026yolo26} \\
+    \midrule
+
+    F1-score macro (tipo de vehículo) & $\geq 85\%$ &
+    Sin rango directamente comparable en las fuentes revisadas. &
+    Criterio operativo \\
+    \midrule
+
+    F1-score macro (color predominante) & $\geq 85\%$ &
+    Entre $83{,}5\%$ y $97{,}8\%$, con $44{,}4\%$ de imágenes nocturnas mal
+    clasificadas en condiciones adversas. &
+    \cite{lima2024vehiclecolor} \\
+    \midrule
+
+    Recall (detección de placas) & $\geq 90\%$ &
+    Entre $91{,}3\%$ y $98{,}8\%$ de exactitud de detección en la revisión
+    sistemática de sistemas de reconocimiento de placas. &
+    \cite{shashirangana2021alpr, anagnostopoulos2008lpr} \\
+    \midrule
+
+    Exactitud por carácter (OCR) & $\geq 90\%$ &
+    $89{,}6\%$ de exactitud a nivel de carácter sobre datos reales con
+    matrículas del contexto local. &
+    \cite{auzabanegas2026blpr} \\
+    \midrule
+
+    Exactitud de eventos & $\geq 90\%$ &
+    Las fuentes revisadas definen las métricas de seguimiento pero no un umbral
+    de aceptación. &
+    Criterio operativo \\
+    \midrule
+
+    Latencia por evento & $\leq 1$ s &
+    Sin rango comparable; condicionada por la exigencia de operación en tiempo
+    real. &
+    Criterio operativo \\*
+    \multicolumn{4}{r}{\footnotesize\textit{Fuente: Elaboración propia}} \\*
+    \bottomrule
+\end{longtable}
+
+\textbf{Detección de vehículos.} La familia YOLO26 reporta en COCO valores de
+mAP@50--95 comprendidos entre $40{,}9$ y $57{,}5$ según la escala del modelo,
+métrica que resulta más exigente que el mAP@50 evaluado en este proyecto, pues
+promedia diez umbrales de intersección sobre unión en lugar de uno. Considerando
+además que el dominio de estudio es sustancialmente más acotado que COCO
+---una única escena, condiciones de captura estables y una sola familia de
+objetos---, el umbral de $80\%$ de mAP@50 se sitúa por encima del desempeño
+generalista reportado y es, por tanto, exigente pero alcanzable.
+
+\textbf{Reconocimiento de color.} El rango reportado para reconocimiento de color
+vehicular abarca desde $83{,}5\%$ en condiciones adversas hasta $97{,}8\%$ en
+condiciones controladas. El umbral de $85\%$ se ubica deliberadamente en el
+extremo conservador de ese rango, próxima al límite inferior, porque las
+condiciones de captura del parqueadero incluyen operación nocturna, donde la
+misma fuente reporta que cerca de la mitad de las imágenes nocturnas resultan
+mal clasificadas.
+
+\textbf{Reconocimiento de placas.} El umbral de Recall adoptado ($90\%$) se sitúa
+en el extremo inferior del rango de detección reportado ($91{,}3\%$ a $98{,}8\%$),
+lo que lo convierte en el criterio menos exigente del conjunto. En cambio, el
+umbral de exactitud por carácter ($90\%$) se apoya en un resultado obtenido sobre
+datos reales con matrículas del contexto local, que reporta $89{,}6\%$; adoptar
+$90\%$ implica exigir un desempeño igual o superior al reportado, lo que
+constituye uno de los criterios más demandantes del proyecto.
+
+\textbf{Tipo de vehículo y determinación de eventos.} Las fuentes revisadas
+fundamentan la elección de las métricas ---media armónica para el desbalance
+entre clases y las métricas CLEAR MOT para el seguimiento--- pero no establecen
+un valor de aceptación universal. El umbral de $85\%$ para el tipo de vehículo y
+el de $90\%$ para los eventos se justifican, en consecuencia, por vía operativa:
+un error superior a esos niveles implicaría que una proporción apreciable de
+vehículos requeriría verificación manual en la barrera, anulando el beneficio de
+la automatización.
+
+\textbf{Latencia.} La restricción de un segundo por evento no proviene de la
+literatura sino de la operación del recinto: por encima de ese valor, el tiempo
+de espera del conductor en la barrera deja de ser aceptable. Su verificación es
+experimental y se realiza sobre el hardware de despliegue.
+
+En síntesis, tres de los siete criterios se sustentan simultáneamente en la
+literatura y en el requisito operativo, mientras que los cuatro restantes se
+sustentan únicamente en el segundo. Esta distinción se declara de forma explícita
+para que la evaluación posterior permita distinguir entre un resultado que
+alcanza un estándar de la disciplina y uno que satisface una exigencia
+operativa del proyecto.

@@ -1,0 +1,178 @@
+\section{Detección de Objetos mediante Aprendizaje Profundo en Entornos Urbanos}
+
+La automatización de procesos de supervisión vehicular en infraestructura urbana
+requiere la localización y clasificación precisa de las instancias presentes en
+el flujo de video. En el control de accesos a parqueaderos, los algoritmos de
+detección de objetos constituyen el núcleo del sistema de percepción, siendo
+responsables de identificar vehículos completos (sedanes, camionetas, minibuses)
+y aislar subregiones de interés como las placas de matrícula.
+
+\subsection{Formulación de la detección: Cajas delimitadoras y Funciones de Pérdida}
+
+Como formulan Redmon et al. \cite{redmon2016yolo}, la detección de objetos
+reformula la clasificación tradicional al predecir simultáneamente la categoría
+del objeto y un vector continuo de coordenadas espaciales que define una caja
+delimitadora (\textit{bounding box}). Para cada objeto identificado en el
+parqueadero, la red predice una tupla $B = (x, y, w, h)$, donde $(x, y)$
+representan las coordenadas del centro de la caja ajustadas dinámicamente a la
+celda de la Rejilla, mientras que $w$ y $h$ denotan el ancho y el alto
+normalizados con respecto a las dimensiones totales de la imagen. Este principio
+permite encerrar desde la silueta completa de un vehículo ingresando al recinto
+hasta aislar con alta resolución espacial la región rectangular de la matrícula.
+
+Para medir cuantitativamente el grado de solapamiento entre la caja delimitadora
+predicha por el modelo ($B_{\text{pred}}$) y la caja de referencia anotada
+manualmente ($B_{\text{gt}}$), se utiliza la métrica de Intersección sobre Unión
+(\textit{Intersection over Union}, IoU) \cite{rezatofighi2019giou}:
+
+\begin{equation}
+    \text{IoU}(B_{\text{pred}}, B_{\text{gt}})
+    =
+    \frac{|B_{\text{pred}} \cap B_{\text{gt}}|}{|B_{\text{pred}} \cup B_{\text{gt}}|}
+\end{equation}
+
+Dado que la métrica IoU convencional produce gradientes nulos cuando dos cajas
+no se solapan ($\text{IoU} = 0$), las arquitecturas modernas optimizan la
+localización mediante funciones de pérdida geométricas continuas como
+Generalized IoU ($\mathcal{L}_{\text{GIoU}}$) y Complete IoU
+($\mathcal{L}_{\text{CIoU}}$) \cite{zheng2020diou}, las cuales incorporan
+penalizaciones por la distancia entre centros de las cajas y la discrepancia en
+su relación de aspecto:
+
+\begin{equation}
+    \mathcal{L}_{\text{CIoU}}
+    =
+    1 - \text{IoU} + \frac{\rho^2(b, b^{\text{gt}})}{c^2} + \alpha v
+\end{equation}
+
+donde $\rho(b, b^{\text{gt}})$ representa la distancia euclídea entre los puntos
+centrales de la caja predicha y la real, $c$ es la diagonal del contenedor
+convexo mínimo que abarca ambas cajas, y $v$ mide la consistencia en la relación
+de aspecto geométrica de la placa o vehículo.
+
+\subsection{Taxonomía de detectores: Modelos de una etapa para inferencia en tiempo real}
+
+Históricamente, la literatura de visión artificial dividió los detectores
+profundos en dos grandes familias: los detectores de dos etapas
+(\textit{two-stage}) y los de una sola etapa (\textit{one-stage}). Como
+describen Ren et al. \cite{ren2015faster}, los modelos de dos etapas (como
+Faster R-CNN) emplean una Red de Propuesta de Regiones (\textit{Region Proposal
+Network}, RPN) para generar candidatos de objetos, los cuales son posteriormente
+recortados, vectorizados y clasificados por subredes secundarias. Aunque este
+enfoque ofrece un nivel elevado de precisión, la evaluación secuencial de
+cientos de propuestas regionales genera un cuello de botella computacional
+insuperable para el procesamiento de video de alta tasa de fotogramas.
+
+En el contexto del control vehicular en parqueaderos, la latencia de inferencia
+es un factor crítico. Por ello, los detectores de dos etapas son descartados
+frente a las arquitecturas de una sola etapa (\textit{one-stage}) como SSD
+\cite{liu2016ssd} y la familia YOLO \cite{redmon2016yolo, wang2024yolov1to10}.
+Estos modelos evalúan la escena completa en una única pasada convolucional
+(\textit{single-pass}), realizando la regresión de coordenadas y la asignación
+de probabilidades de clase de forma simultánea. Esta unificación del flujo de
+datos reduce el tiempo de procesamiento a milisegundos por fotograma,
+consolidando a las arquitecturas de una etapa como el estándar de facto para la
+supervisión vehicular en tiempo real.
+
+\subsection{Evolución arquitectónica de la familia YOLO}
+
+La evolución de la familia YOLO ha estado marcada por un cambio continuo en la
+representación de los datos y en la eficiencia computacional. Las primeras
+generaciones (YOLOv2 a YOLOv5) \cite{redmon2016yolo} introdujeron el concepto de
+cajas ancla (\textit{anchor boxes}), las cuales requerían predefinir manualmente
+plantillas de forma y tamaño mediante algoritmos de agrupamiento ($k$-means)
+sobre el conjunto de entrenamiento.
+
+Sin embargo, como demuestran Tian et al. \cite{tian2019fcos} y Ge et al. en
+YOLOX, la dependencia de anclas fijas introduce rigidez y una alta sensibilidad
+a hiperparámetros. La transición hacia arquitecturas libres de anclas
+(\textit{anchor-free}), adoptada en YOLOv8, YOLOv10 y YOLO26 
+\cite{sapkota2026yolo26, jocher2026yolo26}, eliminó las cajas de referencia
+predefinidas. En su lugar, el detector predice directamente desde cada punto
+sobre el mapa de características las cuatro distancias continuas $(l, t, r, b)$ 
+hacia los bordes superior, inferior, izquierdo y derecho de la entidad visual.
+
+Esta transición hacia el enfoque \textit{anchor-free} mejoró drásticamente la
+capacidad de detección multiescala dentro de la misma escena de parqueadero. Al
+no depender de dimensiones de ancla preajustadas, la red adapta dinámicamente
+sus campos receptivos, permitiendo localizar con alta precisión objetos de
+dimensiones dispares dentro del mismo encuadre: desde un camión de carga de gran
+volumen hasta una pequeña placa de matrícula instalada en el parachoques de un
+automóvil.
+
+\subsection{Cuellos de botella en el Borde (Edge AI): NMS y DFL en oclusión vehicular}
+
+El despliegue de sistemas inteligentes en puntos de acceso vehicular exige
+ejecutar los modelos de visión directamente en dispositivos de borde
+(\textit{Edge AI}) integrados en las casetas del parqueadero (como tarjetas
+NVIDIA Jetson o procesadores embebidos), donde la memoria, la potencia de
+cálculo y la disipación térmica son limitadas \cite{sapkota2026yolo26}. En este
+escenario, dos componentes arquitectónicos tradicionales representan los
+principales cuellos de botella computacionales:
+
+\begin{enumerate}
+    \item \textbf{Carga computacional de Distribution Focal Loss (DFL):} Módulos
+        como DFL transforman la regresión de cada borde de la caja en una
+        distribución de probabilidad discreta distribuida en $K$ contenedores
+        ($K=16$). Evaluar funciones \textit{Softmax} y sumas ponderadas sobre
+        miles de puntos espaciales incrementa significativamente las operaciones
+        de punto flotante (FLOPs) y el tamaño del cabezal de detección. En
+        dispositivos con recursos restringidos, DFL ralentiza el tiempo de
+        respuesta y complica la exportación de modelos a formatos de ejecución
+        cuantitizados como TensorRT o INT8 \cite{jocher2026yolo26}.
+    
+    \item \textbf{Latencia estocástica de Supresión No Máxima (NMS):} El
+        algoritmo tradicional NMS ordena y elimina iterativamente las cajas con
+        alto grado de solapamiento mediante un umbral rígido de IoU
+        \cite{bodla2017softnms}. En accesos con tráfico denso, cuando los
+        automóviles avanzan en fila muy cercanos o sufren oclusiones parciales,
+        NMS presenta dos fallas críticas:
+
+    \begin{itemize}
+        \item \textit{Latencia variable:} El tiempo de ejecución en CPU/GPU
+            oscila impredeciblemente en función de la cantidad de vehículos
+            detectados en la escena.
+
+        \item \textit{Falsos negativos por oclusión:} NMS corre el riesgo de
+            suprimir erróneamente la caja delimitadora de un automóvil válido al
+            interpretar que su alto nivel de solapamiento con la caja del
+            vehículo delantero es un duplicado, provocando la pérdida de
+            registros de acceso.
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Arquitecturas modernas (NMS-Free) y Detección de Objetos Pequeños}
+
+Para eliminar los retrasos del post-procesamiento en entornos de acceso crítico,
+las versiones más recientes como YOLOv10, YOLOv12 y YOLO26
+\cite{wang2024yolov1to10, tian2025yolov12_arxiv, sapkota2026yolo26} introducen
+un diseño de cabezal dual (\textit{dual-head}). Durante el entrenamiento, el
+modelo utiliza una rama uno-a-muchos (\textit{one-to-many}) para proporcionar
+una supervisión densa y acelerar la convergencia, y una rama uno-a-uno
+(\textit{one-to-one}) que aprende a asignar exactamente un predictor positivo
+por objeto. Durante la inferencia en producción, se utiliza exclusivamente la
+rama uno-a-uno, logrando una decodificación directa \textit{End-to-End NMS-Free}
+que erradica la dependencia de NMS y garantiza una latencia constante. Además,
+YOLO26 elimina por completo el módulo DFL, aligerando el cabezal de regresión y
+reduciendo en más del 20\% los FLOPs requeridos \cite{jocher2026yolo26}.
+
+Por otro lado, la localización de matrículas lejanas representa el reto de
+detectar ``objetos pequeños'' (\textit{small targets}), los cuales ocupan apenas
+una mínima fracción de píxeles en la captura de alta resolución. En los métodos
+de asignación tradicionales (\textit{Task-Aligned Learning}, TAL), las
+operaciones de submuestreo (\textit{downsampling}) reducen la resolución
+espacial de los mapas de características profundos de tal forma que los objetos
+muy pequeños no logran contener ningún punto de ancla en su interior, recibiendo
+cero asignaciones positivas y anulando el gradiente de aprendizaje para dicha
+muestra \cite{jocher2026yolo26}.
+
+Para resolver esta degradación, modelos como YOLOv13 y YOLO26 incorporan la
+técnica de Asignación de Etiquetas Adaptativa para Objetos Pequeños
+(\textit{Small-Target-Aware Label Assignment}, STAL) \cite{lei2025yolov13,
+sapkota2026yolo26}. STAL desacopla la geometría utilizada durante el filtrado de
+candidatos de la superficie real de la caja, garantizando de forma matemática la
+generación de muestras positivas para objetos cuya superficie sea inferior al
+salto del mapa de características (\textit{stride}). Gracias a esta innovación,
+el detector mantiene una supervisión continua sobre las matrículas distantes, 
+resolviendo el problema crítico de la pérdida de detección de patentes lejanas
+en las barreras de ingreso.

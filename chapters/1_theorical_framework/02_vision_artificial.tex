@@ -1,0 +1,136 @@
+\section{Visión Artificial y Procesamiento de Imágenes}
+
+\subsection{Modelo de la imagen digital y espacios de color (RGB, HSV) aplicados
+al entorno}
+
+Como establecen Gonzalez y Woods \cite{gonzalez2018digital} y Szeliski
+\cite{szeliski2022computer}, una imagen digital bidimensional se representa
+matemáticamente como una función de intensidad discreta $I(x, y)$, donde $(x, y)$
+denotan las coordenadas espaciales en un plano cartesiano y el valor de $I$
+corresponde a la amplitud o brillo en dicho punto (píxel). En imágenes multicanal
+a color, cada posición espacial está definida por un vector tridimensional en un
+espacio vectorial determinado.
+
+El modelo de color predeterminado en los sensores de las cámaras de seguridad es
+el espacio RGB (\textit{Red, Green, Blue}). Sin embargo, la representación RGB
+acopla fuertemente la información cromática con la intensidad luminosa, haciendo
+que variaciones en la luz ambiental alteren drásticamente los tres canales
+simultáneamente \cite{gonzalez2018digital}. Para mitigar esta vulnerabilidad en
+el parqueadero, el sistema transforma las capturas al espacio de color HSV
+(\textit{Hue, Saturation, Value}), el cual desacopla el tono ($H$) y la
+saturación ($S$) de la luminancia o brillo ($V$).
+
+Esta separación es fundamental para la robustez del sistema durante la operación
+nocturna. Como analizan Liu y Zeng \cite{liu2017vehiclecounting} y Auza Banegas
+et al. \cite{auzabanegas2026blpr}, cuando un automóvil aproxima a la barrera de
+acceso con los faros delanteros encendidos, se generan destellos directos y
+reflexiones de alta intensidad sobre la calzada y la carrocería. Al aislar el
+canal de luminancia $V$, el sistema puede aplicar umbralizaciones y análisis
+cromáticos sobre las coordenadas de tono y saturación ($H, S$), permitiendo
+clasificar el color real del vehículo y localizar la placa de matrícula sin
+sufrir saturación ni cegueras provocadas por los haces de luz nocturnos.
+
+\subsection{Filtrado espacial lineal y suavizado Gaussiano}
+
+El filtrado espacial lineal consiste en la aplicación de una operación de
+convolución discreta bidimensional entre la matriz de la imagen $I(x, y)$ y un
+núcleo o filtro espacial $K(m, n)$ de dimensiones reducidas \cite{szeliski2022computer}:
+
+\begin{equation}
+    (I * K)(x, y)
+    =
+    \sum_{m=-k}^{k} \sum_{n=-k}^{k} I(x - m, y - n) \, K(m, n)
+\end{equation}
+
+Entre los filtros de suavizado pasabajo, el \textbf{Filtro Gaussiano} utiliza un
+núcleo cuyos coeficientes están definidos por una distribución Gaussiana
+bidimensional con desviación estándar $\sigma$. Su función principal es atenuar
+los componentes de alta frecuencia espacial mientras preserva las estructuras de
+los bordes principales de la escena \cite{gonzalez2018digital}.
+
+En el punto de acceso al parqueadero, los sensores de video capturan
+continuamente ruido de alta frecuencia introducido por factores climáticos y
+térmicos. La presencia de textura rugosa en el asfalto mojado, el goteo de lluvia
+cayendo frente a la lente o el grano fotométrico generado por el sensor en
+condiciones de baja iluminación introducen artefactos aleatorios. La aplicación
+del suavizado Gaussiano atenúa estos gradientes espaciales espurios,
+homogeneizando las superficies antes de ejecutar algoritmos de extracción de
+bordes o segmentación de vehículos.
+
+\subsection{Morfología matemática (Top-Hat, Apertura) en el preprocesamiento de
+matrículas}
+
+La morfología matemática en procesamiento de imágenes grises se fundamenta en la
+teoría de conjuntos y opera mediante la interacción entre la imagen de entrada y
+un elemento estructurante $B$ de forma y tamaño definidos
+\cite{soille2003morphological}. Las dos operaciones morfológicas no lineales
+básicas son la \textit{Erosión} ($\epsilon_B$) y la \textit{Dilatación}
+($\delta_B$), a partir de las cuales se construyen la \textit{Apertura}
+($\gamma_B = \delta_B \circ \epsilon_B$) —que remueve pequeños brillantes— y el
+\textit{Cierre} ($\phi_B = \epsilon_B \circ \delta_B$) —que rellena pequeñas
+grietas oscuras—.
+
+Para el realce de estructuras delgadas con iluminación desigual, Soille
+\cite{soille2003morphological} formula la transformación \textbf{Top-Hat}
+(o Sombrero de Copa):
+\begin{itemize}
+    \item \textbf{White Top-Hat ($\mathcal{T}_w$):} Diferencia entre la imagen
+        original y su apertura ($\mathcal{T}_w(I) = I - \gamma_B(I)$), aislando
+        elementos más brillantes que su entorno local.
+
+    \item \textbf{Black Top-Hat / Bottom-Hat ($\mathcal{T}_b$):} Diferencia entre
+        el cierre y la imagen original ($\mathcal{T}_b(I) = \phi_B(I) - I$),
+        aislando elementos más oscuros que su entorno local.
+\end{itemize}
+
+Como destacan Anagnostopoulos et al. \cite{anagnostopoulos2008lpr} y Auza Banegas
+et al. \cite{auzabanegas2026blpr}, el estándar de matrículas vehiculares (como el
+boliviano) presenta caracteres alfanuméricos oscuros (azules o negros) estampados
+sobre un fondo blanco reflectante. Cuando la cámara captura una placa bajo
+sombras parciales proyectadas por el parachoques o con iluminación solar
+heterogénea, la intensidad del fondo varía drásticamente. La aplicación de la
+transformación \textit{Black Top-Hat} aisla y resalta específicamente los trazos
+oscuros de las letras y números frente al fondo claro, corrigiendo el gradiente
+de iluminación antes de pasar el recorte al motor de Reconocimiento Óptico de
+Caracteres (OCR).
+
+\subsection{Limitaciones del procesamiento clásico ante perturbaciones 
+ambientales (sombras, oclusión)}
+
+A pesar del rigor matemático del procesamiento digital de imágenes clásico, su
+aplicación directa para el control de acceso en entornos no controlados presenta
+severas limitaciones estructurales. Como demuestran las investigaciones de
+Tatulea et al. \cite{tatulea2019image}, Chandrasekaran et al.
+\cite{chandrasekaran2022parking} y Lee et al. \cite{lee2023systematic}, los
+métodos deterministas (basados en umbrales estáticos de Otsu, substracción de
+fondo o detectores de bordes de Canny) dependen de la suposición rígida de que
+las condiciones ópticas de la escena permanecen constantes.
+
+En la realidad operativa de un parqueadero al aire libre, esta premisa se rompe
+continuamente por perturbaciones ambientales dinámicas \cite{rioalvarez2019effects}:
+\begin{enumerate}
+    \item \textbf{Sombras móviles y cambios de iluminación pasante:} El
+        movimiento del sol a lo largo del día y la proyección de sombras de
+        árboles, estructuras o de los propios vehículos alteran la distribución
+        de histogramas de los píxeles, provocando que los algoritmos de
+        substracción de fondo identifiquen las sombras como falsos vehículos.
+
+    \item \textbf{Reflejos especulares y charcos en la calzada:} El agua
+        acumulada en el pavimento tras una lluvia actúa como un espejo que
+        refleja las luces de tráfico y el cielo, generando contornos ruidosos que
+        distorsionan las máscaras de segmentación clásica.
+
+    \item \textbf{Oclusiones parciales y variaciones de perspectiva:} Marcos de
+        placa, enganches de remolque, acumulación de barro sobre el parachoques
+        o ángulos de captura laterales agudos deforman la geometría de los
+        objetos. Los métodos basados en plantillas fijas (\textit{template
+        matching}) colapsan incapaces de adaptarse a estas deformaciones geométricas.
+\end{enumerate}
+
+Estas deficiencias físicas demuestran que las reglas heurísticas ajustadas
+manualmente son insuficientes para garantizar la fiabilidad del sistema durante
+las 24 horas del día. Esta barrera tecnológica justifica de manera categórica la
+necesidad de adoptar modelos de \textbf{Aprendizaje Profundo} (\textit{Deep
+Learning}), los cuales reemplazan los filtros diseñados a mano por
+representaciones jerárquicas aprendidas directamente desde los datos, logrando
+invariancia ante las perturbaciones del mundo real.

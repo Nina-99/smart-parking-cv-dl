@@ -1,0 +1,172 @@
+\section{Seguimiento Vehicular y Determinación de Eventos}
+
+En un sistema de control de acceso para parqueaderos, la detección frame a frame
+de los vehículos resulta insuficiente si no se acopla a un mecanismo de
+continuidad temporal. El módulo de seguimiento vehicular (\textit{Vehicle
+Tracking}) tiene como objetivo vincular las detecciones espaciales a lo largo
+del tiempo para construir la trayectoria continua de cada automóvil. Esta etapa
+es fundamental para transformar coordenadas crudas de píxeles en eventos
+operativos estructurados, tales como la autorización de paso, el conteo en
+tiempo real y la clasificación direccional de ingresos y salidas.
+
+\subsection{Formulación matemática del seguimiento de objetos múltiples (MOT)}
+
+Como sintetizan Luo et al. \cite{luo2021mot}, el seguimiento de objetos
+múltiples (\textit{Multiple Object Tracking}, MOT) se formula como un problema
+de estimación multivariable donde, dada una secuencia continua de video, se
+busca determinar el estado de $M_t$ objetos presentes en cada fotograma $t$. En
+el paradigma estándar de seguimiento por detección (\textit{Tracking-by-Detection}), 
+el detector de objetos (como YOLO) proporciona en cada frame $t$ un conjunto de
+observaciones $O_t = \{o_1^t, o_2^t, \dots, o_{N_t}^t\}$, mientras que el sistema
+de seguimiento mantiene el conjunto de estados hipotéticos $S_t = \{s_1^t, s_2^t, \dots, s_{M_t}^t\}$.
+
+La tarea central del problema MOT reside en la asignación temporal de identidades:
+asignar y mantener un identificador único e invariable ($ID_k \in \mathbb{N}$) a
+cada vehículo individual a medida que se desplaza dentro del campo de visión de
+la cámara. 
+
+En la operación real de un parqueadero, la asignación de este $ID$ único es
+indispensable. Si el sistema dependiera únicamente de detecciones independientes
+por frame a una tasa de 30 fotogramas por segundo, un automóvil detenido o
+avanzando lentamente hacia la barrera generaría decenas de registros aislados
+por segundo. Mantener una trayectoria persistente (\textit{tracklet}) mediante
+un $ID$ único garantiza que el ciclo de vida del vehículo sea tratado como una
+sola entidad continua desde que entra en el área de aproximación hasta que cruza
+la barrera, evitando la duplicación estocástica de eventos de acceso.
+
+\subsection{Modelado de incertidumbre y estimación del estado mediante Filtro de Kalman}
+
+Como demostró originalmente Kalman \cite{kalman1960new} y adaptaron Bewley et al.
+\cite{bewley2016sort} para el seguimiento en tiempo real, el movimiento de una
+caja delimitadora puede modelarse dinámicamente mediante un Filtro de Kalman
+lineal bajo la suposición de velocidad constante. Para el caso de un vehículo,
+el vector de estado sintético $s_t$ se define típicamente en el espacio de la
+imagen como:
+
+\begin{equation}
+s_t = [u, v, s, r, \dot{u}, \dot{v}, \dot{s}]^T
+\end{equation}
+
+donde $(u, v)$ representan el centroide espacial de la caja delimitadora en
+píxeles, $s$ es la escala o área total de la caja ($s = w \times h$), $r$ es la
+relación de aspecto fija ($r = w / h$), y los términos $(\dot{u}, \dot{v}, \dot{s})$
+representan sus respectivas velocidades lineales de cambio entre fotogramas
+consecutivos.
+
+El Filtro de Kalman opera de manera recursiva en dos fases conceptuales continuas:
+
+\begin{enumerate}
+    \item \textbf{Fase de Predicción (\textit{Predict}):} Utilizando la ecuación
+        del modelo cinemático previa, el filtro proyecta hacia adelante el
+        estado estimado y su matriz de covariaza de incertidumbre para el
+        fotograma $t+1$, anticipando dónde debería ubicarse el vehículo antes de
+        procesar la nueva imagen.
+    \item \textbf{Fase de Actualización (\textit{Update}):} Una vez que el
+        detector emite las observaciones reales del fotograma $t+1$, el filtro
+        calcula la ganancia de Kalman para ponderar la incertidumbre del sensor
+        frente a la predicción teórica, ajustando corregidamente el estado final
+        del vehículo.
+\end{enumerate}
+
+Esta capacidad de estimación cinemática proporciona al sistema un mecanismo de
+``memoria temporal''. En el acceso a un parqueadero, es habitual que la placa o
+el parachoques del vehículo sufran oclusiones parciales temporales —por ejemplo,
+cuando un peatón camina frente a la cámara, cuando la barrera física se levanta
+o ante destellos de luz solar directa—. Durante los fotogramas en los que el
+detector no genera ninguna observación ($o_t = \emptyset$), el Filtro de Kalman
+mantiene la predicción de la posición del vehículo en función de su velocidad
+previa, evitando que la trayectoria se rompa o que el sistema pierda la
+identidad del automóvil durante breves intervalos de ceguera óptica.
+
+\subsection{Asociación de datos y optimización combinatoria: Algoritmo Húngaro y SORT}
+
+Para enlazar las predicciones proyectadas por el Filtro de Kalman con las nuevas
+detecciones generadas por el modelo de visión en cada frame, Bewley et al.
+\cite{bewley2016sort} formularon el algoritmo SORT (\textit{Simple Online and
+Realtime Tracking}). SORT aborda la asociación de datos resolviendo un problema
+de asignación lineal global mediante el Algoritmo Húngaro (Kuhn), una técnica de
+optimización combinatoria que minimiza el costo total de emparejar dos conjuntos
+disjuntos.
+
+Dadas $M$ trayectorias predichas por Kalman ($\hat{B}_{\text{pred}}$) y $N$
+nuevas cajas detectadas por YOLO ($B_{\text{det}}$), se construye una matriz de
+costo asociativo $C \in \mathbb{R}^{M \times N}$. La métrica elegida para medir
+la distancia espacial entre la predicción $i$ y la detección $j$ es el
+complemento de la Intersección sobre Unión (IoU):
+
+\begin{equation}
+C_{i,j} = 1 - \text{IoU}\left(\hat{B}_{\text{pred}, i}, \; B_{\text{det}, j}\right)
+\end{equation}
+
+El Algoritmo Húngaro procesa la matriz $C$ para encontrar la asignación óptima
+que minimice la suma global de distancias espaciales. Para evitar
+emparejamientos erróneos entre vehículos lejanos, se aplica un umbral rígido de
+rechazo ($\text{IoU}_{\text{min}}$, típicamente $0.3$):
+
+\begin{itemize}
+    \item Si $C_{i,j} > 1 - \text{IoU}_{\text{min}}$, la asignación se descarta.
+    \item Las detecciones no asociadas a ninguna trayectoria existente se
+        inicializan como candidatos a nuevos vehículos.
+    \item Las trayectorias que no reciben ninguna detección asociada durante un
+        número límite de fotogramas ($T_{\text{lost}}$) son eliminadas
+        definitivamente de la memoria del sistema.
+\end{itemize}
+
+Esta combinación de baja complejidad computacional permite a SORT resolver la
+asociación de datos en una fracción de milisegundo por frame, manteniendo el
+procesamiento en tiempo real.
+
+\subsection{Determinación de eventos a partir de trayectorias vehiculares}
+
+La etapa final del pipeline transforma las trayectorias asociadas ($Tracklets$)
+en eventos discretos con validez operativa para la gestión del parqueadero. Como
+analizan Liu y Zeng \cite{liu2017vehiclecounting} y Karbalaie et al., la lógica
+de negocio para la detección de eventos se fundamenta en la definición de líneas
+virtuales de control en el plano de la imagen, conocidas técnicamente como
+\textit{Virtual Tripwires}.
+
+Una línea virtual $L_{\text{tripwire}}$ se define geométricamente como un
+segmento orientado en el espacio de la imagen mediante dos puntos de control
+$P_1(x_1, y_1)$ y $P_2(x_2, y_2)$, ubicada estratégicamente sobre la calzada
+frente a la barrera de acceso.
+
+A medida que un vehículo con identidad $ID_k$ avanza, el sistema registra la
+secuencia histórica de los centroides de su caja delimitadora $\mathbf{p}_t =
+(u_t, v_t)$ para instantes $t_1 < t_2 < \dots < t_n$. La determinación del
+evento se evalúa geométricamente mediante el cruce de línea:
+
+\begin{enumerate}
+    \item \textbf{Detección del Cruce Espacial:} Se verifica analíticamente si
+        el segmento trazado entre la posición previa del vehículo $\mathbf{p}_{t-1}$
+        y su posición actual $\mathbf{p}_t$ se interseca espacialmente con el
+        segmento de la línea virtual $L_{\text{tripwire}}$.
+    \item \textbf{Cálculo del Vector de Dirección:} Una vez confirmado el cruce,
+        se evalúa el producto escalar o el producto cruz vectorial entre el
+        vector de desplazamiento del vehículo $\mathbf{v}_{\text{mov}} =
+        \mathbf{p}_t - \mathbf{p}_{t-1}$ y el vector normal unitario de la línea
+        virtual $\mathbf{n}_L$:
+    
+    \begin{equation}
+    \text{Dirección} = \text{signo}\left( \mathbf{v}_{\text{mov}} \cdot \mathbf{n}_L \right)
+    \end{equation}
+\end{enumerate}
+
+Dependiendo del signo del resultado geométrico, el sistema clasifica el evento
+de manera determinista:
+
+\begin{itemize}
+    \item \textbf{Evento de Ingreso (\textit{Entry Event}):} Si el vector de
+        movimiento apunta hacia el interior del parqueadero
+        ($\text{Dirección} > 0$), el sistema consolida el evento registrando el
+        $ID$ del vehículo, la lectura de la placa vinculada, la fecha, la hora
+        exacta y habilita la apertura de la barrera.
+    \item \textbf{Evento de Salida (\textit{Exit Event}):} Si el vector de
+        movimiento apunta en sentido opuesto ($\text{Dirección} < 0$), el
+        sistema registra la salida, calcula el tiempo de permanencia consumido
+        en el recinto y procede al cobro o liberación de la plaza.
+\end{itemize}
+
+Mediante esta arquitectura integrada de detección, filtrado cinemático,
+asociación combinatoria y análisis geométrico de trayectorias, el sistema
+garantiza un registro de accesos automatizado, auditable y resistente a
+falsas disparaciones.

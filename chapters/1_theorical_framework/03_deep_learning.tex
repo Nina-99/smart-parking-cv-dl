@@ -1,0 +1,232 @@
+\section{Fundamentos de Aprendizaje Automático y Aprendizaje Profundo}
+
+El desarrollo de sistemas modernos de gestión vehicular en estacionamientos ha
+migrado desde métodos deterministas basados en procesamiento de imágenes clásico
+hacia arquitecturas de aprendizaje profundo. Esta transición permite abordar la
+alta variabilidad de los entornos de captura reales (como cambios de iluminación,
+ángulos de inclinación de la cámara y oclusiones parciales) mediante modelos
+capaces de extraer jerarquías de características discriminativas a partir de
+grandes volúmenes de datos.
+
+\subsection{El Paradigma del Aprendizaje Supervisado y Partición de Datos}
+
+Como señalan Russell y Norvig \cite{russell2020artificial}, el aprendizaje
+supervisado constituye un paradigma donde un algoritmo deduce una función de
+mapeo a partir de pares de entrenamiento formados por muestras de entrada y sus
+correspondientes etiquetas de referencia. En el ámbito del control de acceso
+vehicular, cada entrada corresponde a un fotograma extraído de las cámaras
+instaladas en las barreras del parqueadero, mientras que las etiquetas
+representan el tipo de vehículo, la categoría de color o las coordenadas y
+contenido alfanumérico de la matrícula.
+
+Para garantizar que el modelo adquiera capacidad predictiva sobre instancias no
+observadas previamente y no memorice las placas de los automóviles de
+entrenamiento, Mohri et al. \cite{mohri2018foundations} y Goodfellow et al.
+\cite{goodfellow2016deep} establecen la necesidad de aplicar una partición de
+datos en tres conjuntos independientes:
+
+\begin{itemize}
+    \item \textbf{Conjunto de Entrenamiento (\textit{Training Set}):} Utilizado
+        por el algoritmo para optimizar iterativamente los pesos internos del
+        modelo a partir de miles de capturas de vehículos en el punto de acceso.
+
+    \item \textbf{Conjunto de Validación (\textit{Validation Set}):} Destinado a
+        monitorear el desempeño durante las etapas de entrenamiento, ajustar
+        hiperparámetros (como la tasa de aprendizaje o el tamaño de filtro) y
+        seleccionar la mejor arquitectura sin sesgar la evaluación.
+
+    \item \textbf{Conjunto de Prueba (\textit{Test Set}):} Reservado
+        estrictamente para medir la precisión final de generalización ante
+        vehículos y matrículas nunca antes procesados por el sistema, simulando
+        la operación real del estacionamiento.
+\end{itemize}
+
+\subsection{Arquitectura Base: Neuronas, Propagación y Activaciones no Lineales}
+
+De acuerdo con Bishop y Bishop \cite{bishop2024deep}, las redes neuronales
+alimentadas hacia adelante (\textit{feedforward networks}) procesan la
+información de manera unidireccional a través de capas compuestas por unidades
+computacionales (neuronas). En el nivel básico, cada neurona efectúa una
+combinación lineal de las señales de entrada mediante pesos y sesgos, pasando el
+resultado a través de una función de activación.
+
+El propósito fundamental de incorporar funciones de activación no lineales (como
+ReLU o SiLU) es romper la linealidad del sistema. Sin estas transformaciones,
+una red de múltiples capas colapsaría matemáticamente en una simple
+transformación afín, siendo incapaz de resolver fronteras de decisión complejas.
+En la percepción vehicular, la no linealidad es la que permite al sistema
+proyectar las intensidades de los píxeles hacia espacios abstractos donde sea
+posible, por ejemplo, separar el color cromático de la carrocería de un
+automóvil respecto a las sombras proyectadas en el pavimento o las reflexiones
+del entorno.
+
+\subsection{Optimización de Modelos: Descenso de Gradiente y Funciones de Pérdida}
+
+El proceso de entrenamiento se formula como la minimización de una función de
+pérdida, la cual cuantifica la discrepancia entre las predicciones emitidas por
+el modelo y las anotaciones reales. Para ajustar los parámetros de la red, los
+algoritmos de optimización —como el Descenso de Gradiente Estocástico (SGD) o
+estimadores adaptativos como Adam \cite{goodfellow2016deep, bishop2024deep}—
+calculan el gradiente de la función de pérdida con respecto a cada peso mediante
+el algoritmo de retropropagación (\textit{backpropagation}), que aplica la regla
+de la cadena en sentido inverso a través de la arquitectura.
+
+En el control de acceso vehicular, el proceso de optimización persigue un
+equilibrio operativo:
+
+\begin{itemize}
+    \item \textbf{Regresión de cajas delimitadoras:} Minimiza el error de
+        localización geométrica entre la caja predicha por el detector y la
+        posición real de la placa o del vehículo.
+
+    \item \textbf{Minimización de falsos positivos:} Reduce la probabilidad de
+        clasificar elementos del fondo (como rejas, sombras o señalética de
+        tráfico) como vehículos autorizados o matrículas válidas.
+
+\end{itemize}
+
+\subsection{Generalización: Sesgo-Varianza, Sobreajuste y Regularización}
+
+El desempeño de un modelo en producción está gobernado por el dilema entre el
+sesgo (incapacidad del modelo para capturar la estructura subyacente de los
+datos) y la varianza (sensibilidad excesiva del modelo a las fluctuaciones del
+conjunto de entrenamiento). Un modelo con alto sesgo incurre en subajuste
+(\textit{underfitting}), mientras que una varianza alta deriva en sobreajuste
+(\textit{overfitting}).
+
+En el contexto de la gestión de parqueaderos, el sobreajuste representa la
+principal causa de falla: ocurre cuando la red neuronal ``memoriza'' las
+condiciones particulares de la sesión de entrenamiento —por ejemplo, la
+iluminación solar directa de la mañana o la orientación fija de un grupo de
+vehículos locales—. Al desplegar el sistema en un entorno real dinámico, el
+modelo sobreajustado colapsa al enfrentar cambios de iluminación pasante
+(nubosidad o noche), lluvia sobre la calzada o variaciones en la trayectoria del
+automóvil al aproximarse a la barrera.
+
+Para mitigar este problema y asegurar una alta capacidad de generalización,
+Srivastava et al. \cite{srivastava2014dropout} y LeCun et al. 
+\cite{lecun2015deep} proponen técnicas de regularización estructurales y
+estocásticas:
+
+\begin{enumerate}
+    \item \textbf{Dropout:} Desactiva aleatoriamente una fracción de neuronas
+        durante cada iteración de entrenamiento, impidiendo la co-adaptación de
+        características y obligando a la red a aprender representaciones
+        redundantes y robustas \cite{srivastava2014dropout}.
+        
+    \item \textbf{Penalizaciones de Norma ($L_2$ / \textit{Weight Decay}):}
+        Restringen la magnitud de los pesos ponderados, suavizando la función de
+        decisión para que pequeñas variaciones en los píxeles de entrada no
+        alteren drásticamente la predicción.
+
+    \item \textbf{Normalización por Lotes (\textit{Batch Normalization}):}
+        Estabiliza la distribución de las activaciones intermedias, acelerando la
+        convergencia y actuando como un regularizador secundario.
+\end{enumerate}
+
+\subsection{Redes Neuronales Convolucionales (CNN) en la Percepción Visual}
+
+Como establecen LeCun et al. \cite{lecun2015deep} y Szeliski
+\cite{szeliski2022computer}, las Redes Neuronales Convolucionales (CNN) están
+optimizadas para datos con topología en rejilla bidimensional mediante tres
+mecanismos: campos receptivos locales, compartición de pesos y submuestreo
+(\textit{pooling}). Estas propiedades otorgan invariancia a la traslación y
+reducen radicalmente la cantidad de parámetros frente a capas densas
+convencionales.
+
+El procesamiento de una escena en el acceso al parqueadero se realiza mediante
+la extracción jerárquica de características visuales:
+\begin{equation}
+    (I * K)(i, j) = \sum_{m} \sum_{n} I(i + m, j + n) K(m, n) \quad
+\end{equation}
+Donde $I$ es la imagen capturada por la cámara y $K$ es el filtro espacial.
+
+\begin{itemize}
+    \item \textbf{Capas Convolucionales Iniciales (Bajo Nivel):} Filtros
+        espaciales pequeños reaccionan ante gradientes de intensidad y primitivas
+        geométricas elementales, como los bordes metálicos de la carrocería, el
+        contorno del parachoques o las líneas de alto contraste del marco de la
+        placa de matrícula.
+
+    \item \textbf{Capas Convolucionales Intermedias (Nivel Medio):} Los mapas de
+        características agrupan las primitivas simples en estructuras compuestas,
+        detectando la simetría rectangular de las placas, la forma circular de
+        las ruedas o la textura de los faros.
+
+    \item \textbf{Capas Convolucionales Profundas (Alto Nivel):} Sintetizan la
+        información espacial en representaciones semánticas globales,
+        permitiendo al sistema clasificar la silueta completa del vehículo 
+        (sedán, camioneta, minibús o motocicleta) y distinguir la textura
+        alfanumérica de los caracteres en la matrícula.
+
+    \item \textbf{Capas de Submuestreo (\textit{Pooling}):} Reducen la resolución
+        espacial de los mapas de características, reteniendo las respuestas más
+        dominantes (\textit{Max-Pooling}) y otorgando tolerancia al sistema ante
+        pequeñas variaciones en la posición del vehículo dentro del carril de
+        ingreso.
+\end{itemize}
+
+\subsection{Aprendizaje por Transferencia (Transfer Learning), Fine-Tuning y
+Aumento de Datos}
+
+Entrenar un detector de objetos desde cero requiere millones de imágenes anotadas
+y una enorme capacidad computacional. Para superar esta limitación en
+aplicaciones del entorno real, Pan y Yang \cite{pan2010survey} formalizan el
+Aprendizaje por Transferencia (\textit{Transfer Learning}), técnica que permite
+transferir el conocimiento extraído de un dominio fuente masivo $\mathcal{D}_S$
+(como los conjuntos de datos COCO u Objects365) hacia un dominio objetivo
+$\mathcal{D}_T$.
+
+Sustentado en las demostraciones empíricas de Yosinski et al.
+\cite{yosinski2014transferable}, las capas iniciales de una CNN entrenada en
+datasets generales capturan descriptores de bajo nivel universales. Por lo tanto,
+en lugar de reiniciar los pesos, se adopta una arquitectura preentrenada de
+vanguardia (como la familia YOLO) y se ejecuta un ajuste fino
+(\textit{Fine-Tuning}), adaptando las capas superiores a las condiciones locales
+del proyecto:
+
+\begin{enumerate}
+    \item \textbf{Especialización a la Morfología de Placas Locales:} Los modelos
+        preentrenados globalmente están optimizados para formatos de matrículas
+        estadounidenses o europeas. El \textit{fine-tuning} reconfigura los
+        cabezales de predicción para detectar la geometría, color de fondo,
+        relación de aspecto y tipografía estándar de las matrículas del contexto
+        nacional (Bolivia).
+
+    \item \textbf{Categorización de la Flota Vehicular Específica:} Permite
+        adaptar la red para clasificar categorías de transporte particulares del
+        entorno urbano local (como minibuses o ``surubíes'') que no existen de
+        forma explícita en datasets internacionales.
+
+    \item \textbf{Calibración a la Geometría de Captura:} Adapta el modelo a la
+        distancia focal, ángulo de inclinación y altura fija de las cámaras
+        instaladas en la infraestructura del parqueadero.
+\end{enumerate}
+
+De forma complementaria, el Aumento de Datos (\textit{Data Augmentation}) actúa
+como un regularizador implícito que incrementa la variabilidad del conjunto de
+entrenamiento sin costo de etiquetado adicional \cite{goodfellow2016deep,
+bishop2024deep}. En el sistema de control de acceso, el aumento de datos simula
+condiciones físicas y ambientales adversas:
+
+\begin{itemize}
+    \item \textbf{Variaciones Fotométricas (HSV y Brillo):} Simulan cambios
+        drásticos de iluminación solar, reflejos o deslumbramientos sobre el
+        parabrisas y condiciones de baja visibilidad nocturna.
+
+    \item \textbf{Transformaciones Geométricas (Escalado, Rotación y
+        Perspectiva):} Modulan las distintas trayectorias de ingreso de los
+        automóviles, simulando maniobras descentradas o ángulos de aproximación
+        no frontales.
+
+    \item \textbf{Simulación de Intemperie y Oclusiones:} Inyecta artefactos
+        sintéticos como ruido estocástico, desenfoque de movimiento y oclusiones
+        parciales (\textit{Mosaic} / \textit{Mixup}) para representar gotas de
+        lluvia sobre la lente, suciedad en la calzada o barro sobre la placa
+        vehicular.
+\end{itemize}
+
+Mediante la integración del \textit{Transfer Learning}, el \textit{Fine-Tuning} y
+el \textit{Data Augmentation}, el sistema alcanza la estabilidad operativa
+requerida para garantizar un control de acceso automatizado, preciso y resistente
+a las inclemencias del entorno real.
