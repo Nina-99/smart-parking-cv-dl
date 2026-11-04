@@ -26,7 +26,7 @@ Esa verificabilidad alcanza al software. El subsistema de gestión se encuentra
 integrado con el motor de visión: la tarea de inferencia decodifica el fotograma,
 invoca al motor, agrega las detecciones por trayectoria y persiste el vehículo, la
 sesión y la observación de forma atómica, con la latencia de inferencia registrada
-por fotograma. El esquema se materializa en cinco revisiones de migración que se
+por fotograma. El esquema se materializa en seis revisiones de migración que se
 aplican en orden, el cierre de sesión opera por emparejamiento exacto de matrícula
 con umbral de confianza y admite el cierre manual auditado, y la aplicación web
 ofrece nueve vistas operativas y administrativas. El control de autorización
@@ -36,14 +36,15 @@ exportación. La verificación automática comprende $156$ pruebas unitarias y d
 integración que se ejecutan contra una base PostgreSQL real con las migraciones
 aplicadas, con una cobertura del $83\%$ sobre \texttt{backend/app}.
 
-El límite que corresponde declarar es la \textbf{validación de campo de extremo a extremo}:
-la cadena completa con las cámaras del recinto y la simulación con las dos fuentes
-sincronizadas. Esa validación es la que sostendría la medición de la determinación
-de eventos ($H_{1.5}$) y la que permitiría afirmar que el sistema opera como un
-todo continuo, y no solo que cada componente funciona y está probado. En
-consecuencia, los resultados que se reportan corresponden a los componentes
-efectivamente ejecutados y se atribuyen a ellos, no a una operación en condiciones
-reales de recinto.
+El límite que corresponde declarar ya no es la validación de campo: esa cadena se
+ejecutó de extremo a extremo sobre una hora completa de las dos cámaras, con verdad
+de referencia humana y $0{,}889$ de exactitud en la determinación de eventos
+(Subsección~\ref{sec:resultados_eventos}). Lo que queda pendiente es el tamaño de la
+muestra: nueve cruces no permiten pronunciarse sobre un umbral del $90\%$, y
+certificarlo exige del orden de diez a quince horas pareadas etiquetadas. Los
+resultados se atribuyen a los componentes ejecutados y a las condiciones de
+instalación del recinto, no a una operación en condiciones distintas de las
+medidas.
 
 \subsection{Contrastación de la hipótesis general}
 
@@ -192,7 +193,7 @@ este trabajo no se registra ningún objetivo en el tercer estado.
     Integrar los modelos en un sistema de gestión con registro y consulta de
     eventos. &
     Cumplido &
-    Modelo de datos con restricciones e índices, cinco revisiones de migración,
+    Modelo de datos con restricciones e índices, seis revisiones de migración,
     rutas HTTP operativas, de consulta, de autenticación, de administración y de
     diagnóstico, canal persistente de notificación, cliente web con nueve vistas y
     emparejamiento de salida con abstención.
@@ -358,6 +359,59 @@ resultado. El aporte de esta sección es haber establecido, con evidencia, cuál
 la condición de captura por debajo de la cual el criterio del $90\%$ es
 inalcanzable con cualquier modelo.
 
+\subsection{Alcance del aporte}
+
+La hipótesis general se rechaza, y conviene decir con precisión qué significa eso y
+qué no. No significa que el sistema no funcione: significa que no satisface
+simultáneamente los cinco criterios que el perfil comprometió. Leída por componente,
+la evidencia sostiene dos usos operativos y no sostiene otros dos.
+
+\begin{table}[H]
+    \centering
+    \caption{Qué sostiene la evidencia y qué no, por componente.}
+    \label{tab:alcance}
+    \begin{tabular}{@{}p{0.26\textwidth} p{0.11\textwidth}
+                    p{0.16\textwidth} p{0.36\textwidth}@{}}
+        \toprule
+        \textbf{Componente} & \textbf{Medido} & \textbf{Veredicto} &
+        \textbf{Lectura operativa} \\
+        \midrule
+        Detección de vehículos & $0{,}901$ & respaldada &
+        Un vehículo que cruza queda registrado con su instante, sentido y recorte \\
+        Tipo de vehículo & $0{,}889$ & respaldada &
+        El atributo sirve para filtrar y para describir el vehículo al operador \\
+        Detección de placas & $0{,}971$ & respaldada &
+        La placa se localiza dentro del vehículo; el recorte sirve como evidencia \\
+        Color predominante & $0{,}812$ & no respaldada &
+        Sirve para acotar una búsqueda, no para identificar \\
+        Lectura de matrícula & $0{,}851$ & no respaldada &
+        No alcanza para cerrar una sesión sin intervención humana \\
+        Determinación de eventos & $0{,}889$ & inconclusa &
+        Sin eventos falsos en la hora medida; falta muestra para afirmar el umbral \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+El sistema es desplegable para registrar y buscar. Cada cruce queda documentado con
+su evidencia visual, y la búsqueda por ventana temporal y color resuelve el caso que
+motivó el trabajo: encontrar el vehículo que entró en un intervalo recordado. Ese
+uso no depende de la lectura de matrícula ni del conteo automático, que son los dos
+componentes que no alcanzan.
+
+El sistema no es desplegable como automatismo completo. La lectura de matrícula
+acierta la mitad de las veces de forma exacta, de modo que el cierre de sesión debe
+quedar a cargo del operador. Y la determinación de eventos, aunque no produjo ningún
+evento falso en la hora medida, tiene un intervalo demasiado ancho para afirmar que
+alcanza el $90\%$. Un producto que prometa ambas cosas con esta evidencia estaría
+prometiendo más de lo medido.
+
+Tampoco autoriza a concluir que el enfoque sea inviable. Los incumplimientos tienen
+causa identificada ---la resolución de captura gobierna el reconocimiento, la
+asociación de trayectorias gobierna la determinación de eventos--- y ambas son
+condiciones de instalación y de algoritmo, no límites del método. El trabajo
+establece dónde queda el techo con este material y esta configuración; no establece
+dónde queda el techo del enfoque.
+
 \subsection{Aportes verificables}
 
 \paragraph{Aporte teórico.}
@@ -379,7 +433,8 @@ inspección que aquí se documenta.
 \paragraph{Aporte académico.}
 El trabajo deja registro de resultados negativos que rara vez se publican: el
 post-procesamiento sintáctico medido y desactivado, las configuraciones de
-entrenamiento descartadas con su efecto cuantificado, y las dos hipótesis que no
-pudieron medirse con su causa. Ese registro evita que un trabajo posterior repita
-el mismo camino y permite discutir el desempeño con datos en lugar de
-impresiones.
+entrenamiento descartadas con su efecto cuantificado, los dos componentes que no
+alcanzan su umbral con la causa de cada uno, y la hipótesis que quedó inconclusa con
+el tamaño de muestra que haría falta para resolverla. Ese registro evita que un
+trabajo posterior repita el mismo camino y permite discutir el desempeño con datos en
+lugar de impresiones.
