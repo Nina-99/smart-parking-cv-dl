@@ -8,13 +8,12 @@ son recortes del material real capturado en el recinto.
 
 La comparación con los wireframes del capítulo de diseño muestra tres diferencias
 que conviene declarar antes de recorrer las vistas. La primera es que el panel de
-monitoreo no reproduce el video con las cajas superpuestas: el sistema entrega el
-evento confirmado y el recorte que lo evidencia, y no transmite el flujo al
-navegador. La segunda es que la vista de padrón no se implementó, porque el
-padrón de vehículos habilitados no forma parte del alcance
-(Sección~\ref{sec:estado_gestion}); su lugar lo ocupa una búsqueda de incidentes
-por ventana temporal. La tercera es que se añadió una vista de telemetría del
-modelo que no estaba en el diseño, y que expone la latencia y la confianza
+monitoreo no reproduce el video continuo con cajas en streaming: el sistema entrega el
+evento confirmado y el recorte de mayor tamaño que lo evidencia sin sobrecargar el ancho
+de banda. La segunda es que la vista de padrón de vehículos autorizados se implementó
+como vista administrativa y operativa (RF-10), complementada por la búsqueda forense
+de incidentes por ventana temporal. La tercera es que se añadió una vista de telemetría del
+modelo que no estaba en el diseño inicial, y que expone la latencia y la confianza
 registradas por el sistema en operación.
 
 La aplicación implementa dos temas, claro y oscuro. Las capturas corresponden al
@@ -77,7 +76,11 @@ ventana horaria determinada. El operador fija un intervalo ---por omisión, la h
 anterior y la siguiente al instante recordado--- y puede restringir por color. El
 filtro de color es deliberadamente blando: incluye los vehículos cuya clasificación
 está próxima al color pedido, porque el clasificador confunde tonos acromáticos y
-un filtro estricto ocultaría el candidato buscado.
+un filtro estricto ocultaría el candidato buscado. El vecindario no es arbitrario:
+se midió que \textit{plata} y \textit{gris} comparten cerca del $12\%$ de sus
+predicciones, y \textit{gris} y \textit{negro} entre $10$ y $12\%$; por eso la
+consulta de \textit{plata} incluye \textit{gris} y \textit{blanco}, y los aciertos
+exactos se ordenan primero con la etiqueta de coincidencia exacta o vecina.
 
 El resultado se presenta como una grilla de candidatos ordenada por cercanía al
 instante consultado. Cada tarjeta muestra el recorte del vehículo, la matrícula
@@ -136,6 +139,9 @@ confundirla con una medición experimental: se alimenta de la telemetría de la
 operación y está sujeta a la política de retención del sistema, de modo que
 describe el comportamiento observado y no sustituye el banco comparativo por
 formato de modelo que se declara pendiente en la Sección~\ref{sec:estado_gestion}.
+Por esa misma razón la vista se reserva al rol de administrador, y el recurso que
+la alimenta exige ese rol en el servidor: la lectura del dueño es la operación
+del recinto, no el desempeño del detector.
 
 \begin{figure}[htbp]
     \centering
@@ -145,13 +151,28 @@ formato de modelo que se declara pendiente en la Sección~\ref{sec:estado_gestio
     \label{fig:if_modelo}
 \end{figure}
 
+\subsection{Vistas de administración}
+\label{subsec:vistas_admin}
+
+Las vistas de administración se reservan a los roles autorizados. La vista de
+\textbf{padrón de vehículos} (RF-10) permite registrar matrículas autorizadas
+asignándoles titular y notas, alternar su estado activo/inactivo y eliminar
+registros; el motor de interfaz en tiempo real utiliza este padrón para alertar
+ante accesos no habilitados. La vista de \textbf{usuarios} permite listar, crear
+y modificar cuentas, asignar uno de los tres roles ---administrador, operador o
+dueño--- y activar o desactivar una cuenta; reproduce las reglas de negocio
+impidiendo eliminar al último administrador activo o a la propia cuenta. La vista
+de \textbf{cámaras} combina el registro persistente con el latido del capturador:
+muestra los puntos de acceso configurados, identifica cámaras caídas y permite
+dar de alta o retirar accesos.
+
 \subsection{Documentación de la interfaz de programación}
 
 La especificación de la interfaz se genera de forma automática a partir de las
 declaraciones de tipos de la aplicación y se publica en los formatos estándar de
-OpenAPI. El documento resultante describe diecisiete rutas y trece esquemas de
-datos, e incluye para cada operación sus parámetros, su cuerpo de solicitud, sus
-respuestas y los códigos de error previstos. Al derivarse del mismo código que se
+OpenAPI. El documento resultante describe las rutas y los esquemas de datos
+implementados, e incluye para cada operación sus parámetros, su cuerpo de
+solicitud, sus respuestas y los códigos de error previstos. Al derivarse del mismo código que se
 ejecuta, no puede desincronizarse de la implementación: un cambio en la firma de
 un recurso se refleja en la especificación en el siguiente arranque.
 

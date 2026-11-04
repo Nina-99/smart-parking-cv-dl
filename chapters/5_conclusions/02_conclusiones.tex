@@ -7,38 +7,37 @@ de dos subsistemas con responsabilidades separadas. El subsistema de visión
 encadena detección de vehículos sobre pesos preentrenados, seguimiento
 multiobjeto, un detector de placas entrenado para este dominio, un reconocedor de
 matrículas con arquitectura ResNet18--BiLSTM--CTC y dos clasificadores de
-atributos. El subsistema de gestión expone diecisiete rutas HTTP ---operativas, de consulta,
-de autenticación y de diagnóstico--- y un canal persistente de notificación sobre
-FastAPI, PostgreSQL y una cola de tareas, y ofrece un cliente web con seis vistas. El despliegue se resuelve con contenedores,
+atributos. El subsistema de gestión expone las rutas HTTP operativas, de consulta,
+de autenticación y de diagnóstico, junto con un canal persistente de notificación
+sobre FastAPI, PostgreSQL y una cola de tareas, y ofrece un cliente web con seis
+vistas. El despliegue se resuelve con contenedores,
 exportación a formatos intermedios y compilación de motores especializados para el
 acelerador de destino.
 
 La magnitud del artefacto es verificable y no estimada: el sistema comprende $62$
 puntos de función y $6.946$ líneas de producto distribuidas en $88$ archivos, a
 las que se suman $3.537$ líneas de pruebas y $6.225$ de herramientas de datos. El
-conjunto de datos que lo sustenta también es verificable: $496$ matrículas reales
-confirmadas por un operador, $359.992$ matrículas sintéticas con formato
-boliviano, $4.006$ recortes de vehículo y $868$ recortes de placa con caja
-revisada manualmente.
+conjunto de datos que lo sustenta también es verificable: $640$ matrículas reales
+distintas confirmadas por un operador, $360.000$ matrículas sintéticas con formato
+boliviano, $4.006$ recortes de vehículo y $1.237$ recortes de placa reales
+particionados por cadena de matrícula.
 
 Esa verificabilidad alcanza al software. El subsistema de gestión se encuentra
 integrado con el motor de visión: la tarea de inferencia decodifica el fotograma,
 invoca al motor, agrega las detecciones por trayectoria y persiste el vehículo, la
 sesión y la observación de forma atómica, con la latencia de inferencia registrada
-por fotograma. El esquema se materializa en tres revisiones de migración que se
+por fotograma. El esquema se materializa en cinco revisiones de migración que se
 aplican en orden, el cierre de sesión opera por emparejamiento exacto de matrícula
 con umbral de confianza y admite el cierre manual auditado, y la aplicación web
-ofrece seis vistas. La verificación automática comprende $140$ pruebas unitarias y
-$4$ de integración que se ejecutan contra una base PostgreSQL real con las
-migraciones aplicadas, con una cobertura del $88\%$ sobre el código de la
-aplicación.
+ofrece nueve vistas operativas y administrativas. El control de autorización
+(RF-10) se integró exitosamente mediante un padrón institucional de vehículos
+habilitados, y la auditoría histórica (RF-11) dispone de filtrado multicriterio y
+exportación. La verificación automática comprende $156$ pruebas unitarias y de
+integración que se ejecutan contra una base PostgreSQL real con las migraciones
+aplicadas, con una cobertura del $83\%$ sobre \texttt{backend/app}.
 
-El límite que corresponde declarar es de otra naturaleza. El contraste de la
-matrícula contra un padrón de vehículos habilitados, previsto como requerimiento
-RF-10, no forma parte de la entrega: la entidad de vehículos registra los
-vehículos observados en los accesos, no un padrón previo. Lo que tampoco se
-realizó es la \textbf{validación de campo de extremo a extremo}: la cadena
-completa con las cámaras del recinto y la simulación con las dos fuentes
+El límite que corresponde declarar es la \textbf{validación de campo de extremo a extremo}:
+la cadena completa con las cámaras del recinto y la simulación con las dos fuentes
 sincronizadas. Esa validación es la que sostendría la medición de la determinación
 de eventos ($H_{1.5}$) y la que permitiría afirmar que el sistema opera como un
 todo continuo, y no solo que cada componente funciona y está probado. En
@@ -54,22 +53,63 @@ reconocimiento de placas y la determinación de eventos. Por su forma conjuntiva
 basta que un solo término no se cumpla para que la hipótesis no se respalde, y
 basta que un término no se haya medido para que no pueda declararse verificada.
 
-El estado de cada término se resume en la Tabla~\ref{tab:contraste_hipotesis}:
-dos criterios se cumplen (identificación de tipo y detección de placas), tres no
-se alcanzan (color predominante, exactitud por carácter y coincidencia exacta) y
-dos no fueron medidos (detección de vehículos y determinación de eventos).
+El estado de cada indicador se resume en la Tabla~\ref{tab:contraste_hipotesis}:
+tres criterios se cumplen (detección de vehículos, identificación de tipo y
+detección de placas), el F1 macro de color queda por debajo de su umbral, la
+exactitud por carácter queda en la frontera ---el intervalo de Wilson excluye el
+$0{,}90$ y el exacto lo contiene---, la coincidencia exacta no alcanza la
+referencia declarada y la determinación de eventos queda inconclusa porque su
+intervalo contiene el umbral.
 
-\textbf{La hipótesis general no se respalda.} Dos de sus componentes medidos
-quedan por debajo del umbral comprometido, de modo que el sistema, en su estado
-actual, no satisface el conjunto de criterios que la hipótesis exige. Se acepta
-la hipótesis nula para esos componentes.
+\textbf{$H_1$ se rechaza y $H_0$ se acepta según la regla de decisión adoptada.}
+El sistema, en su estado actual, no satisface el conjunto de criterios que la
+hipótesis exige: el F1 macro de color queda por debajo de su umbral con un
+intervalo que excluye el $0{,}85$, y el componente de reconocimiento no alcanza la
+coincidencia exacta declarada como referencia de aceptación, que dista más de
+veinte puntos. Por la forma conjuntiva de $H_1$, cualquiera de los dos basta para
+refutarla. La regla se formuló como prueba unilateral de intervalo:
+$H_0:\pi\ge\theta$ frente a $H_1:\pi<\theta$, con $\alpha=0{,}05$
+\cite{schuirmann1987comparison,lakens2017equivalence}. En el término de color el
+intervalo del $95$\,\% queda íntegramente por debajo del umbral; en el
+reconocimiento, la referencia de coincidencia exacta queda fuera del intervalo por
+un margen que ningún método de intervalo discute. La aceptación de
+$H_0$ se apoya además en la regla adoptada en el perfil y en la guía de la FNI, que
+la considera válida cuando la de investigación es descartada.
 
-La conclusión debe formularse con una precisión adicional: la hipótesis nula
-tampoco queda demostrada en su totalidad, porque dos de sus términos no fueron
-sometidos a medición. Respecto de la detección de vehículos y de la determinación
-de eventos, el trabajo no afirma que el sistema falle ni que acierte: afirma que
-no lo sabe, y explicita por qué. Un pronunciamiento en cualquiera de las dos
-direcciones carecería de respaldo experimental.
+La formulación importa: no se afirma que $H_0$ sea verdadera ---ninguna prueba lo
+permite \cite{fisher1935design}--- sino que $H_1$ queda refutada bajo las
+condiciones evaluadas \cite{popper1959logic} y que la decisión se toma con el
+riesgo $\alpha$ declarado \cite{neyman1933problem}. Por eso la conclusión se
+limita a las condiciones de captura y operación del estudio, y por eso cada
+contraste reporta el tamaño de su conjunto de prueba y su intervalo de confianza,
+del cual se deriva la precisión alcanzada; sin ellos, aceptar $H_0$
+sería confundir ausencia de evidencia con evidencia de ausencia
+\cite{altman1995absence}.
+
+El sostén más firme del veredicto es la coincidencia exacta: su intervalo
+($[0{,}428;\ 0{,}621]$) queda más de veinte puntos por debajo de la referencia de
+$0{,}80$ y esa distancia excede cualquier fuente de error considerada. El F1 de
+color también excluye su umbral, pero su margen ($0{,}6$ puntos) es menor que la
+varianza medida entre corridas de entrenamiento, de modo que se reporta como
+confirmación y no como único fundamento. La exactitud por carácter, en cambio, no
+se usa: queda en la frontera entre ambos métodos de intervalo y no permite
+pronunciarse por sí sola.
+
+La lectura de extremo a extremo sobre el encuadre servido ($0{,}882$, intervalo
+$[0{,}800;\ 0{,}929]$) contiene el umbral en todo su recorrido, de modo que
+tampoco allí el término se cumple con certeza; y la coincidencia exacta del sistema
+ensamblado ($0{,}566$, intervalo $[0{,}467;\ 0{,}659]$) sigue lejos del $0{,}80$.
+
+La conclusión debe formularse con una precisión adicional sobre su alcance:
+$H_0$ se sostiene por los términos medidos, no por los ausentes. La hipótesis
+específica $H_{0.1}$ (detección de vehículos) queda descartada por la medición: el
+detector supera el umbral comprometido con un límite inferior de intervalo de
+$0{,}876$. La hipótesis $H_{0.5}$ (determinación de eventos) queda igualmente sin
+sostén, pero por un motivo distinto: su exactitud medida ($0{,}889$) tiene un
+intervalo de confianza que contiene el umbral del $90\%$. No se declara que el
+sistema falle en esa etapa ni que acierte; se declara que la muestra disponible no
+permite pronunciarse. Un juicio en cualquiera de las dos direcciones carecería de
+respaldo experimental.
 
 \subsection{Cumplimiento de los objetivos específicos}
 
@@ -118,11 +158,13 @@ este trabajo no se registra ningún objetivo en el tercer estado.
     Construir y preparar un conjunto de datos representativo de las condiciones
     reales. &
     Cumplido &
-    $496$ matrículas reales verificadas por operador, $359.992$ sintéticas,
-    $4.006$ recortes de vehículo y $868$ recortes de placa con caja revisada.
-    Partición por sesión y por bloque horario, sin sesiones compartidas entre
-    entrenamiento y prueba. El volumen real es la restricción dominante del
-    módulo de reconocimiento y así se declara. \\
+    $640$ matrículas reales verificadas por operador, $360.000$ sintéticas,
+    $4.006$ recortes de vehículo y $1.304$ recortes de placa reales, de los cuales
+    $196$ se incorporaron tras revisión manual. Partición por sesión y por bloque
+    horario para atributos y detección, y por cadena de matrícula para
+    reconocimiento, sin placas compartidas entre entrenamiento y prueba. El
+    volumen real es la restricción dominante del módulo de reconocimiento y así se
+    declara. \\
     \midrule
 
     Adaptar y entrenar modelos de detección e identificación de tipo y color, y
@@ -138,32 +180,37 @@ este trabajo no se registra ningún objetivo en el tercer estado.
     Desarrollar y entrenar un modelo de reconocimiento óptico de caracteres para
     placas vehiculares y evaluarlo bajo distintas condiciones de visibilidad. &
     Parcial &
-    Modelo construido y entrenado en dos etapas, evaluado sobre $101$ placas
-    aisladas y sobre $88$ recortes de vehículo con texto verificado. Exactitud
-    por carácter $0{,}789$ y $0{,}737$; coincidencia exacta $0{,}356$ y
-    $0{,}261$. El criterio de $0{,}90$ de exactitud por carácter no se alcanza;
-    la causa se analiza en la Subsección~\ref{subsec:brecha_ocr}. \\
+    Modelo construido y entrenado en dos etapas, evaluado sobre $152$ recortes de
+    placa ($99$ placas distintas) y sobre $99$ recortes de vehículo con texto
+    verificado. Exactitud por carácter $0{,}851$ y $0{,}882$; coincidencia exacta
+    $0{,}526$ y $0{,}566$. El criterio de $0{,}90$ de exactitud por carácter no se
+    alcanza en el módulo de reconocimiento, y la coincidencia exacta queda lejos
+    del $0{,}80$ de referencia; la causa se analiza en la
+    Subsección~\ref{subsec:brecha_ocr}. \\
     \midrule
 
     Integrar los modelos en un sistema de gestión con registro y consulta de
     eventos. &
     Cumplido &
-    Modelo de datos con restricciones e índices, tres revisiones de migración,
-    diecisiete rutas HTTP, canal persistente de notificación, cliente web con seis
-    vistas y emparejamiento de salida con abstención.
-    Verificado por $140$ pruebas unitarias y $4$ de integración contra una base
-    real. La validación de extremo a extremo con las cámaras del recinto
-    corresponde al objetivo de evaluación, no a este. \\
+    Modelo de datos con restricciones e índices, cinco revisiones de migración,
+    rutas HTTP operativas, de consulta, de autenticación, de administración y de
+    diagnóstico, canal persistente de notificación, cliente web con nueve vistas y
+    emparejamiento de salida con abstención.
+    Verificado por $156$ pruebas unitarias y de integración contra una base real,
+    con una cobertura del $83$\,\% sobre \texttt{backend/app}. La validación de
+    extremo a extremo con las cámaras del recinto corresponde al objetivo de
+    evaluación, no a este. \\
     \midrule
 
     Evaluar el desempeño del sistema y el efecto de las técnicas de
     optimización. &
     Parcial &
-    Cinco de los siete términos de hipótesis fueron medidos sobre conjuntos de
+    Cinco de los siete indicadores de contraste fueron medidos sobre conjuntos de
     prueba independientes. La optimización fue aplicada y su efecto sobre la
-    huella en disco está cuantificado (reducción del $75\%$ al pasar de precisión
-    simple a media precisión), pero la latencia, la tasa de fotogramas y la
-    degradación de exactitud atribuible a la cuantización no llegaron a medirse. \\
+    huella en disco está cuantificado (reducción del $75\%$ entre el grafo en
+    precisión simple con pesos externos y el artefacto en media precisión), pero
+    la latencia, la tasa de fotogramas y la degradación de exactitud atribuible a
+    la reducción de precisión no llegaron a medirse. \\
     \bottomrule
     \multicolumn{3}{r}{\footnotesize\textit{Fuente: Elaboración propia}} \\*
 \end{longtable}
@@ -183,73 +230,100 @@ eso recibe un tratamiento propio. El criterio exigía, de forma simultánea,
 exhaustividad de detección igual o superior al $90\%$ y exactitud por carácter
 igual o superior al $90\%$, con una coincidencia exacta adicional del $80\%$. El
 componente de detección se cumplió con holgura ($0{,}9714$ de exhaustividad y
-$0{,}9898$ de mAP@50). El déficit es íntegramente de reconocimiento: $0{,}789$ de
-exactitud por carácter sobre recortes aislados y $0{,}737$ sobre el sistema
-ensamblado, con coincidencia exacta de $0{,}356$ y $0{,}261$ respectivamente.
+$0{,}9898$ de mAP@50). El déficit es íntegramente de reconocimiento: $0{,}851$ de
+exactitud por carácter sobre recortes aislados y $0{,}882$ sobre el sistema
+ensamblado, con coincidencia exacta de $0{,}526$ y $0{,}566$ respectivamente.
+El avance respecto de la versión anterior del capítulo ---$0{,}831$ y $0{,}782$ de
+exactitud por carácter--- es real, pero se midió sobre un conjunto de prueba
+estrictamente más difícil, sin placas compartidas con el entrenamiento.
 
 La conclusión que sostiene la evidencia es que \textbf{la restricción dominante
 no es la arquitectura del modelo, sino la calidad y el volumen del material
-disponible}. Cuatro mediciones independientes convergen en esa dirección.
+disponible}. Cinco mediciones independientes convergen en esa dirección.
 
 \paragraph{Primera causa: la resolución física del recorte.}
 Un recorte de $40 \times 13$ píxeles que contiene siete caracteres dispone de
 aproximadamente cinco píxeles de ancho por glifo. A esa escala la información no
 está presente en la imagen: ningún modelo puede reconstruir un trazo que no fue
-capturado. La degradación es monótona con la altura del recorte ---$0{,}605$ por
-debajo de $20$ píxeles, $0{,}824$ entre $20$ y $30$, $0{,}803$ entre $30$ y $40$
-y $0{,}847$ por encima de $40$---, lo que descarta una explicación por
+capturado. La degradación es monótona con la altura del recorte ---$0{,}643$ por
+debajo de $20$ píxeles, $0{,}781$ entre $20$ y $30$, $0{,}841$ entre $30$ y $40$
+y $0{,}872$ por encima de $40$---, lo que descarta una explicación por
 variabilidad muestral y confirma una relación causal con la resolución.
 
 Este dato tiene una consecuencia decisiva para interpretar la brecha: aun
 eliminando por completo los recortes de baja resolución y evaluando solo el mejor
-tramo, el sistema alcanza $0{,}847$, todavía por debajo del $0{,}90$ exigido. La
+tramo, el sistema alcanza $0{,}872$, todavía por debajo del $0{,}90$ exigido. La
 infraestructura de captura disponible no produce, en la generalidad de los casos,
 la calidad de imagen que el criterio supone.
 
 \paragraph{Segunda causa: el volumen de datos reales.}
-El ajuste fino dispone de $395$ placas reales para un alfabeto de $37$ símbolos.
-La curva de exactitud seguía aumentando al finalizar las $500$ épocas, lo que
-indica que el modelo no había agotado la información disponible: el límite
-aparece antes por cantidad de datos que por convergencia del entrenamiento. El
-preentrenamiento sobre $359.992$ matrículas sintéticas elevó el piso del
-desempeño, pero no su techo, porque persiste una diferencia de dominio medible:
-la luminancia mediana de los recortes reales es de $76{,}6$ frente a $106{,}4$ en
-los sintéticos, con desviación estándar de $20{,}7$ frente a $34{,}4$.
+El ajuste fino dispone de $1.085$ recortes reales de $541$ placas distintas para
+un alfabeto de $37$ símbolos, todavía pocos ejemplos por carácter. La ampliación
+del conjunto de entrenamiento de $889$ a $1.085$ recortes, medida sobre el mismo
+test, elevó la coincidencia exacta de $0{,}480$ a $0{,}526$: la cantidad de datos
+sigue siendo una palanca activa y el techo aún no se ha agotado por esa vía. El
+preentrenamiento sobre $360.000$ matrículas sintéticas elevó el piso del
+desempeño, pero no su techo. La calibración del generador contra los recortes
+reales igualó el tono ---brillo medio $110$ sintético frente a $101$ real,
+contraste $37$ frente a $38$, relación rojo/azul $1{,}49$ frente a $1{,}55$---,
+de modo que la diferencia de dominio que persiste ya no es de iluminación sino de
+fidelidad del glifo: tipografía, relieve y oclusiones por sujeción.
 
-\paragraph{Tercera causa: el costo de la localización.}
+\paragraph{Tercera causa: la geometría del recorte.}
 La comparación entre evaluar con la caja provista por un operador y con la caja
-producida por el detector propio aísla el error atribuible al encuadre:
-$0{,}799$ frente a $0{,}737$, es decir $6{,}2$ puntos de exactitud por carácter
-que no corresponden al reconocedor. El dato se confirma desde el otro extremo:
-de las $700$ propuestas del etiquetador automático que sí correspondían a una
-placa, solo $183$ ($26{,}1\%$) resultaron utilizables sin corrección. La
-geometría del recorte, y no solo su contenido, condiciona la lectura.
+producida por el detector propio aísla el error atribuible al encuadre. Con el
+detector entrenado para este dominio, la caja automática ya no penaliza al
+reconocedor: sobre los $99$ recortes ensamblados rinde $0{,}882$ de exactitud por
+carácter frente a $0{,}854$ de la caja humana, porque adapta el encuadre a cada
+imagen mientras el recorte de referencia usa márgenes fijos. El costo de la
+localización, en cambio, sí aparece con un localizador genérico: de las $700$
+propuestas del etiquetador automático que correspondían a una placa, solo $183$
+($26{,}1\%$) resultaron utilizables sin corrección. La geometría del recorte
+condiciona la lectura, y por eso el detector propio es parte de la solución y no
+solo del pipeline.
 
 \paragraph{Cuarta causa: el formato impide corregir por gramática.}
 Se implementó y se midió un post-procesamiento determinista basado en la
 gramática oficial de las matrículas bolivianas. Su efecto fue contrario al
-esperado: redujo la exactitud por carácter de $0{,}789$ a $0{,}786$, porque el
-formato admite letras dentro del bloque numérico y la regla convierte lecturas
-correctas en incorrectas. El mecanismo se conserva en el código como referencia
-sintáctica y queda desactivado por omisión. La lección es que el formato
-boliviano ofrece menos restricciones explotables que otros formatos, y que la
-corrección sintáctica no sustituye la calidad de captura.
+esperado: redujo ligeramente la exactitud por carácter en la medición original
+($0{,}831 \rightarrow 0{,}826$), porque el formato admite letras dentro del bloque
+numérico y la regla convierte lecturas correctas en incorrectas. El mecanismo se
+descartó como criterio de producción y se conserva únicamente como referencia
+sintáctica. La lección es que el formato boliviano ofrece menos restricciones
+explotables que otros formatos, y que la corrección sintáctica no sustituye la
+calidad de captura.
 
 \paragraph{Por qué no se trata de un problema de ajuste.}
 Tres observaciones descartan que la brecha se cierre con calibración de
-hiperparámetros. Primero, dos arquitecturas de concepción distinta ---el CRNN
-entrenado para este dominio y un motor genérico de terceros--- convergen en la
-misma franja de desempeño ($0{,}789$ y $0{,}601$), lo que apunta a un límite del
-material y no del método. Segundo, la diferencia entre la mejor época observada
-($0{,}793$) y la reportada ($0{,}789$) es inferior al error de muestreo del
-conjunto de prueba, estimado en $\pm 5$ puntos con $n = 101$; elegir el máximo
-habría introducido un sesgo de selección sin mejora real. Tercero, las
-intervenciones que sí produjeron cambios de magnitud fueron todas de
-preprocesamiento y de datos, no de arquitectura: la normalización de contraste
-llevó la exactitud de $0{,}14$ a $0{,}676$, el aumento geométrico de recorte de
-$0{,}594$ a $0{,}737$, y la corrección del criterio de selección de época de
-$0{,}7937$ a $0{,}8124$ en el clasificador de color, sin modificar el modelo ni
-una sola imagen.
+hiperparámetros. Primero, la degradación con la resolución es la misma en dos
+arquitecturas sin nada en común: el CRNN pasa de $0{,}643$ a $0{,}872$ de exactitud
+por carácter entre los recortes de menos de $20$ píxeles y los de $40$ o más,
+mientras que PaddleOCR pasa de $0{,}403$ a $0{,}663$ en los mismos tramos de la
+medición original. Que ambos fallen en el mismo tipo de recorte apunta a un límite
+del material y no del método. Segundo, la diferencia entre la mejor época
+($0{,}851$) y la última ($0{,}850$) es inferior al error estándar del conjunto de
+prueba, estimado en $3{,}7$ puntos con $n = 152$ ($\mathrm{IC}_{95} \approx \pm 7$
+sobre la probabilidad de coincidencia exacta); elegir el máximo no aporta una
+mejora que el test pueda resolver. Tercero, las intervenciones que sí produjeron
+cambios de magnitud fueron todas de preprocesamiento y de datos, no de
+arquitectura: la normalización de contraste llevó la exactitud de $0{,}14$ a
+$0{,}676$, el aumento geométrico de recorte de $0{,}594$ a $0{,}782$, y la
+corrección del criterio de selección de época de $0{,}7937$ a $0{,}8124$ en el
+clasificador de color, sin modificar el modelo ni una sola imagen.
+
+\paragraph{Quinta causa: el preentrenamiento sintético no transfiere.}
+A las cuatro causas anteriores se suma una quinta, medida de forma directa en la
+Subsección~\ref{subsubsec:techo_sintetico}: la etapa 1 se evalúa sobre ambos
+dominios en cada época y el resultado es concluyente. Mientras la exactitud
+sintética asciende de $0{,}923$ a $0{,}948$, la real oscila entre $0{,}094$ y
+$0{,}133$ sin tendencia y la coincidencia exacta permanece en $0{,}000$ en las
+siete mediciones disponibles. La relación no es de volumen sino de fidelidad del
+generador: el modelo converge en su propio dominio y no adquiere la representación
+del glifo real, porque el renderizador emplea tipografía sustituta, omite el
+relieve de la placa y muestrea la degradación de forma independiente en lugar de
+reproducir la física del acceso. El preentrenamiento elevó el piso
+---el reconocedor arranca su ajuste fino en $0{,}148$--- pero no el techo, y por
+eso el resultado final depende del material real disponible.
 
 \paragraph{Consecuencia operativa.}
 El reconocedor emite siempre una cadena plausible y acumula aciertos parciales:
@@ -274,7 +348,7 @@ no un rodeo.
 Las mediciones permiten formular la condición necesaria con una cifra: una altura
 de placa igual o superior a $40$ píxeles en el punto de lectura, combinada con un
 volumen de datos reales un orden de magnitud superior al actual. En esas
-condiciones el sistema ya alcanza $0{,}847$ de exactitud por carácter sobre el
+condiciones el sistema ya alcanza $0{,}872$ de exactitud por carácter sobre el
 tramo de mayor resolución, y la brecha restante es abordable con las técnicas que
 se recomiendan en el apartado siguiente ---votación sobre múltiples fotogramas de
 la trayectoria, hoy limitada al mejor fotograma, y decodificación restringida
@@ -297,9 +371,10 @@ captura mínima compatible con un umbral del $90\%$.
 El pipeline integrado, el conjunto de datos construido y verificado, el sistema
 de gestión con su interfaz de programación y su cliente web, y los protocolos de
 evaluación quedan disponibles como artefactos reutilizables. El conjunto de datos
-es el activo de mayor valor: $496$ matrículas reales con texto confirmado por
-operador y $868$ recortes de placa con caja revisada no se obtienen sin el
-trabajo de inspección que aquí se documenta.
+es el activo de mayor valor: $640$ matrículas reales con texto confirmado por
+operador y $1.237$ recortes de placa reales, de los cuales $196$ se obtuvieron
+revisando manualmente propuestas del detector, no se obtienen sin el trabajo de
+inspección que aquí se documenta.
 
 \paragraph{Aporte académico.}
 El trabajo deja registro de resultados negativos que rara vez se publican: el

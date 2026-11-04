@@ -112,10 +112,11 @@ medido:
         demás, evita el efecto contrario que se midió.
 
     \item \textbf{Calibrar la confianza y publicar la incertidumbre.} La
-        coincidencia exacta de $0{,}261$ en el sistema ensamblado indica que la
-        mayoría de las lecturas contiene al menos un carácter erróneo. Reportar
-        la confianza por carácter permite que el operador distinga entre una
-        lectura utilizable y una que requiere confirmación.
+        coincidencia exacta de $0{,}566$ en el sistema ensamblado indica que
+        todavía una fracción apreciable de las lecturas contiene al menos un
+        carácter erróneo. Reportar la confianza por carácter permite que el
+        operador distinga entre una lectura utilizable y una que requiere
+        confirmación.
 
     \item \textbf{Mantener la revisión humana como parte del ciclo.} El
         pseudo-etiquetado automático fue útil como propuesta, pero solo el
@@ -124,43 +125,42 @@ medido:
         calidad del conjunto y debe presupuestarse como tal.
 \end{enumerate}
 
-\subsection{Medición pendiente de las hipótesis no evaluadas}
+\subsection{Medición pendiente por muestra insuficiente}
 
 \begin{itemize}
-    \item \textbf{Detección de vehículos ($H_{1.1}$).} La medición requiere cajas
-        de referencia humana, que no existen para los vehículos. La línea de
-        trabajo inmediata es anotar una muestra del pool congelado siguiendo el
-        mismo procedimiento de revisión aplicado a las placas: propuesta
-        automática, aceptación, corrección o descarte por un operador, y
-        partición por bloque de grabación. Sin esa anotación, el error de la
-        etapa de detección seguirá propagándose sin cuantificar al resto del
-        pipeline.
+    \item \textbf{Determinación de eventos ($H_{1.5}$).} La cadena de extremo a
+        extremo ya está implementada y medida sobre una hora pareada, con una
+        exactitud de $0{,}889$ cuyo intervalo contiene el umbral
+        (Subsección~\ref{sec:resultados_eventos}). Lo que falta no es
+        infraestructura sino muestra: con una exactitud real de $0{,}95$ se
+        requieren $139$ cruces, y el recinto produce entre nueve y trece por hora
+        pareada. La campaña consiste en etiquetar las horas restantes con el mismo
+        procedimiento, sin volver a ajustar el sistema contra ellas.
 
-    \item \textbf{Determinación de eventos ($H_{1.5}$).} La medición depende de
-        la simulación de extremo a extremo con las dos cámaras sincronizadas. La
-        lógica de zonas y línea virtual está implementada; lo que falta es el
-        escenario de prueba con verdad de referencia sobre una secuencia
-        completa de ingresos y salidas.
+    \item \textbf{Estabilidad de la detección medida.} La detección de vehículos
+        quedó medida sobre dos cámaras y un recinto (Subsección~\ref{subsec:resultados_deteccion}).
+        Repetir el conjunto sobre un tercer punto de acceso, o sobre el mismo con
+        otra altura de montaje, diría si el resultado se sostiene fuera de estas
+        condiciones de instalación.
 
     \item \textbf{Rendimiento y optimización.} Las transformaciones aplicadas
         ---exportación a formatos intermedios, media precisión y compilación de
-        motores--- reducen la huella en disco en un $75\%$, pero su efecto sobre
-        latencia, tasa de fotogramas y exactitud no fue medido. Corresponde
-        completar el banco de pruebas por formato y por variante de escala sobre
-        el hardware de despliegue, e incluir la degradación de exactitud
-        atribuible a la media precisión, que es el dato que permite decidir si el
-        intercambio es aceptable.
+        motores--- reducen la huella del artefacto exportado en un $75\%$, pero su
+        efecto sobre latencia, tasa de fotogramas y exactitud no fue medido.
+        Corresponde completar el banco de pruebas por formato y por variante de
+        escala sobre el hardware de despliegue, e incluir la degradación de
+        exactitud atribuible a la reducción de precisión, que es el dato que
+        permite decidir si el intercambio es aceptable.
 \end{itemize}
 
 \subsection{Líneas de continuidad}
 
 \begin{enumerate}
-    \item \textbf{Contraste contra un padrón de vehículos habilitados (RF-10).}
-        Es la capacidad prevista que la entrega no incluye. Requiere una entidad
-        de vehículos autorizados, la consulta de contraste en el momento del
-        registro y el reporte de accesos no autorizados al operador. Mientras el
-        padrón no exista, el sistema documenta el acceso pero no puede
-        clasificarlo como permitido o no permitido.
+    \item \textbf{Integración del padrón con barreras físicas y mecanismos RFID.}
+        Una vez implementado el padrón lógico de vehículos autorizados (RF-10) en
+        software, la línea de evolución natural consiste en la integración con
+        actuadores físicos (barreras vehiculares, semáforos de acceso o control
+        de apertura automática) o sistemas complementarios de radiofrecuencia (RFID).
 
     \item \textbf{Clasificación de color con referencia de exposición.} El error
         se concentra en el bloque acromático y no es de tono sino de nivel de
@@ -180,11 +180,13 @@ medido:
         condición para distribuir el sistema más allá del equipo de desarrollo.
 
     \item \textbf{Tratamiento de datos personales.} Las matrículas y los registros
-        asociados constituyen datos personales. Antes de una operación real debe
-        definirse la base de licitud, el plazo de conservación, quién accede a la
-        información y cómo se atiende una solicitud de supresión. El sistema
-        almacena lo necesario para operar; la política de retención es una
-        decisión institucional que el software no resuelve por sí solo.
+        asociados constituyen datos personales. El sistema aplica una retención de
+        $90$ días para la telemetría y los recortes, y conserva el vehículo y la
+        sesión para la trazabilidad. Antes de una operación real debe definirse la
+        base de licitud, el plazo definitivo de conservación, quién accede a la
+        información y cómo se atiende una solicitud de supresión; la política de
+        retención es, en último término, una decisión institucional que el software
+        no resuelve por sí solo.
 
     \item \textbf{Extensión del conjunto de datos a otros recintos.} Todas las
         sesiones provienen de las mismas cámaras. La partición por bloque horario
@@ -198,8 +200,8 @@ medido:
 
 El trabajo deja un sistema construido, un conjunto de datos verificado y un
 conjunto de mediciones que delimitan con precisión qué sabe hacer el sistema y
-qué no. De los siete términos de hipótesis, dos se respaldan, tres no se alcanzan y
-dos quedan sin evaluar; de los seis objetivos específicos, tres se cumplen y
-tres se cumplen parcialmente. Esa proporción no es un resultado adverso: es el
+qué no. De los siete indicadores de contraste, dos se respaldan, tres quedan por
+debajo del umbral o de la referencia y dos no se contrastan; de los seis objetivos
+específicos, tres se cumplen y tres se cumplen parcialmente. Esa proporción no es un resultado adverso: es el
 mapa exacto del estado del arte alcanzado, y es la información que permite que
 cualquier trabajo posterior se apoye en lo construido sin repetir lo ya medido.

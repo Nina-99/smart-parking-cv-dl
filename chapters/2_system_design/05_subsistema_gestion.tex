@@ -23,7 +23,7 @@ gestión.
 
 \subsection{Modelo entidad-relación}
 
-El modelo de datos se estructura en tres entidades. La entidad
+El modelo de datos se estructura en seis entidades. La entidad
 \textit{vehículo} representa a cada automóvil observado en los accesos y
 conserva los atributos visuales reconocidos en su primera aparición. La entidad
 \textit{sesión} representa una visita al recinto: se crea en el cruce de ingreso
@@ -31,25 +31,57 @@ y se cierra en el cruce de salida, registrando la duración de la permanencia, e
 estado del cierre y, cuando el cierre es manual, el operador y el motivo. La
 entidad \textit{detección} constituye la bitácora de inferencia: conserva cada
 observación producida por el modelo, con su clase, confianza, latencia y
-trayectoria asociada. La Figura \ref{fig:modelo_er} presenta las entidades y sus
-relaciones con la cardinalidad correspondiente.
+trayectoria asociada. A estas tres se suman la entidad \textit{cámara}, que
+registra los puntos de acceso configurados con su puerta, su URL de captura y su
+estado de habilitación; la entidad \textit{usuario}, que almacena la credencial,
+el rol y el estado de la cuenta; y la entidad \textit{vehículo autorizado}, que
+materializa el padrón institucional contra el cual se contrasta cada matrícula
+reconocida para el control de autorización (RF-10). La Figura
+\ref{fig:modelo_er} presenta la totalidad de las entidades y sus relaciones con
+la cardinalidad correspondiente. Las relaciones trazadas con línea continua
+corresponden a claves foráneas declaradas en el esquema; las trazadas con línea
+discontinua son asociaciones lógicas por coincidencia de identificador o de
+matrícula, que el sistema resuelve en la capa de aplicación.
 
-\begin{figure}[htbp]
+\begin{figure}[H]
     \centering
     \begin{tikzpicture}
-        % *** Entidades ***
-        \spEntity{entVehiculo}{-5.4,0}{3.8cm}{purpura}{vehículo}
-            {id (PK)\\matricula\\tipo, color\\creado\_en}
+        % *** Entidades (nombre conceptual y nombre físico de la tabla) ***
+        \spEntityTable{entVehiculo}{-6.0,2.2}{4.0cm}{purpura}
+            {vehículo}{vehicles}
+            {id (PK)\\license\_plate (ix)\\license\_plate\_confidence\\
+             vehicle\_type, color\\+ su confianza\\entry\_image\_path\\
+             created\_at, updated\_at}
 
-        \spEntity{entSesion}{0,0}{3.8cm}{purpura}{sesión}
-            {id (PK)\\id\_vehiculo (FK)\\puerta\_ingreso\\puerta\_salida\\
-             hora\_ingreso, hora\_salida\\duracion, estado\\cierre\_motivo}
+        \spEntityTable{entSesion}{-0.3,2.2}{4.4cm}{purpura}
+            {sesión}{parking\_sessions}
+            {id (PK)\\vehicle\_id (FK, ix)\\entry\_gate, exit\_gate\\
+             entry\_time, exit\_time\\duration\_seconds\\
+             status (ix)\\close\_reason, closed\_by}
 
-        \spEntity{entDeteccion}{5.4,0}{3.8cm}{matblue}{detección}
-            {id (PK)\\id\_sesion (FK)\\camara, marca temporal\\
-             modelo, clase\\confianza, caja\\track\_id, latencia}
+        \spEntityTable{entDeteccion}{5.6,2.2}{4.8cm}{matblue}
+            {detección}{detection\_events}
+            {id (PK)\\session\_id (FK, ix)\\camera\_id (ix), frame\_timestamp\\
+             model\_name, model\_version\\object\_class, confidence\\
+             bbox (JSONB), crop\_image\_path\\track\_id, inference\_latency\_ms}
 
-        % *** Relaciones ***
+        \spEntityTable{entCamara}{5.6,-2.9}{4.8cm}{cielo}
+            {cámara}{cameras}
+            {id (PK)\\camera\_id (único, ix)\\gate, label, rtsp\_url\\
+             is\_active, created\_at}
+
+        \spEntityTable{entAutorizado}{-6.0,-2.9}{4.0cm}{rosa}
+            {vehículo autorizado}{authorized\_vehicles}
+            {id (PK)\\license\_plate (único, ix)\\owner\_name\\vehicle\_type, color\\
+             notes, is\_active\\created\_at, updated\_at}
+
+        \spEntityTable{entUsuario}{-0.3,-2.9}{4.4cm}{rosa}
+            {usuario}{users}
+            {id (PK)\\username (único, ix)\\password\_hash\\
+             role (admin, operator, owner)\\is\_active\\
+             created\_at, last\_login\_at}
+
+        % *** Relaciones por clave foránea ***
         \draw[spflow] (entVehiculo.east) --
             node[above, font=\tiny\bfseries, text=black!70] {1:N}
             (entSesion.west);
@@ -58,31 +90,48 @@ relaciones con la cardinalidad correspondiente.
             node[above, font=\tiny\bfseries, text=black!70] {1:N}
             (entDeteccion.west);
 
+        % *** Relaciones lógicas ***
+        \draw[spflow, dashed] (entAutorizado.north) --
+            node[right, font=\tiny\bfseries, text=black!60] {1:N (por matrícula)}
+            (entVehiculo.south);
+
+        \draw[spflow, dashed] (entUsuario.north) --
+            node[right, font=\tiny\bfseries, text=black!60] {0..1:N (cierre manual)}
+            (entSesion.south);
+
+        \draw[spflow, dashed] (entCamara.north) --
+            node[right, font=\tiny\bfseries, text=black!60] {1:N (por identificador)}
+            (entDeteccion.south);
+
     \end{tikzpicture}
-    \caption{Modelo entidad-relación del subsistema de gestión.}
+    \caption{Modelo entidad-relación del subsistema de gestión. Cada entidad
+    indica su nombre conceptual y, en tipografía monoespaciada, el nombre físico
+    de la tabla en la base de datos.}
     \label{fig:modelo_er}
 \end{figure}
 
-La Tabla \ref{tab:diccionario_datos} detalla el diccionario de datos,
-especificando para cada campo su tipo y sus restricciones de integridad. Las
-claves foráneas preservan la consistencia referencial y permiten reconstruir la
-trazabilidad completa de una visita, desde el vehículo identificado hasta cada
-una de las observaciones que sustentaron su identificación. El esquema se
-gestiona mediante migraciones versionadas, de modo que toda modificación
-estructural quede registrada y pueda reproducirse sobre cualquier entorno de
-despliegue.
+La Tabla \ref{tab:diccionario_datos} detalla el diccionario de datos. Cada bloque
+identifica la entidad con su nombre conceptual y el nombre físico de la tabla, y
+cada fila emplea el nombre real de la columna tal como se declara en las
+migraciones, de modo que el esquema pueda verificarse contra el código sin
+traducciones intermedias. Las claves foráneas preservan la consistencia
+referencial y permiten reconstruir la trazabilidad completa de una visita, desde
+el vehículo identificado hasta cada una de las observaciones que sustentaron su
+identificación. El esquema se gestiona mediante migraciones versionadas, de modo
+que toda modificación estructural quede registrada y pueda reproducirse sobre
+cualquier entorno de despliegue.
 
 \begin{longtable}{
-        P{0.22}
-        P{0.18}
-        P{0.52}
+        Q{0.28}
+        Q{0.16}
+        P{0.38}
     }
     \caption{Diccionario de datos del subsistema de gestión}
     \label{tab:diccionario_datos}\\
 
     \toprule
     \rowcolor{gray!20}
-    \textbf{Campo} &
+    \textbf{Columna} &
     \textbf{Tipo} &
     \textbf{Restricción} \\
     \midrule
@@ -92,77 +141,165 @@ despliegue.
     \ref{tab:diccionario_datos}}} \\
     \toprule
     \rowcolor{gray!20}
-    \textbf{Campo} &
+    \textbf{Columna} &
     \textbf{Tipo} &
     \textbf{Restricción} \\
     \midrule
     \endhead
 
-    \multicolumn{3}{l}{\textbf{vehículo}} \\
+    \multicolumn{3}{l}{\normalfont\textbf{vehículo} --- \texttt{vehicles}} \\
     \midrule
-    id & UUID & Clave primaria. \\
-    matricula & VARCHAR(20) & Indexado; nulo si no pudo reconocerse. \\
-    confianza\_matricula & REAL & Puede ser nulo. \\
-    tipo & VARCHAR(50) & Puede ser nulo. \\
-    confianza\_tipo & REAL & Puede ser nulo. \\
-    color & VARCHAR(30) & Puede ser nulo. \\
-    confianza\_color & REAL & Puede ser nulo. \\
-    ruta\_imagen & TEXT & Puede ser nulo. \\
-    creado\_en & TIMESTAMP & No nulo. \\
-    actualizado\_en & TIMESTAMP & No nulo; se actualiza en cada modificación. \\
-    \midrule
-
-    \multicolumn{3}{l}{\textbf{sesión}} \\
-    \midrule
-    id & UUID & Clave primaria. \\
-    id\_vehiculo & UUID & Clave foránea a vehículo; no nulo e indexado. \\
-    puerta\_ingreso & VARCHAR(20) & Puede ser nulo. \\
-    puerta\_salida & VARCHAR(20) & Puede ser nulo. \\
-    hora\_ingreso & TIMESTAMP & No nulo. \\
-    hora\_salida & TIMESTAMP & Nulo mientras la sesión permanece activa. \\
-    duracion & INTEGER & Segundos de permanencia; calculado al cierre. \\
-    estado & ENUM & Activa, completada o cancelada; indexado. \\
-    cierre\_motivo & VARCHAR(50) & Nulo cuando la sesión sigue activa; motivo del cierre. \\
-    cierre\_operador & VARCHAR(50) & Nulo cuando el cierre es automático; operador que cerró. \\
+    \texttt{id} & UUID & Clave primaria. \\
+    \texttt{license\_plate} & VARCHAR(20) & Indexado; nulo si no pudo reconocerse. \\
+    \texttt{license\_plate\_confidence} & REAL & Puede ser nulo. \\
+    \texttt{vehicle\_type} & VARCHAR(50) & Puede ser nulo. \\
+    \texttt{vehicle\_type\_confidence} & REAL & Puede ser nulo. \\
+    \texttt{color} & VARCHAR(30) & Puede ser nulo. \\
+    \texttt{color\_confidence} & REAL & Puede ser nulo. \\
+    \texttt{entry\_image\_path} & TEXT & Puede ser nulo. \\
+    \texttt{created\_at} & TIMESTAMP & No nulo. \\
+    \texttt{updated\_at} & TIMESTAMP & No nulo; se actualiza en cada modificación. \\
     \midrule
 
-    \multicolumn{3}{l}{\textbf{detección}} \\
+    \multicolumn{3}{l}{\normalfont\textbf{sesión} --- \texttt{parking\_sessions}} \\
     \midrule
-    id & UUID & Clave primaria. \\
-    id\_sesion & UUID & Clave foránea a sesión; puede ser nulo e indexado. \\
-    camara & VARCHAR(50) & No nulo e indexado. \\
-    marca\_temporal & TIMESTAMP & No nulo. \\
-    modelo & VARCHAR(20) & Identificador del modelo empleado. \\
-    clase & VARCHAR(50) & Clase detectada. \\
-    confianza & REAL & No nulo. \\
-    caja & JSONB & Coordenadas normalizadas de la caja delimitadora. \\
-    ruta\_recorte & TEXT & Puede ser nulo. \\
-    latencia & REAL & Tiempo de inferencia en milisegundos. \\
-    version\_modelo & VARCHAR(20) & Puede ser nulo. \\
-    track\_id & INTEGER & Identificador de trayectoria asignado por el seguimiento. \\*
+    \texttt{id} & UUID & Clave primaria. \\
+    \texttt{vehicle\_id} & UUID & Clave foránea a \texttt{vehicles}; no nulo e indexado. \\
+    \texttt{entry\_gate} & VARCHAR(20) & Puede ser nulo. \\
+    \texttt{exit\_gate} & VARCHAR(20) & Puede ser nulo. \\
+    \texttt{entry\_time} & TIMESTAMP & No nulo. \\
+    \texttt{exit\_time} & TIMESTAMP & Nulo mientras la sesión permanece activa. \\
+    \texttt{duration\_seconds} & INTEGER & Segundos de permanencia; calculado al cierre. \\
+    \texttt{status} & ENUM & \textit{active}, \textit{completed} o \textit{cancelled};
+        indexado. \\
+    \texttt{close\_reason} & VARCHAR(50) & Nulo cuando la sesión sigue activa; motivo del cierre. \\
+    \texttt{closed\_by} & VARCHAR(50) & Nulo cuando el cierre es automático; operador que cerró. \\
+    \midrule
+
+    \multicolumn{3}{l}{\normalfont\textbf{detección} --- \texttt{detection\_events}} \\
+    \midrule
+    \texttt{id} & UUID & Clave primaria. \\
+    \texttt{session\_id} & UUID & Clave foránea a \texttt{parking\_sessions}; puede ser
+        nulo e indexado. \\
+    \texttt{camera\_id} & VARCHAR(50) & No nulo e indexado. \\
+    \texttt{frame\_timestamp} & TIMESTAMP & No nulo. \\
+    \texttt{model\_name} & VARCHAR(20) & Identificador del modelo empleado. \\
+    \texttt{model\_version} & VARCHAR(20) & Puede ser nulo. \\
+    \texttt{object\_class} & VARCHAR(50) & Clase detectada. \\
+    \texttt{confidence} & REAL & No nulo. \\
+    \texttt{bbox} & JSONB & Coordenadas normalizadas de la caja delimitadora. \\
+    \texttt{crop\_image\_path} & TEXT & Puede ser nulo. \\
+    \texttt{track\_id} & INTEGER & Identificador de trayectoria asignado por el seguimiento. \\
+    \texttt{inference\_latency\_ms} & REAL & Tiempo de inferencia en milisegundos. \\
+    \midrule
+
+    \multicolumn{3}{l}{\normalfont\textbf{cámara} --- \texttt{cameras}} \\
+    \midrule
+    \texttt{id} & UUID & Clave primaria. \\
+    \texttt{camera\_id} & VARCHAR(64) & Único, indexado y no nulo; debe coincidir con el
+        empleado por el capturador y el trabajador. \\
+    \texttt{gate} & VARCHAR(20) & No nulo; punto de acceso asociado. \\
+    \texttt{label} & VARCHAR(120) & Puede ser nulo; denominación legible. \\
+    \texttt{rtsp\_url} & TEXT & Puede ser nulo; cadena de captura del flujo. \\
+    \texttt{is\_active} & BOOLEAN & No nulo; indica si la cámara se espera en operación. \\
+    \texttt{created\_at} & TIMESTAMP & No nulo. \\
+    \midrule
+
+    \multicolumn{3}{l}{\normalfont\textbf{usuario} --- \texttt{users}} \\
+    \midrule
+    \texttt{id} & UUID & Clave primaria. \\
+    \texttt{username} & VARCHAR(64) & Único, indexado y no nulo. \\
+    \texttt{password\_hash} & VARCHAR(255) & No nulo; se almacena únicamente el resumen
+        criptográfico, nunca la contraseña. \\
+    \texttt{role} & VARCHAR(20) & Restringido por \texttt{CHECK} a \textit{admin},
+        \textit{operator} u \textit{owner}. \\
+    \texttt{is\_active} & BOOLEAN & No nulo; habilita o suspende la cuenta. \\
+    \texttt{created\_at} & TIMESTAMP & No nulo. \\
+    \texttt{last\_login\_at} & TIMESTAMP & Puede ser nulo. \\
+    \midrule
+
+    \multicolumn{3}{l}{\normalfont\textbf{vehículo autorizado} --- \texttt{authorized\_vehicles}} \\
+    \midrule
+    \texttt{id} & UUID & Clave primaria. \\
+    \texttt{license\_plate} & VARCHAR(20) & Única, indexada y no nulo; sostiene el
+        contraste de RF-10. \\
+    \texttt{owner\_name} & VARCHAR(120) & Puede ser nulo. \\
+    \texttt{vehicle\_type} & VARCHAR(50) & Puede ser nulo. \\
+    \texttt{color} & VARCHAR(30) & Puede ser nulo. \\
+    \texttt{notes} & TEXT & Puede ser nulo. \\
+    \texttt{is\_active} & BOOLEAN & No nulo; una baja lógica conserva el historial de eventos. \\
+    \texttt{created\_at} & TIMESTAMP & No nulo. \\
+    \texttt{updated\_at} & TIMESTAMP & No nulo; se actualiza en cada modificación. \\*
     \multicolumn{3}{r}{\footnotesize\textit{Fuente: Elaboración propia}} \\*
     \bottomrule
 \end{longtable}
 
 Para sostener el desempeño de las consultas sobre un volumen creciente de
-registros, el esquema define índices sobre la matrícula, sobre el identificador
-del vehículo en la sesión, sobre el estado de la sesión, sobre la cámara de
-origen y sobre el identificador de sesión en la bitácora de detecciones. Estos
-índices responden a los patrones de consulta predominantes del sistema: la
-recuperación del historial de un vehículo, la consulta de las sesiones activas
-para el cálculo de la ocupación, y la revisión de las observaciones asociadas a
-una visita determinada.
+registros, el esquema define índices sobre \texttt{license\_plate}, sobre
+\texttt{vehicle\_id}, sobre \texttt{status}, sobre \texttt{camera\_id} y sobre
+\texttt{session\_id}. A ellos se suman los índices únicos sobre
+\texttt{username}, sobre \texttt{camera\_id} y sobre la matrícula del padrón
+(\texttt{authorized\_vehicles.license\_plate}), que impiden duplicados en las
+tres entidades de control. Estos índices responden a los patrones de consulta
+predominantes del sistema: la recuperación del historial de un vehículo, la
+consulta de las sesiones activas para el cálculo de la ocupación, la revisión de
+las observaciones asociadas a una visita determinada y el contraste de una
+matrícula leída contra el padrón de vehículos habilitados.
+
+\subsection{Modelo de aforo perimetral y gestión de ocupación}
+
+Un aspecto de diseño que delimita el alcance del sistema es el modelo adoptado
+para la gestión de ocupación. Frente a los esquemas basados en supervisión de
+plazas individuales (\textit{bay monitoring} o \textit{slot guidance}), que
+demandan una infraestructura extensiva de cámaras cenitales o sensores de
+proximidad en cada cajón, este trabajo adopta el modelo de \textbf{aforo
+perimetral}.
+
+Bajo este enfoque, el sistema modela el parqueadero como un recinto delimitado
+cuyo estado se gobierna por la ley de balance de flujo continuo:
+\begin{equation}
+    O(t) = \min\left(C,\, \max\left(0,\, O(t_0) + \sum_{k} I_k(t_0, t) - \sum_{k} E_k(t_0, t)\right)\right)
+\end{equation}
+donde $O(t)$ representa el número de vehículos activos en el recinto en el
+instante $t$, $C$ es la capacidad nominal configurada, e $I_k$ y $E_k$ son los
+eventos de ingreso y egreso confirmados por el subsistema de visión artificial
+en los puntos perimetrales de acceso $k$. El porcentaje de ocupación relativo se
+expresa como $P(t) = (O(t) / C) \times 100$.
+
+Este diseño presenta tres ventajas operativas y técnicas determinantes:
+\begin{enumerate}
+    \item \textbf{Eficiencia de infraestructura:} requiere cobertura óptica
+        exclusivamente en las vías de entrada y salida, reduciendo los costos de
+        adquisición, cableado y mantenimiento frente a un esquema de cámaras
+        internas.
+    \item \textbf{Inmunidad a oclusiones internas:} no depende de líneas de
+        visión directas hacia cada cajón, las cuales suelen verse degradadas por
+        columnas, techumbres bajas o vehículos de gran porte adyacentes.
+    \item \textbf{Trazabilidad vinculada a eventos:} cada unidad computada en el
+        aforo corresponde rigurosamente a una sesión abierta con evidencia
+        visual (recorte del vehículo y matrícula auditada), evitando discrepancias
+        entre sensores dispersos.
+\end{enumerate}
 
 \subsection{Especificación de la interfaz de programación}
 
 La API se diseña siguiendo el estilo REST y expone sus servicios bajo un prefijo
 versionado, de modo que futuras modificaciones no invaliden a los clientes
-existentes. La Tabla \ref{tab:endpoints} especifica los recursos implementados.
-Nótese que el registro de ingreso y de salida está reservado a los dispositivos
-de captura, mientras que las operaciones de consulta se restringen a los
-usuarios autenticados. Los recursos de registro responden de forma inmediata con
-el identificador de la sesión creada, sin esperar a que concluya la inferencia,
-que se ejecuta de manera asíncrona.
+existentes. La Tabla \ref{tab:endpoints} especifica los recursos previstos por el
+diseño. Nótese que el registro de ingreso y de salida queda reservado a los
+dispositivos de captura, mientras que las operaciones de consulta se restringen
+a los usuarios autenticados. En esa formulación, los recursos de registro
+responden de forma inmediata con el identificador de la sesión creada, sin
+esperar a que concluya la inferencia, que se ejecuta de manera asíncrona.
+
+La implementación conserva la separación de responsabilidades, pero desplaza la
+ingesta fuera de la interfaz HTTP: el proceso de captura publica la tarea de
+inferencia directamente en la cola y el trabajador escribe el resultado en la
+base de datos, de modo que no existen recursos de registro de ingreso ni de
+salida y el camino de escritura no atraviesa el ciclo de atención de una
+petición. El vocabulario de las rutas se unificó en inglés, conforme a la
+convención de nomenclatura del código. Los recursos efectivamente expuestos se
+enumeran en la Tabla~\ref{tab:api_implementada} del capítulo de implementación.
 
 \begin{longtable}{
         P{0.10}
@@ -211,8 +348,8 @@ que se ejecuta de manera asíncrona.
     Operador \\
     \midrule
 
-    POST & /api/v1/vehiculos &
-    Registra o actualiza un vehículo en el padrón del recinto. &
+    POST & /api/v1/whitelist &
+    Registra o actualiza un vehículo en el padrón del recinto (RF-10). &
     Administrador \\
     \midrule
 
@@ -245,7 +382,9 @@ que se ejecuta de manera asíncrona.
 
 La especificación formal de estos recursos se publica de forma automática a
 partir de las definiciones de tipo del propio servicio, lo que garantiza que la
-documentación de la interfaz permanezca sincronizada con su implementación.
+documentación de la interfaz permanezca sincronizada con su implementación. La
+implementación incorpora además los recursos de gestión de usuarios y de registro
+de cámaras, que se documentan en el capítulo de implementación.
 
 \subsection{Procesamiento asíncrono y notificación en tiempo real}
 
@@ -283,14 +422,12 @@ identificado, a la puerta de acceso y a las detecciones que sustentaron la
 lectura de su matrícula.
 
 El contraste de la matrícula reconocida contra un padrón de vehículos
-autorizados está previsto como requerimiento (RF-10) y \textbf{no forma parte del
-esquema entregado}. La entidad \textit{vehículo} registra los vehículos
-observados en los accesos, no un padrón previo, y la sesión no conserva un
-indicador de autorización. Incorporarlo exige una entidad de vehículos
-habilitados, la consulta de contraste en el momento del registro y el reporte de
-los accesos no autorizados al operador. Se declara aquí como capacidad
-pendiente, y no como capacidad disponible, porque el registro de un acceso no
-autorizado sin el padrón que lo define no es verificable.
+autorizados (RF-10) se materializa mediante la entidad
+\textit{vehículo\_autorizado} (\texttt{authorized\_vehicles}), complementando a la
+entidad operativa \textit{vehículo} que registra las observaciones de acceso.
+Al consolidarse un evento de ingreso con placa reconocida, el sistema verifica
+la existencia y vigencia de la matrícula en el padrón institucional, alertando al
+operador ante accesos de vehículos no habilitados.
 
 Dado que el trabajador de inferencia puede reintentar la actualización de una
 sesión tras una interrupción, la operación de cierre se diseña como idempotente:
@@ -298,3 +435,15 @@ la marca temporal de salida y la duración se calculan una única vez, y los
 reintentos posteriores sobre una sesión ya cerrada se ignoran. Esta decisión
 evita que una falla de comunicación derive en una duración inconsistente o en un
 cierre duplicado.
+
+Asimismo, la arquitectura incorpora un mecanismo explícito de tolerancia a fallos
+frente a lecturas imprecisas del reconocedor de matrículas. En caso de que la
+matrícula leída en un evento de salida no encuentre una coincidencia exacta
+activa en la base de datos ---situación esperable ante la tasa de error por
+carácter del OCR---, el sistema no bloquea el flujo ni corrompe el estado
+transaccional: clasifica el evento como una discrepancia y genera una alerta en la
+interfaz operativa de incidentes. De este modo, el operador dispone en pantalla de
+los fotogramas de entrada y salida, el recorte de la placa y los registros
+candidatos por orden de aproximación temporal, permitiendo realizar el cierre de
+sesión de forma manual, controlada y auditada (\texttt{cierre\_operador} y
+\texttt{cierre\_motivo}).

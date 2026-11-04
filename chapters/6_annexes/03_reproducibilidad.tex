@@ -155,6 +155,90 @@ Cada checkpoint se acompaña de su archivo de métricas. El archivo no es un ado
 el motor de inferencia lee de allí el orden de las clases, de modo que un peso sin
 su archivo de métricas no puede servirse y el trabajador se niega a arrancar.
 
+\subsection{Capacidad del trabajador de inferencia}
+
+\begin{verbatim}
+uv run python tools/measure_worker_capacity.py \
+    --image puerta_1_1.png --image puerta_2_1.png \
+    --frames 60 --warmup 8 --sample-interval 0.5
+\end{verbatim}
+
+La herramienta usa el detector y los clasificadores de la configuración de
+operación, de modo que el resultado corresponde a los pesos que el sistema sirve y
+no a un modelo de referencia. El rango reportado en la
+Subsección~\ref{subsec:capacidad} proviene de tres corridas sobre dos accesos: el
+costo depende de cuántos vehículos haya en el fotograma, porque los clasificadores
+de atributos se ejecutan una vez por vehículo.
+
+\subsection{Conjunto de detección y evaluación de H1.1}
+
+\begin{verbatim}
+# 1. Un fotograma por pasada, sólo si el vehículo alcanza la zona interior
+uv run python tools/export_detection_frames.py \
+    --list seleccion.txt \
+    --output ~/Smart_Parking_dataset/detection --model yolo26m.pt
+
+# 2. Anotación humana; una de cada cuatro imágenes sin propuestas
+uv run python tools/label_boxes_gui.py \
+    --root ~/Smart_Parking_dataset/detection --blind-every 4
+
+# 3. Progreso y tasa de aceptación
+uv run python tools/label_boxes_gui.py \
+    --root ~/Smart_Parking_dataset/detection --blind-every 4 --check
+
+# 4. Evaluación
+uv run python tools/eval_vehicle_detection.py \
+    --root ~/Smart_Parking_dataset/detection \
+    --model yolo26n.pt --model yolo26s.pt \
+    --rounds 2000 --json ap50.json
+
+# 5. Contraste del sesgo de anotación
+uv run python tools/eval_vehicle_detection.py \
+    --root ~/Smart_Parking_dataset/detection \
+    --subset blind --model yolo26n.pt
+\end{verbatim}
+
+\texttt{seleccion.txt} contiene una ruta por línea y se construye tomando las horas
+completas de grabación a intervalos regulares sobre el orden cronológico, para
+cubrir los días y las franjas horarias sin favorecer ninguna. El evaluador exige
+una etiqueta por imagen: una imagen sin revisar no se puntúa como ``sin
+vehículos'', porque eso premiaría al detector por trabajo que nadie hizo.
+
+\subsection{Determinación de eventos y evaluación de H1.5}
+
+\begin{verbatim}
+# 1. Verdad de referencia: cada cruce, con su sentido, en segundos de video
+uv run python tools/label_events_gui.py \
+    --video "/mnt/nina/PARKING/Vistos/C.OCCIDENTE_ch16_main_20260415140012_20260415150012.mp4" \
+    --output ~/Smart_Parking_dataset/truth/ch16_2026041514.csv --speed 2
+
+# 2. Reproducción de extremo a extremo de la misma hora
+RTSP_CAMERAS="gate-1=rtsp://127.0.0.1:8554/gate-1,gate-2=rtsp://127.0.0.1:8554/gate-2" \
+timeout 3600 uv run python tools/simulate_cameras.py \
+    --hour 2026041514 --with-capture --transcode \
+    --start-file ~/Smart_Parking_dataset/truth/val_2026041514.start
+
+# 3. Eventos registrados por el sistema, acotados a la ventana reproducida
+START=$(cat ~/Smart_Parking_dataset/truth/val_2026041514.start)
+END=$(date -u -d "$START + 3600 seconds" +%Y-%m-%dT%H:%M:%S)
+uv run python tools/export_system_events.py \
+    --output ~/Smart_Parking_dataset/truth/system_val.json \
+    --since "$START" --until "$END"
+
+# 4. Contraste
+uv run python tools/compare_events.py \
+    --truth ~/Smart_Parking_dataset/truth/truth_val.csv \
+    --system ~/Smart_Parking_dataset/truth/system_val.json \
+    --replay-start "$START" --tolerance 10
+\end{verbatim}
+
+Dos condiciones del procedimiento afectan el resultado y se documentan aquí. La
+reproducción usa \texttt{--transcode}: copiar el flujo HEVC del grabador pierde
+fotogramas de referencia y el detector recibe imágenes dañadas, lo que degrada el
+resultado por una causa ajena al método. Y la ventana del paso 3 debe acotarse con
+\texttt{--since} y \texttt{--until}: sin el segundo, los eventos de corridas
+anteriores entran en la comparación.
+
 \section{Artefactos}
 
 La Tabla~\ref{tab:anexo_artefactos} enumera los artefactos que un tercero necesita
@@ -193,11 +277,11 @@ uv run pytest -m integration       # requiere PostgreSQL accesible
 uv run alembic -c backend/alembic.ini upgrade head
 \end{verbatim}
 
-El resultado reportado en este trabajo es de $140$ pruebas unitarias y $4$ de
-integración aprobadas, con una cobertura del $88\%$ sobre el código de la
-aplicación. Las pruebas de integración aplican las migraciones sobre una base
-vacía, ejercitan el registro y el cierre de una sesión y verifican el efecto en la
-base de datos.
+El resultado reportado en este trabajo es de $156$ pruebas aprobadas ---$134$
+unitarias y $22$ de integración---, con una cobertura del $83\%$ sobre
+\texttt{backend/app}. Las pruebas de integración aplican las migraciones sobre una
+base vacía, ejercitan el registro y el cierre de una sesión y verifican el efecto
+en la base de datos.
 
 \section{Condiciones que limitan la reproducción}
 
@@ -215,7 +299,7 @@ base de datos.
         corridas idénticas es de $1$ a $3{,}4$ puntos de F1 macro, de modo que una
         diferencia menor a ese rango no debe interpretarse como mejora. Reproducir
         un valor puntual exige repetir la corrida, no solo el comando.
-    \item \textbf{El episodio de integridad del almacenamiento.} El disco externo
+    \item \textbf{Integridad del almacenamiento.} El disco externo
         de trabajo devolvió errores de entrada y salida en una fracción de los
         recortes y truncó archivos durante la transferencia. El material se migró
         a almacenamiento NVMe, que pasó a ser la única fuente de verdad; cualquier

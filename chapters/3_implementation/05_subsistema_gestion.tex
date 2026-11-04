@@ -9,10 +9,13 @@ construido de lo pendiente.
 
 \subsection{Modelo físico de datos y migraciones}
 
-El esquema físico comprende las tres entidades especificadas en el diseño
----vehículo, sesión y detección---, cuyas columnas se detallan en la Tabla
-\ref{tab:diccionario_datos}. La implementación añade las siguientes decisiones
-que no se derivan directamente del modelo conceptual:
+El esquema físico comprende las seis tablas que materializan el modelo de datos
+del diseño. Las tres operativas ---\texttt{vehicles}, \texttt{parking\_sessions}
+y \texttt{detection\_events}--- se detallan en la Tabla
+\ref{tab:diccionario_datos}; las tres de control ---\texttt{users},
+\texttt{cameras} y \texttt{authorized\_vehicles}--- se describen a continuación.
+La implementación añade las siguientes decisiones que no se derivan directamente
+del modelo conceptual:
 
 \begin{itemize}
     \item \textbf{Identificadores generados en la aplicación.} Las claves
@@ -59,18 +62,36 @@ Esta política garantiza que una operación que involucra varias escrituras
 mantiene un grupo de conexiones reutilizables, dimensionado para sostener la
 concurrencia esperada del servicio sin saturar la base de datos.
 
-El esquema no se crea de forma directa: se materializa mediante tres revisiones
+El esquema no se crea de forma directa: se materializa mediante cinco revisiones
 versionadas que se aplican en orden y dejan registro del cambio estructural. La
-primera establece las tres entidades con sus restricciones e índices; la segunda
-añade el motivo y el operador del cierre manual, que se registran junto al
-instante de salida previsto en el esquema inicial; la tercera retira columnas que
-ningún componente produce: el vector de características, que se midió y se
+primera establece las tres entidades principales con sus restricciones e índices;
+la segunda añade el motivo y el operador del cierre manual, que se registran junto
+al instante de salida previsto en el esquema inicial; la tercera retira columnas
+que ningún componente produce: el vector de características, que se midió y se
 descartó como señal de identidad, y los campos de marca, que ningún clasificador
-entrega. Esa tercera revisión merece señalarse porque documenta una decisión:
-conservar campos que nadie escribe obliga a cada lector del esquema a preguntarse
-cuáles son reales.
+entrega; la cuarta incorpora la autenticación y el registro de cámaras, con las
+tablas \texttt{users} y \texttt{cameras}; la quinta añade el padrón
+institucional en \texttt{authorized\_vehicles}. Esa tercera revisión merece señalarse
+porque documenta una decisión: conservar campos que nadie escribe obliga a cada
+lector del esquema a preguntarse cuáles son reales.
 
-La aplicación de las tres revisiones sobre una base vacía es reproducible y forma
+Las entidades de soporte son acotadas. \texttt{users} conserva el nombre de
+acceso único, el hash de la contraseña ---nunca la contraseña---, el rol
+(\textit{admin}, \textit{operator} u \textit{owner}), el estado activo y las
+marcas de creación y último acceso. El vocabulario se almacena en inglés por
+convención del código y corresponde, en el dominio del problema, a
+\emph{administrador}, \emph{operador} y \emph{dueño}, respectivamente. Una
+restricción de verificación impide un rol
+fuera del vocabulario y el servicio impide degradar o desactivar al último
+administrador activo. \texttt{cameras} conserva el identificador que publica el
+capturador, la puerta asignada, la etiqueta, la URL RTSP y el estado activo; el
+identificador es único porque debe coincidir exactamente con el que etiqueta los
+eventos y con el que reporta el latido. El latido en sí no se persiste: vive en
+Redis con expiración propia, de modo que una cámara que deja de reportar se
+detecta por ausencia y no por un registro obsoleto. Una cámara se considera fuera
+de línea cuando su último latido supera los $20$ segundos.
+
+La aplicación de las cinco revisiones sobre una base vacía es reproducible y forma
 parte de la verificación automática: el banco de pruebas de integración levanta
 una base temporal, aplica las migraciones y ejercita sobre ella el ciclo completo
 de registro y cierre.
@@ -82,10 +103,12 @@ funcional: operación, consulta, autenticación y diagnóstico. El ingreso de
 fotogramas no utiliza HTTP: el proceso de captura publica la tarea de inferencia
 en la cola y el trabajador escribe el resultado directamente en la base de datos,
 de modo que la interfaz no se interpone en el camino crítico. La Tabla
-\ref{tab:api_implementada} enumera los recursos efectivamente implementados y sus
-parámetros.
+\ref{tab:api_implementada} enumera las veintiséis rutas efectivamente
+implementadas y sus parámetros; las de gestión de usuarios y cámaras exigen rol
+de administrador.
 
-\newcolumntype{P}[1]{>{\raggedright\arraybackslash}m{#1\dimexpr\textwidth\relax}}
+\begingroup
+\small
 \begin{longtable}{
         P{0.09}
         P{0.27}
@@ -115,61 +138,90 @@ parámetros.
     \midrule
     \endhead
 
-    GET & /api/v1/stats/active & Lista los vehículos actualmente dentro del
+    GET & \texttt{/\allowbreak{}api/\allowbreak{}v1/\allowbreak{}stats/\allowbreak{}active} & Lista los vehículos actualmente dentro del
     recinto, con sus atributos. & — \\
     \midrule
 
-    GET & /api/v1/stats/history & Lista las sesiones completadas, ordenadas de la
+    GET & \texttt{/\allowbreak{}api/\allowbreak{}v1/\allowbreak{}stats/\allowbreak{}history} & Lista las sesiones completadas, ordenadas de la
     más reciente a la más antigua. & Límite ($1$--$500$) y desplazamiento. \\
     \midrule
 
-    GET & /api/v1/stats/occupancy & Devuelve el número de sesiones activas y el
+    GET & \texttt{/\allowbreak{}api/\allowbreak{}v1/\allowbreak{}stats/\allowbreak{}occupancy} & Devuelve el número de sesiones activas y el
     instante de la consulta. & — \\
     \midrule
 
-    GET & /api/v1/stats/daily & Devuelve, por día, el total de sesiones y la
+    GET & \texttt{/\allowbreak{}api/\allowbreak{}v1/\allowbreak{}stats/\allowbreak{}daily} & Devuelve, por día, el total de sesiones y la
     duración media. & Número de días ($1$--$90$). \\
     \midrule
 
-    WS & /api/v1/ws/occupancy & Canal persistente que propaga las variaciones de
+    WS & \texttt{/\allowbreak{}api/\allowbreak{}v1/\allowbreak{}ws/\allowbreak{}occupancy} & Canal persistente que propaga las variaciones de
     ocupación. & — \\
     \midrule
 
-    POST & /api/v1/auth/login & Autentica al operador y entrega el token de
+    POST & \texttt{/\allowbreak{}api/\allowbreak{}v1/\allowbreak{}auth/\allowbreak{}login} & Autentica al operador y entrega el token de
     sesión. & Usuario y contraseña. \\
     \midrule
 
-    POST & /api/v1/auth/logout & Revoca la sesión vigente. & — \\
+    POST & \texttt{/\allowbreak{}api/\allowbreak{}v1/\allowbreak{}auth/\allowbreak{}logout} & Revoca la sesión vigente. & — \\
     \midrule
 
-    GET & /api/v1/auth/me & Devuelve el operador autenticado. & — \\
+    GET & \texttt{/\allowbreak{}api/\allowbreak{}v1/\allowbreak{}auth/\allowbreak{}me} & Devuelve el operador autenticado. & — \\
     \midrule
 
-    GET & /api/v1/cameras & Estado y último latido de cada cámara. & — \\
+    GET & \texttt{/\allowbreak{}api/\allowbreak{}v1/\allowbreak{}cameras} & Estado, puerta y último latido de cada cámara, incluidas
+    las registradas que nunca reportaron. & — \\
     \midrule
 
-    POST & /api/v1/sessions/\{id\}/close & Cierra una sesión activa con operador
+    POST & \texttt{/\allowbreak{}api/\allowbreak{}v1/\allowbreak{}cameras} & Registra una cámara en el padrón de puntos de acceso.
+    & Identificador, puerta, etiqueta, URL RTSP y estado. \\
+    \midrule
+
+    PATCH & \texttt{/\allowbreak{}api/\allowbreak{}v1/\allowbreak{}cameras/\allowbreak{}\{camera\_id\}} & Actualiza puerta, etiqueta, URL o estado de una cámara. & Campos a modificar. \\
+    \midrule
+
+    DELETE & \texttt{/\allowbreak{}api/\allowbreak{}v1/\allowbreak{}cameras/\allowbreak{}\{camera\_id\}} & Elimina el registro de una cámara. & Identificador. \\
+    \midrule
+
+    GET & \texttt{/\allowbreak{}api/\allowbreak{}v1/\allowbreak{}users} & Lista las cuentas registradas con su rol y estado. & — \\
+    \midrule
+
+    POST & \texttt{/\allowbreak{}api/\allowbreak{}v1/\allowbreak{}users} & Crea una cuenta con rol y contraseña. & Usuario, contraseña y rol. \\
+    \midrule
+
+    PATCH & \texttt{/\allowbreak{}api/\allowbreak{}v1/\allowbreak{}users/\allowbreak{}\{id\}} & Cambia rol, estado o contraseña; impide degradar al último
+    administrador activo. & Campos a modificar. \\
+    \midrule
+
+    DELETE & \texttt{/\allowbreak{}api/\allowbreak{}v1/\allowbreak{}users/\allowbreak{}\{id\}} & Elimina una cuenta; impide el borrado de la propia cuenta y
+    del último administrador. & Identificador. \\
+    \midrule
+
+    GET & \texttt{/\allowbreak{}api/\allowbreak{}v1/\allowbreak{}users/\allowbreak{}roles} & Devuelve el vocabulario de roles para que el cliente no lo
+    codifique. & — \\
+    \midrule
+
+    POST & \texttt{/\allowbreak{}api/\allowbreak{}v1/\allowbreak{}sessions/\allowbreak{}\{id\}/close} & Cierra una sesión activa con operador
     y motivo, y deja registro de auditoría. & Identificador y motivo. \\
     \midrule
 
-    GET & /api/v1/vehicles/search & Busca vehículos por matrícula o atributos.
-    & Texto de búsqueda. \\
+    GET & \texttt{/\allowbreak{}api/\allowbreak{}v1/\allowbreak{}vehicles/\allowbreak{}search} & Busca vehículos en una ventana temporal, con filtro blando de
+    color y orden por cercanía al instante recordado. & Ventana, color, tipo, confianza, instante y paginación. \\
     \midrule
 
-    GET & /api/v1/vehicles/\{id\} & Detalle del vehículo con su historial de
+    GET & \texttt{/\allowbreak{}api/\allowbreak{}v1/\allowbreak{}vehicles/\allowbreak{}\{id\}} & Detalle del vehículo con su historial de
     sesiones. & Identificador. \\
     \midrule
 
-    GET & /api/v1/vehicles/\{id\}/image & Entrega el recorte asociado al
+    GET & \texttt{/\allowbreak{}api/\allowbreak{}v1/\allowbreak{}vehicles/\allowbreak{}\{id\}/image} & Entrega el recorte asociado al
     vehículo. & Identificador. \\
     \midrule
 
-    GET & /api/v1/stats/model & Distribución de tipos y colores observados.
-    & — \\
+    GET & \texttt{/\allowbreak{}api/\allowbreak{}v1/\allowbreak{}stats/\allowbreak{}model} & Telemetría de inferencia por versión de modelo: eventos,
+    confianza media y percentiles de latencia. & Ventana en días. \\
     \midrule
 
-    GET & /api/v1/stats/colors & Agregado de sesiones por color predominante.
-    & — \\
+    GET & \texttt{/\allowbreak{}api/\allowbreak{}v1/\allowbreak{}stats/\allowbreak{}colors} & Distribución por color y tipo; publica seis colores y agrega
+    el resto en \textit{minority}, con umbral de confianza. & Ventana y confianza mínima. \\
     \midrule
 
     GET & /health, /health/live y /health/ready & Disponibilidad y preparación
@@ -177,6 +229,7 @@ parámetros.
     \multicolumn{4}{r}{\footnotesize\textit{Fuente: Elaboración propia}} \\*
     \bottomrule
 \end{longtable}
+\endgroup
 
 El recurso de historial implementa paginación por límite y desplazamiento ---con
 un máximo de quinientos registros por solicitud--- y el de agregados diarios
@@ -189,10 +242,15 @@ que la documentación no se desincronice de la implementación.
 
 El acceso está protegido: los recursos de lectura no responden sin un token de
 sesión válido, que el cliente conserva en una cookie inaccesible al código del
-navegador. La distinción entre recursos de escritura ---destinados a los
-dispositivos de captura--- y de consulta ---destinados al personal del
-parqueadero--- se mantiene en la autorización y no solo en la nomenclatura de las
-rutas.
+navegador. Las contraseñas no se almacenan: se conserva su hash derivado con
+\textit{scrypt}, y el inicio de sesión está sujeto a un límite de $10$ intentos
+por ventana de $5$ minutos y por dirección de origen. El límite falla abierto si
+el almacén de conteo no está disponible, porque un servicio caído no debe dejar al
+operador fuera del sistema que monitorea. La autorización distingue tres roles
+---administrador, operador y dueño--- y la distinción entre recursos de
+escritura ---destinados a los dispositivos de captura--- y de consulta
+---destinados al personal del parqueadero--- se mantiene en la autorización y no
+solo en la nomenclatura de las rutas.
 
 El cierre de una sesión admite dos caminos. El primero es automático: cuando el
 reconocedor entrega una matrícula, la política de emparejamiento busca entre las
@@ -224,6 +282,14 @@ como máximo absoluto y cuatro como límite flexible, de modo que una tarea
 bloqueada no ocupe indefinidamente al trabajador. El registro del inicio de cada
 tarea se encuentra habilitado, lo que permite distinguir una tarea encolada de
 una en ejecución.
+
+Una tercera tarea programada, fuera del camino de escritura, ejecuta la política
+de retención: cada día elimina la telemetría de inferencia y los recortes con más
+de $90$ días, mientras conserva el vehículo y la sesión. La separación es
+deliberada: la evidencia visual y la latencia tienen valor diagnóstico y costo de
+almacenamiento, mientras que el registro del acceso debe sobrevivir para la
+trazabilidad. El planificador que dispara esa tarea se ejecuta como un contenedor
+propio, de modo que su caída no detiene la inferencia.
 
 Las dos tareas se encuentran implementadas y su cuerpo está separado de la cola
 para poder ejercitarlo sin intermediario. La tarea decodifica el fotograma,
@@ -257,14 +323,14 @@ completo.
 
 El cliente se construye con React y TypeScript sobre Vite, y organiza su
 navegación en un componente de disposición común que envuelve las vistas y
-redirige al panel cualquier ruta no reconocida. Se implementan seis vistas: el
-acceso con autenticación, el panel de monitoreo con el estado del recinto y el
-flujo de eventos, el historial de sesiones, la consulta de incidentes, el padrón
-de vehículos con su detalle e historial, y la vista de desempeño del modelo con la
-distribución de tipos y colores observados. El acceso a datos se centraliza en un
-servicio que declara tipos para cada respuesta de la interfaz de programación, de
-modo que el compilador detecte una discrepancia entre el contrato esperado y el
-recibido.
+redirige al panel cualquier ruta no reconocida. Se implementan nueve vistas:
+seis de operación ---el acceso con autenticación, el panel de monitoreo con el
+estado del recinto y el flujo de eventos, el historial de sesiones, la búsqueda
+de incidentes, el detalle del vehículo con su historial y la vista de desempeño
+del modelo--- y tres de administración ---la gestión de usuarios, el registro de
+cámaras y el padrón de vehículos habilitados---. El acceso a datos se centraliza en un servicio que declara tipos para
+cada respuesta de la interfaz de programación, de modo que el compilador detecte
+una discrepancia entre el contrato esperado y el recibido.
 
 La actualización en tiempo real se encapsula en un enlace que establece la
 conexión con el canal persistente al montar el componente y la libera al
@@ -307,10 +373,10 @@ componente que efectivamente lo produjo.
     \midrule
     \endhead
 
-    Modelo de datos y esquema & Implementado & Las tres entidades se materializan
-    con sus restricciones e índices. \\
+    Modelo de datos y esquema & Implementado & Las seis tablas (tres operativas y
+    tres de control) se materializan con sus restricciones e índices. \\
     \midrule
-    Versionado de migraciones & Implementado & Tres revisiones aplicadas en orden;
+    Versionado de migraciones & Implementado & Cinco revisiones aplicadas en orden;
     la aplicación sobre una base vacía es reproducible y se ejercita en la
     verificación automática. \\
     \midrule
@@ -320,13 +386,13 @@ componente que efectivamente lo produjo.
     Registro de salida & Implementado & Emparejamiento por matrícula exacta con
     umbral de confianza, y cierre manual auditado como alternativa. \\
     \midrule
-    Control de autorización & Pendiente & El contraste contra un padrón
-    (RF-10) requiere una entidad de vehículos habilitados; la entidad actual
-    registra vehículos observados en los accesos. \\
+    Control de autorización & Implementado & El contraste contra el padrón de
+    vehículos habilitados (RF-10) se realiza mediante la entidad
+    \texttt{authorized\_vehicles} y la ruta \texttt{/whitelist}. \\
     \midrule
     Recursos de consulta & Implementado & Ocupación, sesiones activas, historial
-    paginado, agregados diarios, padrón, detalle de vehículo y distribución de
-    atributos. \\
+    paginado con filtros de portón y fecha (RF-11), agregados diarios, búsqueda
+    de incidentes, detalle de vehículo y padrón. \\
     \midrule
     Tareas de inferencia & Implementado & La tarea decodifica el fotograma, invoca
     al motor de visión, agrega por trayectoria y persiste los eventos
@@ -335,12 +401,13 @@ componente que efectivamente lo produjo.
     Notificación en tiempo real & Implementado & Canal persistente con difusión
     tolerante a desconexiones. \\
     \midrule
-    Aplicación web & Implementado & Seis vistas: acceso, panel, historial,
-    incidentes, padrón con detalle y desempeño del modelo. \\
+    Aplicación web & Implementado & Nueve vistas: seis de operación (acceso, panel,
+    historial con filtros y CSV, incidentes, detalle del vehículo y desempeño del modelo)
+    y tres de administración (padrón de vehículos RF-10, usuarios y cámaras). \\
     \midrule
-    Pruebas automatizadas & Implementado & $140$ pruebas unitarias y $4$ de
+    Pruebas automatizadas & Implementado & $156$ pruebas: unitarias y de
     integración contra una base real con las migraciones aplicadas; cobertura
-    del $88\%$ sobre el total del código de la aplicación. \\*
+    del $83\%$ sobre \texttt{backend/app}. \\*
     \multicolumn{3}{r}{\footnotesize\textit{Fuente: Elaboración propia}} \\*
     \bottomrule
 \end{longtable}
