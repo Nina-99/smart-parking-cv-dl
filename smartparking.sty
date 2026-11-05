@@ -81,6 +81,16 @@
         (#1) at (#2) {\textbf{#5}\\[2pt]\tiny #6};
 }
 
+% --- Entidad con nombre físico de tabla ---
+% Uso: \spEntityTable{nombre}{coordenada}{ancho}{color}{título}{tabla}{campos}
+\newcommand{\spEntityTable}[7]{%
+    \node[draw=#4!70!black, fill=#4!25, rounded corners=2pt,
+          minimum width=#3, align=center, inner sep=4pt,
+          font=\scriptsize\sffamily, line width=0.6pt]
+        (#1) at (#2) {\textbf{#5}\\[1pt]
+        {\tiny\ttfamily #6}\\[2pt]\tiny #7};
+}
+
 % ============================================================
 % *** Wireframes de interfaz (Capítulo II) ***
 % ============================================================

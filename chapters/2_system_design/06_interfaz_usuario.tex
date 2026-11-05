@@ -9,11 +9,14 @@ interacciones necesarias para resolver una incidencia de acceso.
 
 \subsection{Criterios de diseño y estructura de navegación}
 
-La interfaz reconoce dos roles con capacidades diferenciadas. El
-\textbf{operador} accede a las vistas de monitoreo e historial, orientadas a la
-supervisión en tiempo real y a la resolución de incidencias; el
-\textbf{administrador} accede además a la gestión del padrón de vehículos, a la
-consulta estadística y a la configuración de los puntos de acceso. Esta
+La interfaz reconoce tres roles con capacidades diferenciadas. El
+\textbf{operador} accede a las vistas de monitoreo, historial e incidentes,
+orientadas a la supervisión en tiempo real y a la resolución de incidencias; el
+\textbf{administrador} accede además a la gestión de usuarios, al registro de
+cámaras, a la consulta estadística y a la administración del padrón de
+vehículos habilitados (RF-10); el rol de
+\textbf{dueño} (\textit{owner}) accede únicamente a la lectura de ocupación,
+historial e indicadores, sin capacidad de modificar registros. Esta
 separación responde al principio de menor privilegio, según el cual cada usuario
 dispone únicamente de las capacidades necesarias para cumplir su función.
 
@@ -39,21 +42,36 @@ requiere actualización continua.
         \spBlock{menu}{0,-1.9}{5.0cm}{rosa}
             {Menú principal}{Construido según el rol}
 
-        \spBlock{vistaMonitoreo}{-5.1,-4.0}{3.0cm}{cielo}
+        % Bus horizontal de navegación: nivel operativo
+        \draw[black!65, line width=0.7pt] (menu.south) -- (0,-3.1);
+        \draw[black!65, line width=0.7pt] (-6.9,-3.1) -- (6.9,-3.1);
+
+        \spBlock{vistaMonitoreo}{-5.4,-4.1}{3.0cm}{cielo}
             {Monitoreo}{Tiempo real}
-        \spBlock{vistaHistorial}{-1.7,-4.0}{3.0cm}{cielo}
+        \spBlock{vistaHistorial}{-1.8,-4.1}{3.0cm}{cielo}
             {Historial}{Eventos}
-        \spBlock{vistaPadron}{1.7,-4.0}{3.0cm}{purpura}
-            {Padrón}{Vehículos}
-        \spBlock{vistaEstadistica}{5.1,-4.0}{3.0cm}{purpura}
+        \spBlock{vistaIncidentes}{1.8,-4.1}{3.0cm}{cielo}
+            {Incidentes}{Discrepancias}
+        \spBlock{vistaPadron}{5.4,-4.1}{3.0cm}{purpura}
+            {Padrón}{Habilitados}
+
+        % Bus horizontal de navegación: nivel administrativo
+        \draw[black!65, line width=0.7pt] (0,-3.1) -- (0,-4.9);
+        \draw[black!65, line width=0.7pt] (-6.9,-4.9) -- (6.9,-4.9);
+
+        \spBlock{vistaEstadistica}{-5.4,-5.9}{3.0cm}{purpura}
             {Estadísticas}{Afluencia}
+        \spBlock{vistaCamaras}{-1.8,-5.9}{3.0cm}{purpura}
+            {Cámaras}{Puntos de acceso}
+        \spBlock{vistaUsuarios}{1.8,-5.9}{3.0cm}{purpura}
+            {Usuarios}{Roles y cuentas}
+        \spBlock{vistaModelo}{5.4,-5.9}{3.0cm}{matblue}
+            {Modelo}{Telemetría}
 
-        \draw[spflow] (session.south) -- (menu.north);
-
-        \draw[spflow] (menu.south) -- (vistaMonitoreo.north);
-        \draw[spflow] (menu.south) -- (vistaHistorial.north);
-        \draw[spflow] (menu.south) -- (vistaPadron.north);
-        \draw[spflow] (menu.south) -- (vistaEstadistica.north);
+        \foreach \x in {-5.4,-1.8,1.8,5.4} {
+            \draw[spflow] (\x,-3.1) -- (\x,-3.62);
+            \draw[spflow] (\x,-4.9) -- (\x,-5.42);
+        }
 
     \end{tikzpicture}
     \caption{Estructura de navegación de la aplicación web.}
@@ -113,7 +131,7 @@ específico sin recurrir a la base de datos.
             \spPanel{1.75,-0.35}{3.4}{3.6}{Último evento}
             \node[anchor=north west, align=left, font=\tiny\sffamily,
                   text=black!75, inner sep=0pt] at (0.20,1.10)
-                {Matrícula: \textbf{1234ABC}\\Tipo: Sedán\\Color: Rojo\\
+                {Matrícula: \textbf{1234ABC}\\Tipo: Automóvil\\Color: Rojo\\
                  Sentido: Ingreso};
 
             \draw[black!25, line width=0.4pt] (0.20,-0.10) -- (3.30,-0.10);
@@ -157,12 +175,12 @@ específico sin recurrir a la base de datos.
             }
 
             \foreach \i/\hora/\placa/\cam/\sen/\est/\col in {%
-                1/08:14/1234ABC/ACC-01/Ingreso/AUT/green!45!black,%
-                2/08:22/456DEF/ACC-01/Salida/AUT/green!45!black,%
-                3/08:35/789GHI/ACC-02/Ingreso/AUT/green!45!black,%
-                4/08:41/321JKL/ACC-01/Ingreso/DEN/red!65!black,%
-                5/08:59/654MNO/ACC-02/Salida/AUT/green!45!black,%
-                6/09:07/987PQR/ACC-01/Ingreso/AUT/green!45!black%
+                1/08:14/1234ABC/ACC-01/Ingreso/Activa/green!45!black,%
+                2/08:22/456DEF/ACC-01/Salida/Completada/black!55,%
+                3/08:35/789GHI/ACC-02/Ingreso/Activa/green!45!black,%
+                4/08:41/321JKL/ACC-01/Ingreso/Activa/green!45!black,%
+                5/08:59/654MNO/ACC-02/Salida/Completada/black!55,%
+                6/09:07/987PQR/ACC-01/Ingreso/Activa/green!45!black%
             } {
                 \node[font=\tiny\sffamily, text=black!75]
                     at (-2.70,{0.98-0.36*\i}) {\hora};
@@ -193,12 +211,19 @@ específico sin recurrir a la base de datos.
 Las vistas de administración y análisis están reservadas al rol de
 administrador. La Figura \ref{fig:wireframes_admin} presenta sus maquetas. La
 vista de padrón (Figura \ref{fig:wire_padron}) permite registrar, modificar
-y desactivar vehículos autorizados, así como consultar su estado de
-autorización. La vista de estadísticas (Figura \ref{fig:wire_estadistica})
+y desactivar vehículos autorizados, así como auditar su pertenencia al recinto
+institucional (RF-10). La vista de estadísticas (Figura \ref{fig:wire_estadistica})
 resume indicadores agregados de la operación ---ingresos y salidas del día y
 tiempo de permanencia promedio--- y presenta la distribución de la afluencia por
 día de la semana, información que sustenta la toma de decisiones sobre la
-operación del recinto.
+operación del recinto. La implementación integró armoniosamente esta estructura:
+la vista de estadísticas nutrió el panel de monitoreo principal (Figura~\ref{fig:if_panel}),
+la consulta detallada y exportación reside en el historial de sesiones, y el
+padrón de vehículos se materializó en una vista administrativa completa
+conectada a la detección en tiempo real. La navegación incorporó además la vista
+de incidentes y la de telemetría del modelo, y la gestión de usuarios y cámaras,
+cuyas maquetas se presentan en la Subsección siguiente y cuya materialización se
+documenta con capturas del sistema en operación en el capítulo de implementación.
 
 \begin{figure}[htbp]
     \centering
@@ -227,12 +252,12 @@ operación del recinto.
             }
 
             \foreach \i/\placa/\tip/\col/\est in {%
-                1/1234ABC/Sedán/Rojo/Activo,%
+                1/1234ABC/Automóvil/Rojo/Activo,%
                 2/456DEF/Camioneta/Blanco/Activo,%
                 3/789GHI/Minibús/Azul/Activo,%
-                4/321JKL/Sedán/Negro/Inactivo,%
+                4/321JKL/Automóvil/Negro/Inactivo,%
                 5/654MNO/Motocicleta/Gris/Activo,%
-                6/112PQR/Camioneta/Plomo/Activo%
+                6/112PQR/Vagoneta/Plomo/Activo%
             } {
                 \node[font=\tiny\sffamily, text=black!75]
                     at (-2.75,{0.98-0.36*\i}) {\placa};
@@ -295,4 +320,129 @@ operación del recinto.
 
     \caption{Maquetas de las vistas de administración y análisis.}
     \label{fig:wireframes_admin}
+\end{figure}
+
+\subsection{Vistas de incidencia y diagnóstico}
+
+El sistema reconoce que el reconocimiento automático de matrículas es
+probabilístico y que, bajo las condiciones de captura del entorno de estudio,
+una fracción de las salidas no encontrará coincidencia exacta con una sesión
+activa. Por esa razón, la interfaz incorpora una vista específica de incidencias
+(Figura \ref{fig:wire_incidentes}) cuyo propósito es resolver la discrepancia en
+el menor número de interacciones posible. La vista presenta, a la izquierda, la
+lista de discrepancias pendientes con la matrícula leída, su confianza y la hora;
+y a la derecha, el detalle de la incidencia seleccionada con los fotogramas de
+ingreso y salida, la lista de sesiones candidatas ordenadas por aproximación
+temporal y la acción de cierre manual, que queda registrada con el operador y el
+motivo.
+
+La vista de telemetría del modelo (Figura \ref{fig:wire_modelo}) completa el
+conjunto. Está destinada al administrador y al responsable técnico: expone la
+latencia de inferencia por fotograma, los indicadores agregados de desempeño y la
+versión del modelo en operación, de modo que una degradación del servicio pueda
+atribuirse a la captura, a la red o al motor de percepción sin acceso directo a
+la base de datos.
+
+\begin{figure}[H]
+    \centering
+
+    % ********************** (e) Incidentes **********************
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \begin{tikzpicture}[scale=0.92, every node/.style={transform shape}]
+            \spScreen{wE}{0,0}{7.0}{4.6}{Incidencias de acceso}
+
+            % Lista de incidencias
+            \spPanel{-1.75,0.05}{3.3}{3.3}{Pendientes (3)}
+            \foreach \i/\hora/\placa/\conf in {%
+                1/08:41/1234AB?/{0.71},%
+                2/09:07/987PQ?/{0.64},%
+                3/09:32/456DE?/{0.58}%
+            } {
+                \pgfmathsetmacro{\yc}{1.20-0.52*\i}
+                \draw[draw=black!20, fill=white, line width=0.4pt]
+                    (-3.28,{\yc-0.23}) rectangle (-0.22,{\yc+0.23});
+                \node[anchor=west, font=\tiny\sffamily, text=black!75]
+                    at (-3.18,{\yc+0.09}) {\placa};
+                \node[anchor=west, font=\tiny\sffamily, text=black!55]
+                    at (-3.18,{\yc-0.11}) {\hora\ \textperiodcentered\ conf.\ \conf};
+            }
+            \node[font=\tiny\itshape, text=black!55] at (-1.75,-1.35)
+                {Sin coincidencia exacta};
+
+            % Detalle de la incidencia
+            \spPanel{1.75,0.05}{3.3}{3.3}{Detalle seleccionado}
+
+            \draw[draw=black!40, fill=black!12, line width=0.4pt]
+                (0.28,0.55) rectangle (1.58,1.35);
+            \node[font=\tiny\sffamily, text=black!55] at (0.93,0.40) {Entrada};
+
+            \draw[draw=black!40, fill=black!12, line width=0.4pt]
+                (1.98,0.55) rectangle (3.28,1.35);
+            \node[font=\tiny\sffamily, text=black!55] at (2.63,0.40) {Salida};
+
+            \node[anchor=west, font=\tiny\bfseries\sffamily, text=black!60]
+                at (0.28,0.12) {Candidatos};
+            \foreach \i/\placa/\conf in {1/1234ABC/{0.94}, 2/1234ABD/{0.86}} {
+                \pgfmathsetmacro{\yc}{-0.24-0.30*\i}
+                \node[anchor=west, font=\tiny\sffamily, text=black!75]
+                    at (0.28,\yc) {\placa};
+                \node[anchor=east, font=\tiny\sffamily, text=black!55]
+                    at (3.28,\yc) {\conf};
+            }
+            \spBadge{1.75,-1.30}{green}{Cerrar sesión}
+
+        \end{tikzpicture}
+        \caption{Incidencias de acceso y cierre asistido.}
+        \label{fig:wire_incidentes}
+    \end{subfigure}
+    \hfill
+    % ********************** (f) Telemetría del modelo **********************
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \begin{tikzpicture}[scale=0.92, every node/.style={transform shape}]
+            \spScreen{wF}{0,0}{7.0}{4.6}{Telemetría del modelo}
+
+            % Tarjetas de indicadores
+            \foreach \x/\tit/\val in {-2.35/Latencia/38 ms,
+                                      0/FPS/{12.4},
+                                      2.35/Versión/yolo26n} {
+                \draw[draw=black!35, fill=black!4, rounded corners=2pt,
+                      line width=0.5pt]
+                    (\x-1.05,0.80) rectangle (\x+1.05,1.50);
+                \node[font=\tiny\sffamily, text=black!55]
+                    at (\x,1.34) {\tit};
+                \node[font=\scriptsize\bfseries\sffamily, text=matblue!55!black]
+                    at (\x,1.02) {\val};
+            }
+
+            % Panel de latencia por fotograma
+            \spPanel{-1.75,-0.85}{3.3}{2.4}{Latencia por fotograma}
+            \draw[black!45, line width=0.5pt] (-3.30,-1.80) -- (-0.25,-1.80);
+            \draw[draw=matblue, line width=0.8pt]
+                (-3.20,-1.20) -- (-2.85,-1.05) -- (-2.50,-1.25) --
+                (-2.15,-0.98) -- (-1.80,-1.10) -- (-1.45,-1.32) --
+                (-1.10,-1.08) -- (-0.75,-1.18) -- (-0.40,-1.02);
+
+            % Panel de estado de componentes
+            \spPanel{1.75,-0.85}{3.3}{2.4}{Estado de componentes}
+            \foreach \i/\comp/\est/\col in {%
+                1/Captura/En l\'inea/green,%
+                2/Inferencia/En l\'inea/green,%
+                3/Base de datos/En l\'inea/green,%
+                4/Cola/1 tarea/black%
+            } {
+                \node[anchor=west, font=\tiny\sffamily, text=black!70]
+                    at (0.25,{-0.05-0.42*\i}) {\comp};
+                \node[anchor=east, font=\tiny\bfseries\sffamily, text=\col!55!black]
+                    at (3.25,{-0.05-0.42*\i}) {\est};
+            }
+
+        \end{tikzpicture}
+        \caption{Telemetría del modelo y estado de componentes.}
+        \label{fig:wire_modelo}
+    \end{subfigure}
+
+    \caption{Maquetas de las vistas de incidencia y diagnóstico.}
+    \label{fig:wireframes_diagnostico}
 \end{figure}

@@ -1,7 +1,7 @@
 \section{Descripción de la Arquitectura General}
 
 El sistema se organiza bajo una arquitectura en capas (\textit{layered
-architecture}) que separa las responsabilidades de captura, servicios,
+architecture}) \cite{richards2020fundamentals} que separa las responsabilidades de captura, servicios,
 procesamiento, persistencia y presentación. Esta organización responde a la
 naturaleza asimétrica de la carga de trabajo: la recepción de solicitudes es
 ligera y debe permanecer siempre disponible, mientras que la inferencia de los
@@ -99,7 +99,7 @@ dispositivo de captura pueda entregar una imagen en un formato conocido.
 \subsection{Capa de servicios}
 
 Expone la interfaz pública del sistema y constituye el único punto de acceso a
-sus funcionalidades. La API REST recibe las solicitudes de registro de ingreso y
+sus funcionalidades. La API REST \cite{fielding2000architectural} recibe las solicitudes de registro de ingreso y
 de salida, valida su estructura y delega el trabajo pesado a la capa de
 procesamiento, respondiendo de inmediato con el identificador de la sesión
 creada. El notificador mantiene un canal persistente con los clientes web y

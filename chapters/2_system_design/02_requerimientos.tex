@@ -112,24 +112,24 @@ proporcionar para cumplir con su propósito operativo. La Tabla
     \midrule
     RF-13 & Gestión de usuarios &
     Administrar el acceso de los usuarios al sistema web conforme a roles
-    definidos (administrador y operador).
+    definidos (administrador, operador y dueño).
     \\*
     \multicolumn{3}{r}{\footnotesize\textit{Fuente: Elaboración propia}} \\*
     \bottomrule
 \end{longtable}
 
-El requerimiento RF-10 se conserva en la especificación por trazabilidad con el
-perfil del proyecto, pero se declara \textbf{fuera del alcance implementado}: el
-contraste contra un padrón de vehículos habilitados exige un registro previo que
-esta entrega no construye, de modo que el sistema documenta el acceso sin
-clasificarlo como autorizado. La limitación correspondiente se declara en el
-capítulo introductorio y el estado del componente, en el capítulo de
-implementación.
+El requerimiento RF-10 se materializa mediante un padrón institucional de
+vehículos habilitados gestionado por el administrador. El sistema contrasta la
+matrícula leída en cada ingreso contra dicho padrón para clasificar el acceso
+y emitir la alerta correspondiente en caso de un vehículo no registrado. El
+detalle de la entidad y de la interfaz de administración se documenta en los
+capítulos de diseño e implementación.
 
 \subsection{Requerimientos no funcionales}
 
 Los requerimientos no funcionales establecen restricciones de calidad y
-condiciones de operación. Su cumplimiento se verifica en la fase de evaluación
+condiciones de operación, en línea con las características de calidad de producto
+de la norma ISO/IEC 25010 \cite{iso25010}. Su cumplimiento se verifica en la fase de evaluación
 mediante las métricas descritas en el marco teórico; los valores objetivo son
 coherentes con las hipótesis planteadas en el perfil del proyecto.
 
@@ -204,7 +204,7 @@ coherentes con las hipótesis planteadas en el perfil del proyecto.
     \midrule
     RNF-08 & Eficiencia en el borde &
     El motor de percepción debe ejecutarse en hardware con recursos
-    restringidos, empleando modelos optimizados y cuantizados.
+    restringidos, empleando modelos optimizados y de precisión reducida.
     \\
 
     \midrule
@@ -267,7 +267,7 @@ la base de datos, y la red local que interconecta estos componentes. La Tabla
     \midrule
     Unidad de procesamiento en el borde &
     Ejecutar los modelos de detección, reconocimiento y seguimiento. &
-    Recursos limitados de cómputo y memoria; requiere modelos cuantizados.
+    Recursos limitados de cómputo y memoria; requiere modelos de precisión reducida.
     \\
 
     \midrule

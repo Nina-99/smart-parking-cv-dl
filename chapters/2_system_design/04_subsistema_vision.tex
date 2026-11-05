@@ -262,18 +262,19 @@ origen y destino de la trayectoria. Este criterio garantiza que cada vehículo
 produzca exactamente un evento por cruce, evitando las falsas activaciones que
 produciría un disparo basado únicamente en la presencia dentro de una región.
 
-El resultado del \textit{pipeline} alimenta el registro de la sesión de
-estacionamiento, que constituye la interfaz formal entre el subsistema de visión
-y la capa de persistencia. La Tabla \ref{tab:contrato_evento} define sus campos,
-los cuales son consumidos por el servicio de gestión y almacenados en la base de
-datos.
+El resultado del \textit{pipeline} constituye la interfaz formal entre el
+subsistema de visión y la capa de persistencia: un evento de acceso, no una
+sesión. La Tabla \ref{tab:contrato_evento} define sus campos. La distinción
+importa porque la sesión ---con su identificador, su estado y su duración--- no
+viaja en el mensaje: se deriva al persistir el evento, que es lo único que la
+visión puede afirmar con evidencia.
 
 \begin{longtable}{
-        P{0.16}
-        P{0.18}
-        P{0.58}
+        Q{0.40}
+        P{0.13}
+        P{0.39}
     }
-    \caption{Contrato de datos de la sesión de estacionamiento}
+    \caption{Contrato de datos del evento de acceso}
     \label{tab:contrato_evento}\\
 
     \toprule
@@ -294,69 +295,79 @@ datos.
     \midrule
     \endhead
 
-    id\_sesion & UUID &
-    Identificador único de la sesión de estacionamiento.
+    \texttt{camera\_id} & texto &
+    Identificador del punto de acceso que originó la observación.
     \\
 
     \midrule
-    id\_vehiculo & UUID &
-    Vehículo asociado a la sesión.
+    \texttt{track\_id} & entero &
+    Identificador de la trayectoria asignada por el agregador; distingue dos
+    vehículos de la misma cámara.
     \\
 
     \midrule
-    matricula & texto &
-    Cadena de matrícula resultante del reconocimiento y de la validación
-    sintáctica.
+    \texttt{box} & entero[4] &
+    Coordenadas en píxeles de la caja del vehículo, tomadas de la vista de mayor
+    área de la trayectoria.
     \\
 
     \midrule
-    tipo\_vehiculo & texto &
-    Categoría de carrocería identificada, o valor nulo si la confianza resulta
+    \texttt{observed\_at} & marca temporal &
+    Instante del fotograma en que se confirmó la trayectoria.
+    \\
+
+    \midrule
+    \texttt{attributes}.\texttt{vehicle\_type} & texto &
+    Categoría de carrocería identificada, o nulo si la confianza resulta
     insuficiente.
     \\
 
     \midrule
-    color & texto &
-    Color predominante identificado, o valor nulo si la confianza resulta
-    insuficiente.
+    \texttt{attributes}.\texttt{vehicle\_type\_confidence} & real &
+    Confianza del clasificador de tipo; se conserva junto a la etiqueta para que
+    las etapas posteriores puedan descartar lecturas débiles.
     \\
 
     \midrule
-    puerta\_ingreso & texto &
-    Identificador del punto de acceso por el que se registró el ingreso.
+    \texttt{attributes}.\texttt{color} & texto &
+    Color predominante identificado, o nulo si la confianza resulta insuficiente.
     \\
 
     \midrule
-    puerta\_salida & texto &
-    Identificador del punto de acceso por el que se registró la salida; nulo
-    mientras la sesión permanece activa.
+    \texttt{attributes}.\texttt{color\_confidence} & real &
+    Confianza del clasificador de color.
     \\
 
     \midrule
-    hora\_ingreso & marca temporal &
-    Instante en que se determinó el cruce de entrada.
+    \texttt{detection\_confidence} & real &
+    Confianza del detector de vehículos para la caja seleccionada.
     \\
 
     \midrule
-    hora\_salida & marca temporal &
-    Instante en que se determinó el cruce de salida; nulo mientras la sesión
-    permanece activa.
+    \texttt{plate}.\texttt{text} & texto &
+    Cadena resultante del reconocimiento y de la validación sintáctica del
+    formato de matrícula; ausente cuando no se leyó placa.
     \\
 
     \midrule
-    duracion & entero &
-    Tiempo de permanencia en segundos, calculado al cierre de la sesión.
+    \texttt{plate}.\texttt{confidence} & real &
+    Confianza del reconocedor de caracteres, empleada por la política de
+    emparejamiento.
     \\
 
     \midrule
-    autorizado & booleano &
-    Resultado de la verificación de la matrícula contra el padrón de vehículos
-    habilitados.
+    \texttt{gate} & enumeración &
+    Punto de acceso de la observación: \texttt{entry} o \texttt{exit}.
     \\
 
     \midrule
-    estado & enumeración &
-    Situación de la sesión: activa, completada o cancelada.
+    \texttt{image\_path} & texto &
+    Ruta del recorte del vehículo conservado como evidencia; puede ser nulo.
+    \\
+
+    \midrule
+    \texttt{model\_name}, \texttt{latency\_ms} & texto, real &
+    Identificador del modelo empleado y tiempo de inferencia del fotograma.
     \\*
     \multicolumn{3}{r}{\footnotesize\textit{Fuente: Elaboración propia}} \\*
     \bottomrule
