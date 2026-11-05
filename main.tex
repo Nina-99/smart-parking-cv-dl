@@ -86,6 +86,24 @@
     pdfauthor={Nina Nuñez Marco}
 }
 
+\newcommand{\currentmonth}{%
+    \ifcase\month
+        \or enero%
+        \or febrero%
+        \or marzo%
+        \or abril%
+        \or mayo%
+        \or junio%
+        \or julio%
+        \or agosto%
+        \or septiembre%
+        \or octubre%
+        \or noviembre%
+        \or diciembre%
+    \fi
+    \space \the\year
+}
+
 % **************
 % MAIN DOCUMENT
 % **************
@@ -113,7 +131,7 @@
 	{\large \textbf{Postulante:} Univ. Nina Nuñez Marco}\\[0.5cm]
 
 	\vfill
-	{\large Oruro, \today}
+    {\large Oruro, \currentmonth}
 
 \end{titlepage}
 
