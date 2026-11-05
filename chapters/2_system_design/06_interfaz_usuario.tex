@@ -208,17 +208,19 @@ específico sin recurrir a la base de datos.
 
 \subsection{Vistas de administración y análisis}
 
-Las vistas de administración y análisis están reservadas al rol de
-administrador. La Figura \ref{fig:wireframes_admin} presenta sus maquetas. La
-vista de padrón (Figura \ref{fig:wire_padron}) permite registrar, modificar
-y desactivar vehículos autorizados, así como auditar su pertenencia al recinto
-institucional (RF-10). La vista de estadísticas (Figura \ref{fig:wire_estadistica})
-resume indicadores agregados de la operación ---ingresos y salidas del día y
-tiempo de permanencia promedio--- y presenta la distribución de la afluencia por
-día de la semana, información que sustenta la toma de decisiones sobre la
-operación del recinto. La implementación integró armoniosamente esta estructura:
-la vista de estadísticas nutrió el panel de monitoreo principal (Figura~\ref{fig:if_panel}),
-la consulta detallada y exportación reside en el historial de sesiones, y el
+Las vistas de administración están reservadas al rol de administrador; las de
+análisis se ofrecen en modo lectura al administrador y al dueño, y al operador
+como apoyo a la operación. La Figura \ref{fig:wireframes_admin} presenta sus
+maquetas. La vista de padrón (Figura \ref{fig:wire_padron}) permite registrar,
+modificar y desactivar vehículos autorizados, así como auditar su pertenencia al
+recinto institucional (RF-10). La vista de estadísticas (Figura
+\ref{fig:wire_estadistica}) resume indicadores agregados de la operación
+---ingresos y salidas del día y tiempo de permanencia promedio--- y presenta la
+distribución de la afluencia por día de la semana, información que sustenta la
+toma de decisiones sobre la operación del recinto. La implementación materializó
+esta estructura en una vista propia de estadísticas (RF-12), que además alimenta
+el panel de monitoreo principal (Figura~\ref{fig:if_panel}), mientras que la
+consulta detallada y la exportación residen en el historial de sesiones y el
 padrón de vehículos se materializó en una vista administrativa completa
 conectada a la detección en tiempo real. La navegación incorporó además la vista
 de incidentes y la de telemetría del modelo, y la gestión de usuarios y cámaras,

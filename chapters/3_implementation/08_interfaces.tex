@@ -122,6 +122,28 @@ cola se conserva en el servidor y no solo en el canal persistente, de manera que
 un panel cerrado no pierde eventos pendientes y una decisión queda registrada
 aunque el navegador se recargue.
 
+\subsection{Estadísticas y reportes}
+
+La vista de estadísticas responde a RF-12 con una ventana seleccionable de siete,
+catorce o treinta días. Resume cuatro indicadores ---ingresos del período,
+estadía promedio ponderada por ingresos, hora de mayor afluencia y proporción de
+placas legibles--- y los acompaña con tres lecturas: la serie diaria de ingresos,
+la distribución horaria sobre un eje fijo de veinticuatro horas y la distribución
+por color, que excluye las etiquetas por debajo del piso de confianza en lugar de
+adivinar el tono. El bloque de calidad de decisión cierra la vista con la tasa de
+corrección y el detalle por operador.
+
+La vista está disponible en modo lectura para administrador, operador y dueño. El
+rol no cambia el contenido del reporte, sino lo que cada uno puede hacer con él: el
+administrador conserva además la telemetría del modelo en su propia vista, el
+operador usa la distribución horaria para ubicar la supervisión en los picos y el
+dueño lee el reporte sin acciones de escritura. El panel de monitoreo acompaña esa
+distinción: la tarjeta de latencia del modelo sólo se consulta con rol de
+administrador, y para los demás roles se reemplaza por un indicador que sí pueden
+leer ---placas legibles para el dueño, salidas sin coincidencia para el
+operador---, de modo que ninguna vista dispare una consulta prohibida ni muestre un
+valor vacío por falta de permiso.
+
 \subsection{Búsqueda de incidentes y detalle del vehículo}
 
 La vista de incidentes (Figura~\ref{fig:if_incidentes}) responde a la consulta
