@@ -38,18 +38,18 @@ el de operación.
     \midrule
     \endhead
 
-    Python & $3{,}12$, con gestor de dependencias y archivo de bloqueo &
+    Python & $3{.}12$, con gestor de dependencias y archivo de bloqueo &
     Servicios, trabajador y herramientas \\
     \midrule
 
-    PyTorch y torchvision & $\geq 2{,}4$ y $\geq 0{,}19$ &
+    PyTorch y torchvision & $\geq 2{.}4$ y $\geq 0{.}19$ &
     Entrenamiento e inferencia \\
     \midrule
 
-    Ultralytics & $\geq 8{,}4$ & Detección de vehículos y de placas \\
+    Ultralytics & $\geq 8{.}4$ & Detección de vehículos y de placas \\
     \midrule
 
-    OpenCV & $\geq 4{,}10$, sin interfaz gráfica &
+    OpenCV & $\geq 4{.}10$, sin interfaz gráfica &
     Captura, preprocesamiento y calibración \\
     \midrule
 
@@ -154,6 +154,42 @@ uv run python tools/report_metrics.py \
 Cada checkpoint se acompaña de su archivo de métricas. El archivo no es un adorno:
 el motor de inferencia lee de allí el orden de las clases, de modo que un peso sin
 su archivo de métricas no puede servirse y el trabajador se niega a arrancar.
+
+\subsection{Intervalos de confianza}
+\label{subsec:repro_ci}
+
+Los intervalos del Capítulo~III no usan la varianza binomial sobre recuentos de
+recortes: varias métricas son promedios macro y los recortes de una misma placa no
+son independientes. Se calculan con \texttt{tools/bootstrap\_ci.py}, que remuestrea
+la unidad realmente muestreada.
+
+\begin{verbatim}
+# 1. Exportar predicciones por ítem (una fila por recorte)
+uv run python tools/eval_type_classifier.py \
+    --dataset "$DATASETS/color dataset v5" \
+    --checkpoint "$DATASETS/runs/resnet18_final_color_v5_best.pt" \
+    --dump-predictions /tmp/color_test.jsonl
+
+uv run python tools/train_ocr_crnn.py --dataset ../datasets/ocr_real_box \
+    --stage stage2_real --eval-only --save-dir ../runs/ocr_v3_plus \
+    --dump-test-predictions /tmp/ocr_test.jsonl
+
+# 2. Intervalo por placa y decisión frente al umbral
+uv run python tools/bootstrap_ci.py items /tmp/ocr_test.jsonl \
+    --task text --cluster-col plate --macro-by-cluster --threshold 0.90
+
+# 3. F1 macro desde una matriz de confusión guardada
+uv run python tools/bootstrap_ci.py confusion \
+    "$DATASETS"/runs/resnet18_final_color_v5_metrics.json --threshold 0.85
+\end{verbatim}
+
+\texttt{confusion} remuestrea cada clase verdadera desde su distribución observada;
+\texttt{items} remuestrea placas o sesiones completas y, con
+\texttt{-{}-macro-by-cluster}, promedia primero dentro de cada placa para que un
+vehículo con varios recortes no pese más que otro con uno. \texttt{proportion}
+devuelve el intervalo de Wilson, el exacto de Clopper--Pearson y la prueba binomial
+unilateral. Ninguno de estos intervalos incorpora la varianza entre corridas de
+entrenamiento, que se reporta por separado.
 
 \subsection{Capacidad del trabajador de inferencia}
 
@@ -296,7 +332,7 @@ en la base de datos.
         diseño. Lo reproducible sin ellas son los procedimientos, las particiones
         y las métricas.
     \item \textbf{Una corrida no es un resultado.} La varianza medida entre
-        corridas idénticas es de $1$ a $3{,}4$ puntos de F1 macro, de modo que una
+        corridas idénticas es de $1$ a $3{.}4$ puntos de F1 macro, de modo que una
         diferencia menor a ese rango no debe interpretarse como mejora. Reproducir
         un valor puntual exige repetir la corrida, no solo el comando.
     \item \textbf{Integridad del almacenamiento.} El disco externo

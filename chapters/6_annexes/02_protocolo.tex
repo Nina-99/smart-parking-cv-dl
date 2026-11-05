@@ -129,7 +129,7 @@ Hasta el 23 de octubre de 2026 existió una sexta clase, \textit{furgón}, desti
 a la van de carga sin ventanas laterales traseras. Se fusionó con
 \textit{vagoneta} porque su única pista distintiva ---la ventana trasera--- no es
 visible de noche, con el vehículo de cola o con el portón tapado; el F1 de prueba
-de esa clase era $0{,}16$ frente a $0{,}66$ de macro. Los $98$ recortes
+de esa clase era $0{.}16$ frente a $0{.}66$ de macro. Los $98$ recortes
 etiquetados como furgón se reauditaron individualmente: $23$ se reasignaron a
 camioneta, $20$ a vagoneta, $6$ a minibús y $49$ se descartaron por no ser
 identificables. La taxonomía publicada tiene cinco clases.
@@ -161,18 +161,18 @@ humana en la segunda.
 Un motor de reconocimiento de texto de terceros actuó como
 \textbf{pseudo-etiquetador} en el sentido estricto del término: propuso una caja
 delimitadora por recorte de vehículo, sin que ninguna de esas cajas ingresara al
-conjunto de entrenamiento sin revisión. De $4.006$ recortes, $727$ ($18{,}1\%$)
+conjunto de entrenamiento sin revisión. De $4{,}006$ recortes, $727$ ($18{.}1\%$)
 contenían una región compatible con una placa; el resto corresponde en su mayoría
 a vistas laterales donde la placa no es visible, es decir, negativos reales y no
 fallos del etiquetador.
 
 \subsection{Revisión humana}
 
-Un operador revisó $1.127$ recortes ---todas las propuestas más una muestra
+Un operador revisó $1{,}127$ recortes ---todas las propuestas más una muestra
 aleatoria de $400$ negativos--- y aceptó, corrigió, redibujó o descartó cada caja.
 El resultado fueron $868$ recortes con placa ($77\%$) y $259$ sin placa
 ($23\%$). De las $700$ propuestas que sí correspondían a una placa, solo $183$
-($26{,}1\%$) resultaron geométricamente utilizables sin corrección: el
+($26{.}1\%$) resultaron geométricamente utilizables sin corrección: el
 etiquetador encontraba la placa, pero su caja recortaba los glifos.
 
 Una caja rechazada no se descarta del todo: se conserva como \textbf{negativo},
@@ -211,21 +211,31 @@ contra los archivos de imagen, y se resumen en la Tabla~\ref{tab:anexo_conteos}.
         \toprule
         \textbf{Conjunto} & \textbf{Muestras} & \textbf{Origen} \\
         \midrule
-        Pool de atributos & 4.006 & 5 clases \\
-        Tipo: entrenamiento & 2.783 & Pool congelado \\
+        Pool de atributos & 4,006 & 5 clases \\
+        Tipo: entrenamiento & 2,783 & Pool congelado \\
         Tipo: validación & 590 & Pool congelado \\
         Tipo: prueba & 633 & Pool congelado \\
-        Color: entrenamiento & 2.482 & Pool congelado \\
+        Color: entrenamiento & 2,482 & Pool congelado \\
         Color: validación & 539 & Pool congelado \\
         Color: prueba & 551 & Pool congelado \\
-        Recortes de placa verificados & 868 & Revisión humana \\
-        Placas: entrenamiento & 395 & Texto confirmado \\
-        Placas: prueba & 101 & Texto confirmado \\
-        Placas sintéticas & 359.992 & Formato boliviano \\
-        Medición de extremo a extremo & 88 & Texto verificado \\
+        Recortes de placa verificados & 1,237 & Revisión humana \\
+        Placas: entrenamiento & 1,085 & Texto confirmado \\
+        Placas: prueba & 152 & Texto confirmado \\
+        Placas sintéticas & 360,000 & Formato boliviano \\
+        Medición de extremo a extremo & 99 & Texto verificado \\
         \bottomrule
     \end{tabular}
 \end{table}
+
+El pool de atributos ($4{,}006$ recortes) y la partición de color ($3{,}572$:
+$2{,}482 + 539 + 551$) difieren en $434$ recortes. La diferencia se explica por dos
+filtros declarados en el protocolo de construcción del conjunto: $426$ recortes
+corresponden a minibuses, excluidos porque su librea hace que el color dominante
+dependa del ángulo de captura, y $8$ recortes estaban etiquetados con la clase
+residual \textit{otro}, que no se adopta como clase de entrenamiento por falta de
+soporte y se descarta con el umbral de $10$ muestras. Ambos conjuntos no son
+intercambiables y cualquier comparación entre sus métricas debe hacerse sobre el
+mismo subconjunto.
 
 \section{Reproductibilidad del etiquetado}
 
