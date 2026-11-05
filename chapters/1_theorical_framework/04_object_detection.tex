@@ -86,8 +86,8 @@ sobre el conjunto de entrenamiento.
 Sin embargo, como demuestran Tian et al. \cite{tian2019fcos} y Ge et al. en
 YOLOX, la dependencia de anclas fijas introduce rigidez y una alta sensibilidad
 a hiperparámetros. La transición hacia arquitecturas libres de anclas
-(\textit{anchor-free}), adoptada en YOLOv8, YOLOv10 y YOLO26 
-\cite{sapkota2026yolo26, jocher2026yolo26}, eliminó las cajas de referencia
+(\textit{anchor-free}), adoptada en YOLOv8, YOLOv10, YOLO11 y YOLO26 
+\cite{yolo11_ultralytics,sapkota2026yolo26, jocher2026yolo26}, eliminó las cajas de referencia
 predefinidas. En su lugar, el detector predice directamente desde cada punto
 sobre el mapa de características las cuatro distancias continuas $(l, t, r, b)$ 
 hacia los bordes superior, inferior, izquierdo y derecho de la entidad visual.
@@ -112,7 +112,8 @@ principales cuellos de botella computacionales:
 
 \begin{enumerate}
     \item \textbf{Carga computacional de Distribution Focal Loss (DFL):} Módulos
-        como DFL transforman la regresión de cada borde de la caja en una
+        como DFL, derivados de la pérdida focal \cite{lin2017focal}, transforman
+        la regresión de cada borde de la caja en una
         distribución de probabilidad discreta distribuida en $K$ contenedores
         ($K=16$). Evaluar funciones \textit{Softmax} y sumas ponderadas sobre
         miles de puntos espaciales incrementa significativamente las operaciones

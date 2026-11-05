@@ -84,7 +84,8 @@ Para enlazar las predicciones proyectadas por el Filtro de Kalman con las nuevas
 detecciones generadas por el modelo de visión en cada frame, Bewley et al.
 \cite{bewley2016sort} formularon el algoritmo SORT (\textit{Simple Online and
 Realtime Tracking}). SORT aborda la asociación de datos resolviendo un problema
-de asignación lineal global mediante el Algoritmo Húngaro (Kuhn), una técnica de
+de asignación lineal global mediante el Algoritmo Húngaro (Kuhn)
+\cite{kuhn1955hungarian}, una técnica de
 optimización combinatoria que minimiza el costo total de emparejar dos conjuntos
 disjuntos.
 
@@ -101,7 +102,7 @@ C_{i,j} = 1 - \text{IoU}\left(\hat{B}_{\text{pred}, i}, \; B_{\text{det}, j}\rig
 El Algoritmo Húngaro procesa la matriz $C$ para encontrar la asignación óptima
 que minimice la suma global de distancias espaciales. Para evitar
 emparejamientos erróneos entre vehículos lejanos, se aplica un umbral rígido de
-rechazo ($\text{IoU}_{\text{min}}$, típicamente $0.3$):
+rechazo ($\text{IoU}_{\text{min}}$, típicamente $0{.}3$):
 
 \begin{itemize}
     \item Si $C_{i,j} > 1 - \text{IoU}_{\text{min}}$, la asignación se descarta.
@@ -120,7 +121,8 @@ procesamiento en tiempo real.
 
 La etapa final del pipeline transforma las trayectorias asociadas ($Tracklets$)
 en eventos discretos con validez operativa para la gestión del parqueadero. Como
-analizan Liu y Zeng \cite{liu2017vehiclecounting} y Karbalaie et al., la lógica
+analizan Liu y Zeng \cite{liu2017vehiclecounting} y Karbalaie et al.
+\cite{karbalaie2022event}, la lógica
 de negocio para la detección de eventos se fundamenta en la definición de líneas
 virtuales de control en el plano de la imagen, conocidas técnicamente como
 \textit{Virtual Tripwires}.

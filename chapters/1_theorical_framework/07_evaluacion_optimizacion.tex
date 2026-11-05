@@ -61,10 +61,10 @@ Para evaluar la localización espacial de las cajas delimitadoras
 \cite{padilla2021metrics} formulan la precisión media promedio 
 (\textit{Mean Average Precision}, mAP). El mAP evalúa el área bajo la curva de
 Precision-Recall considerando distintos umbrales de Intersección sobre Unión 
-(IoU). Típicamente, el $\text{mAP}@0.5$ evalúa la capacidad del detector para
-encerrar de forma aproximada el vehículo o la placa (IoU $\ge 0.5$), mientras que
-el $\text{mAP}@0.5:0.95$ promedia el desempeño en diez umbrales estrictos,
-midiendo la precisión geométrica del ajuste de la caja delimitadora.
+(IoU). Típicamente, el $\text{mAP}@0{.}5$ evalúa la capacidad del detector para
+encerrar de forma aproximada el vehículo o la placa (IoU $\ge 0{.}5$), mientras que
+el $\text{mAP}@0{.}5:0{.}95$ promedia el desempeño en diez umbrales estrictos
+\cite{lin2014coco}, midiendo la precisión geométrica del ajuste de la caja delimitadora.
 
 \subsection{Métricas de reconocimiento de secuencias: Exactitud por carácter y CER}
 
@@ -89,7 +89,7 @@ ejemplo, si el motor de OCR confunde el carácter alfabético \texttt{``O''} con
 dígito numérico \texttt{``0''} en una placa real (prediciendo \texttt{``12O4ABC'}
 en lugar de \texttt{``1204ABC''}), la distancia de Levenshtein contabiliza una
 sustitución ($S = 1$). Aunque la precisión a nivel de carácter sea elevada
-($6/7 = 85.7\%$), la métrica de coincidencia exacta (\textit{exact match})
+($6/7 = 85{.}7\%$), la métrica de coincidencia exacta (\textit{exact match})
 cae a cero. Dado que las consultas en la base de datos del parqueadero requieren
 una coincidencia alfanumérica exacta para autorizar el paso, minimizar el CER
 mediante reglas de corrección sintáctica es indispensable para garantizar el
@@ -134,6 +134,17 @@ tiempo, Bernardin y Stiefelhagen \cite{bernardin2008clear} y Ristani et al.
         de identidades a largo plazo frente a fragmentaciones u oclusiones
         temporales \cite{ristani2016performance}.
 \end{enumerate}
+
+Estas métricas delimitan el marco de evaluación del seguimiento, pero este
+trabajo no las reporta: su cálculo exige verdad de referencia por fotograma ---una
+caja e identidad correctas para cada vehículo en cada instante---, que no fue
+anotada. La determinación de eventos se contrastó al nivel del evento y no al de la
+trayectoria (Subsección~\ref{sec:resultados_eventos}): la referencia humana
+registra cruces, no identidades por fotograma, de modo que MOTA e IDF1 no pueden
+calcularse. La descomposición de errores que esas métricas formalizan ---falsos
+negativos, falsos positivos y cambios de identidad--- sigue siendo, en cambio, el
+marco con el que se interpretan los cruces perdidos y espurios. Las métricas se
+conservan aquí porque definen qué haría falta anotar para cerrar esa brecha.
 
 \subsection{Compromiso entre exactitud y latencia: Rendimiento en el Borde}
 
@@ -193,7 +204,8 @@ discretos de menor ancho de banda de memoria:
 
 Pasar un modelo de detección u OCR desde FP32 a INT8 reduce la huella de memoria
 del archivo de pesos en un $75\%$ y triplica la velocidad de inferencia (FPS) en
-aceleradores como TensorRT, OpenVINO o ONNX Runtime. Dado que la cuantización
+aceleradores como TensorRT, OpenVINO o ONNX Runtime
+\cite{sapkota2026yolo26,jocher2026yolo26}. Dado que la cuantización
 transforma operaciones de multiplicación matricial complejas en aritmética de
 enteros de bajo consumo, los dispositivos de borde pueden procesar los flujos de
 video con una latencia de milisegundos, experimentando una degradación en la
@@ -251,7 +263,7 @@ que los respalda y su procedencia.
     \endhead
 
     mAP@50 (detección de vehículos) & $\geq 80\%$ &
-    Entre $40{,}9$ y $57{,}5$ de mAP@50--95 en COCO para la familia YOLO26. &
+    Entre $40{.}9$ y $57{.}5$ de mAP@50--95 en COCO para la familia YOLO26. &
     \cite{jocher2026yolo26, sapkota2026yolo26} \\
     \midrule
 
@@ -261,19 +273,19 @@ que los respalda y su procedencia.
     \midrule
 
     F1-score macro (color predominante) & $\geq 85\%$ &
-    Entre $83{,}5\%$ y $97{,}8\%$, con $44{,}4\%$ de imágenes nocturnas mal
-    clasificadas en condiciones adversas. &
+    Entre $44{.}6\%$ y $62{.}8\%$ de F1 macro en el benchmark de condiciones
+    adversas (once clases, operación nocturna). &
     \cite{lima2024vehiclecolor} \\
     \midrule
 
     Recall (detección de placas) & $\geq 90\%$ &
-    Entre $91{,}3\%$ y $98{,}8\%$ de exactitud de detección en la revisión
+    Entre $91{.}3\%$ y $98{.}8\%$ de exactitud de detección en la revisión
     sistemática de sistemas de reconocimiento de placas. &
     \cite{shashirangana2021alpr, anagnostopoulos2008lpr} \\
     \midrule
 
     Exactitud por carácter (OCR) & $\geq 90\%$ &
-    $89{,}6\%$ de exactitud a nivel de carácter sobre datos reales con
+    $89{.}6\%$ de exactitud a nivel de carácter sobre datos reales con
     matrículas del contexto local. &
     \cite{auzabanegas2026blpr} \\
     \midrule
@@ -293,27 +305,33 @@ que los respalda y su procedencia.
 \end{longtable}
 
 \textbf{Detección de vehículos.} La familia YOLO26 reporta en COCO valores de
-mAP@50--95 comprendidos entre $40{,}9$ y $57{,}5$ según la escala del modelo,
-métrica que resulta más exigente que el mAP@50 evaluado en este proyecto, pues
+mAP@50--95 comprendidos entre $40{.}9$ y $57{.}5$ según la escala del modelo
+\cite{jocher2026yolo26,sapkota2026yolo26}, métrica que resulta más exigente que
+el mAP@50 evaluado en este proyecto, pues
 promedia diez umbrales de intersección sobre unión en lugar de uno. Considerando
 además que el dominio de estudio es sustancialmente más acotado que COCO
 ---una única escena, condiciones de captura estables y una sola familia de
 objetos---, el umbral de $80\%$ de mAP@50 se sitúa por encima del desempeño
 generalista reportado y es, por tanto, exigente pero alcanzable.
 
-\textbf{Reconocimiento de color.} El rango reportado para reconocimiento de color
-vehicular abarca desde $83{,}5\%$ en condiciones adversas hasta $97{,}8\%$ en
-condiciones controladas. El umbral de $85\%$ se ubica deliberadamente en el
-extremo conservador de ese rango, próxima al límite inferior, porque las
-condiciones de captura del parqueadero incluyen operación nocturna, donde la
-misma fuente reporta que cerca de la mitad de las imágenes nocturnas resultan
-mal clasificadas.
+\textbf{Reconocimiento de color.} Los valores de referencia disponibles provienen
+de conjuntos con condiciones más favorables que las del recinto y no deben leerse
+como un rango único. Los trabajos que reportan $83{.}5\%$ y $97{.}8\%$ lo hacen
+sobre imágenes de autopista y de vista trasera en condiciones controladas,
+respectivamente. El benchmark específico de condiciones adversas
+\cite{lima2024vehiclecolor}, con once clases y operación nocturna, reporta entre
+$44{.}6\%$ y $62{.}8\%$ de F1 macro, con el máximo en el mejor de los modelos
+evaluados. El umbral de $85\%$ no se sitúa, por tanto, en el extremo conservador de
+la literatura: la excede en más de veinte puntos. Se adopta como \emph{exigencia
+operativa} del recinto ---un error superior obliga a verificación manual del color
+en una proporción apreciable de vehículos--- y no como estándar reportado, y así se
+declara en la Tabla~\ref{tab:umbrales}.
 
 \textbf{Reconocimiento de placas.} El umbral de Recall adoptado ($90\%$) se sitúa
-en el extremo inferior del rango de detección reportado ($91{,}3\%$ a $98{,}8\%$),
+en el extremo inferior del rango de detección reportado ($91{.}3\%$ a $98{.}8\%$),
 lo que lo convierte en el criterio menos exigente del conjunto. En cambio, el
 umbral de exactitud por carácter ($90\%$) se apoya en un resultado obtenido sobre
-datos reales con matrículas del contexto local, que reporta $89{,}6\%$; adoptar
+datos reales con matrículas del contexto local, que reporta $89{.}6\%$; adoptar
 $90\%$ implica exigir un desempeño igual o superior al reportado, lo que
 constituye uno de los criterios más demandantes del proyecto.
 
@@ -326,14 +344,19 @@ un error superior a esos niveles implicaría que una proporción apreciable de
 vehículos requeriría verificación manual en la barrera, anulando el beneficio de
 la automatización.
 
-\textbf{Latencia.} La restricción de un segundo por evento no proviene de la
-literatura sino de la operación del recinto: por encima de ese valor, el tiempo
-de espera del conductor en la barrera deja de ser aceptable. Su verificación es
-experimental y se realiza sobre el hardware de despliegue.
+\textbf{Latencia.} La restricción de un segundo por evento se apoya en la
+exigencia operativa del recinto y en la referencia del contexto local
+\cite{auzabanegas2026blpr}, que la adopta como límite de operación; no existe, en
+cambio, un rango de desempeño reportado que permita fijar el umbral por
+comparación. Por encima de ese valor, el tiempo de espera del conductor en la
+barrera deja de ser aceptable. Su verificación es experimental y se realiza sobre
+el hardware de despliegue.
 
-En síntesis, tres de los siete criterios se sustentan simultáneamente en la
-literatura y en el requisito operativo, mientras que los cuatro restantes se
-sustentan únicamente en el segundo. Esta distinción se declara de forma explícita
-para que la evaluación posterior permita distinguir entre un resultado que
+En síntesis, tres de los siete criterios se apoyan en un rango de desempeño
+reportado en la literatura y en el requisito operativo, mientras que los cuatro
+restantes se justifican por vía operativa; en el caso de la latencia, la
+literatura respalda la exigencia temporal, pero no un rango de referencia. Esta
+distinción se declara de forma explícita para que la evaluación posterior permita
+distinguir entre un resultado que
 alcanza un estándar de la disciplina y uno que satisface una exigencia
 operativa del proyecto.

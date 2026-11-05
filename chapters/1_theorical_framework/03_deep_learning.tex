@@ -2,7 +2,7 @@
 
 El desarrollo de sistemas modernos de gestión vehicular en estacionamientos ha
 migrado desde métodos deterministas basados en procesamiento de imágenes clásico
-hacia arquitecturas de aprendizaje profundo. Esta transición permite abordar la
+hacia arquitecturas de aprendizaje profundo \cite{voulodimos2018deep}. Esta transición permite abordar la
 alta variabilidad de los entornos de captura reales (como cambios de iluminación,
 ángulos de inclinación de la cámara y oclusiones parciales) mediante modelos
 capaces de extraer jerarquías de características discriminativas a partir de
@@ -10,7 +10,8 @@ grandes volúmenes de datos.
 
 \subsection{El Paradigma del Aprendizaje Supervisado y Partición de Datos}
 
-Como señalan Russell y Norvig \cite{russell2020artificial}, el aprendizaje
+Como señalan Russell y Norvig \cite{russell2020artificial} y Hastie et al.
+\cite{hastie2009elements}, el aprendizaje
 supervisado constituye un paradigma donde un algoritmo deduce una función de
 mapeo a partir de pares de entrenamiento formados por muestras de entrada y sus
 correspondientes etiquetas de referencia. En el ámbito del control de acceso
@@ -130,7 +131,9 @@ Como establecen LeCun et al. \cite{lecun2015deep} y Szeliski
 \cite{szeliski2022computer}, las Redes Neuronales Convolucionales (CNN) están
 optimizadas para datos con topología en rejilla bidimensional mediante tres
 mecanismos: campos receptivos locales, compartición de pesos y submuestreo
-(\textit{pooling}). Estas propiedades otorgan invariancia a la traslación y
+(\textit{pooling}). La formulación original de esta arquitectura se remonta al
+neocognitrón de Fukushima \cite{fukushima1980neocognitron}. Estas propiedades
+otorgan invariancia a la traslación y
 reducen radicalmente la cantidad de parámetros frente a capas densas
 convencionales.
 
