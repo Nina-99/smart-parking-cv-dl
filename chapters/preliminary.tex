@@ -24,7 +24,7 @@ la gestión del establecimiento. Es decir, la automatización de la aplicación 
 grandes beneficios, como en el ahorro de ciertos recursos económicos, cantidad y
 calidad de los datos recolectados y permite una toma de decisiones efectiva.
 
-Con esta propuesta, se espera contribuir al desarrollo de tecnologías
+Con este trabajo, se contribuye al desarrollo de tecnologías
 inteligentes para la gestión de infraestructura urbana, brindando
 soluciones eficientes, seguras y fáciles de implementar en el control de
 acceso vehicular.
@@ -38,7 +38,8 @@ acceso vehicular.
 El crecimiento acelerado del parque automotor y la urbanización a nivel
 mundial ha generado un aumento en la demanda de infraestructura idónea
 para el estacionamiento de vehículos. Este fenómeno ha impulsado a
-diversas ciudades y países a explorar soluciones tecnológicas que
+diversas ciudades y países a explorar soluciones tecnológicas
+\cite{liu2023camera} que
 permita gestionar de manera más eficiente los parqueaderos,
 especialmente en zonas urbanas de mayor crecimiento. En este sentido,
 los avances en visión artificial y aprendizaje profundo se han
@@ -113,37 +114,119 @@ se emplea actualmente y las investigaciones realizadas.
 \subsection*{INFORMACIÓN DOCUMENTAL Y ESTADÍSTICA}
 \addcontentsline{toc}{subsection}{INFORMACIÓN DOCUMENTAL Y ESTADÍSTICA}
 
-Como se observar en la Figura \ref{fig:resultados_semana},
-se observa la afluencia media por día de vehículos al parqueadero.
+La información documental y estadística que sostiene el problema proviene de dos
+fuentes verificables. La primera es el registro oficial del parque automotor que
+publica el Instituto Nacional de Estadística (INE) a partir de los datos del
+Registro Único para la Administración Tributaria Municipal (RUAT)
+\cite{ine2026parqueautomotor}. La segunda es la campaña de grabación realizada en
+el recinto de estudio, cuyos metadatos describen la cobertura temporal del material
+analizado en este trabajo.
+
+\textbf{Parque automotor.} El parque automotor registrado en Bolivia creció de
+2,470,622 vehículos en 2023 a 2,583,319 en 2024 y 2,672,176 en 2025, con
+variaciones anuales de $4{.}6$\,\% y $3{.}4$\,\% respectivamente. El departamento
+de Oruro siguió la misma tendencia: 120,400 vehículos en 2023, 124,008 en 2024
+y 127,285 en 2025 (Tabla~\ref{tab:parque_automotor}). El crecimiento sostenido
+del parque vehicular aumenta la presión sobre los puntos de acceso de los
+parqueaderos: un registro manual de placas atiende un vehículo por vez, de modo que
+cada unidad adicional se traduce en espera en la barrera y en cola sobre la vía
+pública.
+
+\begin{table}[H]
+    \centering
+    \caption{Parque automotor registrado en Bolivia y en el departamento de Oruro.
+    Fuente: INE, con base en el RUAT \cite{ine2026parqueautomotor}.}
+    \label{tab:parque_automotor}
+    \begin{tabular}{lrrr}
+        \toprule
+        \textbf{Año} & \textbf{Bolivia} & \textbf{Oruro} &
+        \textbf{Variación anual en Oruro} \\
+        \midrule
+        2023 & 2,470,622 & 120,400 & --- \\
+        2024 & 2,583,319 & 124,008 & $+3{.}0$\,\% \\
+        2025 & 2,672,176 & 127,285 & $+2{.}6$\,\% \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\textbf{Proyección.} Con tres observaciones anuales no se puede estimar un modelo
+con intervalo de predicción defendible, pero sí una proyección mecánica que acote
+el orden de magnitud. Aplicando la tasa de crecimiento anual compuesta del
+departamento entre 2023 y 2025 ($2{.}82$\,\%) se obtienen 146,270 vehículos en
+2030; aplicando la tasa nacional del mismo período ($4{.}0$\,\%) se obtienen
+154,855. Una extrapolación lineal sobre los mismos datos arroja 144,498, dentro
+del mismo orden. La Tabla~\ref{tab:proyeccion_parque} resume los dos escenarios.
+
+\begin{table}[H]
+    \centering
+    \caption{Proyección del parque automotor de Oruro bajo dos escenarios de
+    crecimiento. Elaboración propia a partir de la serie del INE
+    \cite{ine2026parqueautomotor}. Es una extrapolación mecánica, no un
+    pronóstico.}
+    \label{tab:proyeccion_parque}
+    \begin{tabular}{lrr}
+        \toprule
+        \textbf{Año} & \textbf{Escenario base ($2{.}82$\,\%)} &
+        \textbf{Escenario alto ($4{.}0$\,\%)} \\
+        \midrule
+        2026 & 130,874 & 132,375 \\
+        2027 & 134,564 & 137,669 \\
+        2028 & 138,358 & 143,174 \\
+        2029 & 142,259 & 148,900 \\
+        2030 & 146,270 & 154,855 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Se trata de una proyección, no de un pronóstico: supone que la tasa reciente se
+mantiene y no modela saturación del parque, cambios normativos ni crisis
+económicas. Se incluye porque el orden de magnitud ---entre $144{,}000$ y $155{,}000$
+vehículos en 2030--- es lo que importa para dimensionar un punto de acceso, no
+porque permita predecir el valor exacto. La cifra observada sigue siendo la que
+sostiene el problema; la proyección solo muestra hacia dónde crece.
+
+\textbf{Campaña de grabación.} El material del estudio se recolectó en el recinto
+entre el 16 de marzo y el 16 de mayo de 2026, con las cámaras de los accesos del
+recinto.
+La campaña comprende $276$ sesiones de una hora, una por hora grabada, distribuidas
+en $39$ días. La Figura~\ref{fig:cobertura_grabacion} muestra las horas registradas
+por día de la semana: la cobertura es pareja de lunes a sábado (entre $37$ y $52$
+horas) y baja el domingo ($8$ horas). Esa distribución condiciona el alcance de los
+resultados: las conclusiones sobre el domingo se limitan a la evidencia disponible
+para ese día, mientras que el resto de la semana cuenta con material suficiente
+para las mediciones que se reportan en el Capítulo~III. Ese capítulo detalla qué
+subconjunto de este material se destinó a cada medición y qué horas quedaron fuera
+de cada conjunto de prueba.
 
 \begin{figure}[htbp]
     \centering
-    \begin{tikzpicture}[x=1.8cm, y=0.08cm] % Escala: Separación en X, Altura en Y
-        
-        % 1. Dibujar las líneas de cuadrícula del fondo (Estilo Excel 3D)
-        \foreach \y in {0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100} {
-            % Línea diagonal (profundidad) y línea horizontal
-            \draw[gray!30, thin] (0, \y) -- (0.3, \y+5) -- (6.7, \y+5);
-            % Etiquetas del eje Y
-            \node[left, font=\scriptsize\sffamily, text=gray!80!black] at (0, \y) {\y};
-        }
-        
-        % ******************
-        % DATOS DEL GRÁFICO
-        % ******************
-        % Formato: \barraTresD{Posición X}{Valor Y}{Color}{Etiqueta}
-        
-        \barraTresD{1}{85}{blue!70!cyan}{LUNES}
-        \barraTresD{2}{80}{blue!70!cyan}{MARTES}
-        \barraTresD{3}{96}{blue!70!cyan}{MIÉRCOLES}
-        \barraTresD{4}{76}{blue!70!cyan}{JUEVES}
-        \barraTresD{5}{66}{blue!70!cyan}{VIERNES}
-        \barraTresD{6}{96}{blue!70!cyan}{SÁBADO}
-        
+    \begin{tikzpicture}
+        \begin{axis}[
+            ybar,
+            width=0.82\textwidth,
+            height=5.8cm,
+            ymin=0, ymax=60,
+            ylabel={Horas grabadas},
+            xlabel={Día de la semana},
+            symbolic x coords={Lun, Mar, Mié, Jue, Vie, Sáb, Dom},
+            xtick=data,
+            nodes near coords,
+            every node near coord/.append style={font=\scriptsize},
+            bar width=16pt,
+            enlarge x limits=0.10,
+            axis lines=left,
+            tick label style={font=\small},
+            label style={font=\small},
+        ]
+            \addplot[fill=blue!55!cyan, draw=blue!40!black] coordinates {
+                (Lun, 43) (Mar, 44) (Mié, 46) (Jue, 46) (Vie, 37) (Sáb, 52) (Dom, 8)
+            };
+        \end{axis}
     \end{tikzpicture}
-    
-    \caption{Resultados registrados durante los días de la semana.}
-    \label{fig:resultados_semana}
+    \caption{Horas de grabación por día de la semana en el recinto de estudio,
+    entre el 16 de marzo y el 16 de mayo de 2026. Fuente: metadatos de las
+    sesiones registradas por las cámaras del recinto.}
+    \label{fig:cobertura_grabacion}
 \end{figure}
 
 % ***********************
@@ -314,107 +397,129 @@ detección e identificación de vehículos, el reconocimiento de placas de
 matrícula y la determinación de los eventos de ingreso y salida, bajo las
 condiciones de captura del entorno de estudio.
 
-$H_{1.1}$: El modelo de detección de vehículos alcanza un mAP@50 igual o superior
+$H_{1{.}1}$: El modelo de detección de vehículos alcanza un mAP@50 igual o superior
 al 80 \% bajo las condiciones de captura del entorno de estudio.
 
-$H_{0.1}$: El modelo de detección de vehículos no alcanza un mAP@50 del 80 \%
+$H_{0{.}1}$: El modelo de detección de vehículos no alcanza un mAP@50 del 80 \%
 bajo las condiciones de captura del entorno de estudio.
 
-$H_{1.2}$: El modelo de identificación del tipo de vehículo alcanza un F1-score
+$H_{1{.}2}$: El modelo de identificación del tipo de vehículo alcanza un F1-score
 macro igual o superior al 85 \% bajo las condiciones de captura del entorno de
 estudio.
 
-$H_{0.2}$: El modelo de identificación del tipo de vehículo no alcanza un
+$H_{0{.}2}$: El modelo de identificación del tipo de vehículo no alcanza un
 F1-score macro del 85 \% bajo las condiciones de captura del entorno de estudio.
 
-$H_{1.3}$: El modelo de identificación del color predominante alcanza un F1-score
+$H_{1{.}3}$: El modelo de identificación del color predominante alcanza un F1-score
 macro igual o superior al 85 \% bajo las condiciones de captura del entorno de
 estudio.
 
-$H_{0.3}$: El modelo de identificación del color predominante no alcanza un
+$H_{0{.}3}$: El modelo de identificación del color predominante no alcanza un
 F1-score macro del 85 \% bajo las condiciones de captura del entorno de estudio.
 
-$H_{1.4}$: El sistema de reconocimiento de placas alcanza simultáneamente un
+$H_{1{.}4}$: El sistema de reconocimiento de placas alcanza simultáneamente un
 Recall igual o superior al 90 \% en la detección de las placas y una exactitud
 por carácter igual o superior al 90 \% en el reconocimiento de las matrículas,
 bajo las condiciones de visibilidad del entorno de estudio.
 
-$H_{0.4}$: El sistema de reconocimiento de placas no alcanza los valores mínimos
-establecidos para la detección y reconocimiento de las matrículas bajo las
-condiciones de visibilidad del entorno de estudio.
+$H_{0{.}4}$: El sistema de reconocimiento de placas no alcanza simultáneamente los
+valores mínimos establecidos para la detección y el reconocimiento de las
+matrículas bajo las condiciones de visibilidad del entorno de estudio.
 
-$H_{1.5}$: El sistema determina correctamente los eventos de ingreso y salida de
+$H_{1{.}5}$: El sistema determina correctamente los eventos de ingreso y salida de
 los vehículos con una exactitud igual o superior al 90 \% bajo las condiciones
 de operación del parqueadero.
 
-$H_{0.5}$: El sistema no alcanza una exactitud del 90 \% en la determinación de
+$H_{0{.}5}$: El sistema no alcanza una exactitud del 90 \% en la determinación de
 los eventos de ingreso y salida bajo las condiciones de operación del parqueadero.
 
 \subsection*{CRITERIO DE EVALUACIÓN DE LA HIPÓTESIS}
 \addcontentsline{toc}{subsection}{CRITERIO DE EVALUACIÓN DE LA HIPÓTESIS}
 
 
-La contrastación de la hipótesis se realizará mediante pruebas experimentales
+La contrastación de la hipótesis se realizó mediante pruebas experimentales
 sobre un conjunto de datos de prueba independiente de los datos utilizados para
-el entrenamiento de los modelos. El conjunto de prueba deberá contener muestras
+el entrenamiento de los modelos. El conjunto de prueba contiene muestras
 representativas de las condiciones de captura del parqueadero, incluyendo
 variaciones de iluminación, visibilidad, distancia, ángulo de captura y
 oclusiones presentes en el entorno de estudio.
 
-La evaluación se realizará de forma independiente para cada componente del
-sistema, utilizando los siguientes criterios:
+La evaluación se realizó de forma independiente para cada componente del
+sistema. En todo el documento se emplean \emph{precisión} (\textit{precision}),
+\emph{exhaustividad} (\textit{recall}) y \emph{exactitud} (\textit{accuracy});
+cuando una métrica se cita con su nombre en inglés, corresponde al mismo
+indicador. Los criterios aplicados son los siguientes:
 
 \begin{itemize}
-    \item \textbf{Detección de vehículos:} se utilizará como indicador principal
+    \item \textbf{Detección de vehículos:} se utilizó como indicador principal
         el mAP@50, considerando como criterio mínimo de cumplimiento un valor
-        igual o superior al 80\%. Adicionalmente, se reportarán Precisión,
+        igual o superior al 80\%. Adicionalmente, se reportan Precisión,
         Recall y mAP@50--95 para caracterizar el comportamiento del detector.
 
-    \item \textbf{Identificación del tipo de vehículo:} se utilizará como
+    \item \textbf{Identificación del tipo de vehículo:} se utilizó como
         indicador principal el F1-score macro, considerando como criterio mínimo
-        un valor igual o superior al 85\%. Se complementará con Accuracy,
+        un valor igual o superior al 85\%. Se complementa con Accuracy,
         Precision, Recall y matriz de confusión por clase.
 
-    \item \textbf{Identificación del color predominante:} se utilizará como
+    \item \textbf{Identificación del color predominante:} se utilizó como
         indicador principal el F1-score macro, considerando como criterio mínimo
-        un valor igual o superior al 85\%. Se complementará con Accuracy y matriz
+        un valor igual o superior al 85\%. Se complementa con Accuracy y matriz
         de confusión por clase.
 
-    \item \textbf{Detección de placas de matrícula:} se utilizará como indicador
+    \item \textbf{Detección de placas de matrícula:} se utilizó como indicador
         principal el Recall, considerando como criterio mínimo un valor igual o
-        superior al 90\%. También se reportarán Precision, IoU y mAP para evaluar
+        superior al 90\%. También se reportan Precision, IoU y mAP para evaluar
         la calidad de localización de las placas.
 
-    \item \textbf{Reconocimiento óptico de caracteres:} se utilizará como indicador
+    \item \textbf{Reconocimiento óptico de caracteres:} se utilizó como indicador
         principal la exactitud a nivel de carácter, considerando como criterio
-        mínimo un valor igual o superior al 90\%. Asimismo, se calculará el
-        Character Error Rate (CER), cuyo valor deberá ser igual o inferior al 10\%,
-        y la proporción de placas reconocidas completamente mediante Exact Match,
-        considerando como referencia un valor igual o superior al 80\%.
+        mínimo un valor igual o superior al 90\%. Asimismo, se calculó el
+        Character Error Rate (CER), cuyo valor debía ser igual o inferior al 10\%,
+        y la proporción de recortes de placa reconocidos en su totalidad
+        mediante Exact Match, considerando como referencia un valor igual o
+        superior al 80\%.
 
-    \item \textbf{Determinación de eventos de ingreso y salida:} se utilizará
+    \item \textbf{Determinación de eventos de ingreso y salida:} se utilizó
         como indicador principal la Accuracy, considerando como criterio mínimo
-        un valor igual o superior al 90\%. Se reportarán adicionalmente
+        un valor igual o superior al 90\%. Se reportan adicionalmente
         Precision, Recall y F1-score.
 
-    \item \textbf{Rendimiento computacional:} se evaluará mediante la latencia
+    \item \textbf{Rendimiento computacional:} se evaluó mediante la latencia
         promedio por evento, FPS, tiempo de inferencia y consumo de recursos.
-        Como criterio operacional de referencia se considerará una latencia
+        Como criterio operacional de referencia se consideró una latencia
         promedio igual o inferior a un segundo por evento, bajo las condiciones
         y hardware definidos para las pruebas.
 \end{itemize}
 
-La hipótesis general será considerada respaldada cuando el sistema desarrollado
-cumpla los criterios mínimos establecidos para los componentes críticos del
-proceso de identificación y registro vehicular y demuestre que puede ejecutar de
-forma automatizada las funciones definidas dentro del alcance del proyecto.
+La hipótesis general se considera respaldada cuando el sistema desarrollado
+cumple simultáneamente los criterios mínimos establecidos para el conjunto de
+componentes del proceso de identificación y registro vehicular y demuestra que
+puede ejecutar de forma automatizada las funciones definidas dentro del alcance
+del proyecto. Por su forma conjuntiva, basta que un solo criterio no se cumpla
+para que la hipótesis no se respalde.
 
-La hipótesis nula será considerada respaldada cuando el sistema no alcance los
-criterios mínimos establecidos en los componentes críticos o cuando las
-deficiencias observadas impidan realizar de manera confiable el proceso
-automatizado de identificación y registro vehicular bajo las condiciones evaluadas.
+La hipótesis nula se considera respaldada cuando el sistema no alcanza el
+conjunto de criterios mínimos establecidos o cuando las deficiencias observadas
+impiden realizar de manera confiable el proceso automatizado de identificación y
+registro vehicular bajo las condiciones evaluadas. Al ser la negación de la
+hipótesis general, no requiere que fallen todos los términos, sino que el
+conjunto deje de cumplirse.
 
-Los resultados serán analizados además de manera desagregada por tipo de
+La regla anterior se operacionaliza como una prueba unilateral de intervalo. Para
+cada criterio con umbral $\theta$ se contrasta $H_0:\pi\ge\theta$ frente a
+$H_1:\pi<\theta$ con un nivel de significancia $\alpha=0{.}05$. La hipótesis
+específica se respalda cuando el límite inferior del intervalo de confianza del
+$95$\,\% supera $\theta$; se rechaza ---y se acepta la hipótesis nula en el sentido
+de la decisión--- cuando el límite superior queda por debajo de $\theta$; y el
+resultado se declara inconcluso cuando el intervalo contiene $\theta$. La
+coincidencia exacta $\geq 80\%$ se declara en este criterio como referencia de
+aceptación y no se incorpora con posterioridad a la medición. Aceptar la hipótesis
+nula no prueba que el sistema no pueda alcanzar el umbral en toda condición: es la
+decisión de que, bajo las condiciones evaluadas y con el riesgo declarado, el
+desempeño queda por debajo
+\cite{schuirmann1987comparison,lakens2017equivalence,neyman1933problem,fisher1935design}.
+
+Los resultados se analizan además de manera desagregada por tipo de
 vehículo, condición de iluminación y nivel de visibilidad, con el propósito de
 identificar las condiciones en las que el sistema presenta mayores tasas de error.
 
@@ -429,18 +534,18 @@ identificar las condiciones en las que el sistema presenta mayores tasas de erro
 
 El desarrollo del sistema se justifica técnicamente por la necesidad de
 automatizar el proceso de identificación y registro de vehículos mediante
-técnicas de visión artificial y aprendizaje profundo. La solución propuesta
-permitirá procesar imágenes obtenidas mediante cámaras ubicadas en los puntos de
+técnicas de visión artificial y aprendizaje profundo. La solución desarrollada
+procesa imágenes obtenidas mediante cámaras ubicadas en los puntos de
 acceso del parqueadero para detectar los vehículos, identificar su tipo y color
 predominante y localizar sus placas de matrícula para su posterior reconocimiento.
 
-La utilización de modelos de aprendizaje profundo permitirá adaptar la solución
+La utilización de modelos de aprendizaje profundo permitió adaptar la solución
 a las características visuales del entorno de estudio mediante datos obtenidos
-del propio parqueadero. Asimismo, el procesamiento de imágenes permitirá realizar
+del propio parqueadero. Asimismo, el procesamiento de imágenes permitió realizar
 las etapas necesarias para mejorar la información utilizada por los modelos y
 por el sistema de reconocimiento de placas.
 
-La integración de los modelos con un sistema de gestión permitirá asociar la
+La integración de los modelos con un sistema de gestión permitió asociar la
 información visual obtenida con los eventos de ingreso y salida, generando
 registros estructurados que puedan ser consultados posteriormente. De esta
 manera, la solución no se limita al reconocimiento de vehículos, sino que
@@ -482,7 +587,7 @@ trazable y basado en información.
 \subsection*{ALCANCES}
 \addcontentsline{toc}{subsection}{ALCANCES}
 
-La presente propuesta del sistema automatizado para el parqueadero
+El sistema automatizado para el parqueadero
 presenta los siguientes alcances
 
 \begin{itemize}
@@ -495,10 +600,10 @@ presenta los siguientes alcances
         mediante modelos de aprendizaje profundo y reconocimiento de su tipo y
         color predominante.
     \item
-        \textbf{Escalabilidad del sistema:} El sistema podrá ser ampliado para
-        controlar múltiples puntos de acceso, gestionando grandes volúmenes de
-        vehículos y características en tiempo real y sin pérdida de
-        rendimiento.
+        \textbf{Escalabilidad del sistema:} el diseño prevé la incorporación de
+        nuevos puntos de acceso sin modificar el núcleo del subsistema de visión.
+        El comportamiento bajo carga concurrente de múltiples cámaras no forma
+        parte de la evaluación experimental de este trabajo.
     \item
         \textbf{Reconocimiento de placas:} localización de las placas de
         matrícula y desarrollo de un mecanismo de reconocimiento óptico de
@@ -508,6 +613,11 @@ presenta los siguientes alcances
         \textbf{Determinación de eventos:} registro de los eventos de ingreso y
         salida asociados a los vehículos, considerando fecha, hora y cámara
         correspondiente.
+    \item
+        \textbf{Gestión de ocupación por aforo perimetral:} cálculo del nivel de
+        ocupación del recinto y disponibilidad global en tiempo real a partir del
+        balance continuo entre los eventos de ingreso y salida registrados en los
+        puntos de acceso, en contraste con la capacidad nominal configurada.
     \item
         \textbf{Gestión de información:} almacenamiento estructurado de los
         datos obtenidos y disponibilidad de mecanismos de consulta y
@@ -545,12 +655,12 @@ presenta los siguientes alcances
         estará condicionado por la diversidad y calidad de las imágenes utilizadas
         para el entrenamiento y evaluación de los modelos.
     \item
-        \textbf{Control de autorización:} el contraste de la matrícula reconocida
-        contra un padrón de vehículos habilitados no forma parte del alcance
-        implementado en esta entrega. El sistema registra el evento y su
-        evidencia, de modo que el contraste queda disponible para una etapa
-        posterior, pero no clasifica por sí mismo un acceso como autorizado o no
-        autorizado.
+        \textbf{Control de acceso físico:} el sistema contrasta automáticamente
+        la matrícula reconocida contra el padrón institucional de vehículos
+        habilitados y clasifica el acceso emitiendo las alertas correspondientes;
+        sin embargo, el accionamiento electromecánico de barreras físicas o
+        talanqueras no forma parte del alcance implementado, dependiendo de la
+        supervisión del operador en caseta.
     \item
         \textbf{Capacidad computacional:} el tiempo de inferencia y el rendimiento
         del sistema dependerán de las características del equipo usado para ejecutar
@@ -560,9 +670,14 @@ presenta los siguientes alcances
         sistema podrá verse afectada por la disponibilidad y estabilidad de la
         infraestructura de red.
     \item
-        \textbf{Alcance de las cámaras:} el proyecto se limitará a los puntos de
-        acceso seleccionados y a las condiciones de captura disponibles en el entorno
-        de estudio.
+        \textbf{Alcance de las cámaras y delimitación de aforo:} el sistema de
+        visión artificial se concentra en los puntos perimetrales de acceso
+        (ingreso y egreso). La determinación de la disponibilidad se realiza a
+        nivel de aforo general del recinto; el monitoreo, seguimiento o guiado
+        hacia plazas o cajones de estacionamiento individuales (\textit{bay monitoring}
+        o \textit{parking guidance}) queda explícitamente fuera del alcance de este
+        trabajo por requerir una red de cámaras cenitales internas o sensores IoT
+        por cajón.
     \item
         \textbf{Privacidad y tratamiento de información:} el almacenamiento y
         procesamiento de placas y registros asociados deberá considerar las disposiciones
@@ -607,7 +722,6 @@ artificial aplicada en la Carrera de Ingeniería Informática.
 \addcontentsline{toc}{subsection}{INGENIERÍA DEL PROYECTO}
 
 \renewcommand{\arraystretch}{1.3}
-\newcolumntype{P}[1]{>{\raggedright\arraybackslash}m{#1\dimexpr\textwidth\relax}}
 \begin{longtable}{
         P{0.27}
         P{0.28}
@@ -714,3 +828,24 @@ artificial aplicada en la Carrera de Ingeniería Informática.
     \multicolumn{3}{r}{\footnotesize\textit{Fuente: Elaboración propia}} \\*
     \bottomrule
 \end{longtable}
+
+% **************************
+% ORGANIZACIÓN DEL TRABAJO
+% **************************
+\section*{ORGANIZACIÓN DEL TRABAJO}
+\addcontentsline{toc}{section}{ORGANIZACIÓN DEL TRABAJO}
+
+El documento se organiza en cinco capítulos y un apartado de anexos. El
+Capítulo~I establece el marco teórico: visión artificial, aprendizaje profundo,
+detección de objetos, percepción y seguimiento vehicular, y las métricas de
+evaluación y optimización que sostienen los criterios adoptados. El Capítulo~II
+presenta el diseño del sistema: requerimientos, arquitectura general y diseño de
+los subsistemas de visión y gestión, incluida la interfaz de usuario. El
+Capítulo~III documenta la implementación: entorno tecnológico, construcción del
+conjunto de datos, desarrollo de los modelos, integración del sistema de gestión,
+optimización y despliegue, pruebas y resultados, y las interfaces construidas.
+El Capítulo~IV estima el costo del proyecto mediante puntos de función y
+equipamiento. El Capítulo~V cierra con el contraste de las hipótesis y los
+objetivos, las conclusiones y las recomendaciones. Los anexos reúnen el manual de
+operación, los protocolos de construcción y evaluación del conjunto de datos, y
+los procedimientos de reproducibilidad.
