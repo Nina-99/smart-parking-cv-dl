@@ -33,6 +33,7 @@
 \usetikzlibrary{matrix, arrows.meta, calc, positioning}
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.18} 
+\AtBeginDocument{\pgfplotsset{/pgf/number format/use comma=false}}
 \usepackage{smartparking} % *** MACROS PROPIAS DEL PROYECTO ***
 \usepackage{subcaption}
 
@@ -44,6 +45,7 @@
 \usepackage{makecell}
 \usepackage{longtable}
 \newcolumntype{P}[1]{>{\raggedright\arraybackslash}m{#1\dimexpr\textwidth\relax}}
+\newcolumntype{Q}[1]{>{\raggedright\arraybackslash\ttfamily\small}m{#1\dimexpr\textwidth\relax}}
 
 % *** COLOR & CODE CONFIGURATION ***
 \usepackage[table]{xcolor}
@@ -119,12 +121,16 @@
 \pagenumbering{roman}
 \setcounter{page}{2}
 \input{chapters/frontmatter/resumen}
+\clearpage
+\input{chapters/frontmatter/abstract}
 
 % *** INDICES ***
 \clearpage
 \tableofcontents
 \listoffigures
 \listoftables
+\clearpage
+\input{chapters/frontmatter/abreviaturas}
 \clearpage
 
 % *** CHAPTERS ***

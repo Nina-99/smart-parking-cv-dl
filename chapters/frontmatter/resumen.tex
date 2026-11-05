@@ -2,20 +2,24 @@
 \addcontentsline{toc}{section}{RESUMEN}
 
 Se desarrolló un sistema de gestión de acceso vehicular para un parqueadero de
-Oruro, con el propósito de sustituir el registro manual
-de ingresos y salidas por un proceso automatizado basado en visión artificial y
-aprendizaje profundo. Se construyó sobre las cámaras existentes del recinto y
-comprendió la construcción de un conjunto de datos propio, el entrenamiento de
-modelos de detección y clasificación, un reconocedor de matrículas y su
-integración en una plataforma web con base de datos, cola de tareas y
-notificación en tiempo real. Se anotaron y verificaron 496
-matrículas reales y se generaron 359.992 muestras sintéticas. La identificación del
-tipo de vehículo alcanzó un valor F1 de 0,8887 y la detección de placas una
-exhaustividad de 0,9714; el reconocimiento de matrículas obtuvo 0,789 de exactitud
-por carácter, limitado por la resolución de captura. La valoración económica determinó un tamaño funcional de 62 puntos de
-función y un costo total de 33.170 bolivianos. El
-sistema resultó viable por componentes, aunque el reconocimiento de placas requiere
-mejorar la calidad de captura para alcanzar el criterio propuesto.
+Oruro con el fin de sustituir el registro manual de ingresos y salidas por un
+proceso automatizado de visión artificial y aprendizaje profundo. El sistema se
+apoyó en las cámaras existentes del recinto e integró un conjunto de datos propio,
+modelos de detección y clasificación, un reconocedor de matrículas y una plataforma
+web con base de datos, cola de tareas y notificación en tiempo real. Se verificaron
+640 matrículas reales y se generaron 360,000 muestras sintéticas. La detección de
+vehículos alcanzó un mAP@50 de 0.901; la de placas, una exhaustividad de 0.9714; la
+clasificación de tipo, un F1 de 0.8887; y la de color, un F1 macro de 0.8124. El
+reconocimiento de matrículas obtuvo 0.851 de exactitud por carácter y 52.6\,\% de
+coincidencia exacta por recorte, ambos limitados por la resolución de captura. Dos
+criterios quedaron por debajo del umbral fijado (el F1 de color y la exactitud
+por carácter), la determinación de eventos quedó inconclusa por tamaño de
+muestra y la latencia por evento no llegó a medirse; por ello se rechaza la
+hipótesis de investigación y se acepta la hipótesis nula conforme al criterio
+definido de antemano. La estimación económica arrojó 62 puntos de función y un
+costo total de 33,170 bolivianos. El sistema está construido e integrado por
+componentes, pero no satisface el conjunto de criterios de desempeño en su estado
+actual.
 
 \vspace{1em}
 \noindent\textbf{Palabras clave:} visión artificial, aprendizaje profundo,

@@ -1,0 +1,25 @@
+\section*{ABSTRACT}
+\addcontentsline{toc}{section}{ABSTRACT}
+
+A vehicle access management system was developed for a parking facility in Oruro,
+Bolivia, to replace the manual registration of entries and exits with an automated
+process based on computer vision and deep learning. The system relied on the
+facility's existing cameras and integrated a dedicated dataset, detection and
+classification models, a license plate recognizer, and a web platform with a
+database, a task queue, and real-time notification. A total of 640 real license
+plates were verified and 360,000 synthetic samples were generated. Vehicle
+detection reached 0.901 mAP@50; plate detection, 0.9714 recall; vehicle type
+classification, 0.8887 F1; and color classification, 0.8124 macro F1. License
+plate recognition obtained 0.851 character-level accuracy and 52.6\% per-crop
+exact match, both limited by capture resolution. Two criteria fell below the
+target threshold (color F1 and character accuracy), event determination
+remained inconclusive because of sample size, and per-event latency was not
+measured; the research hypothesis is therefore rejected and the null hypothesis is
+accepted under the predefined criterion. The cost estimate yielded 62 function
+points and a total cost of 33,170 bolivianos. The system is built and integrated
+by components, but it does not meet the set of performance criteria in its current
+state.
+
+\vspace{1em}
+\noindent\textbf{Keywords:} computer vision, deep learning, license plate
+recognition, access management, parking.
