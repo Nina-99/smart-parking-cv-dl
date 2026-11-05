@@ -6,12 +6,16 @@ on:
       - main
     paths-ignore:
       - "**.pdf"
+  pull_request:
+    paths-ignore:
+      - "**.pdf"
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
 
     steps:
       - name: Download repository
@@ -22,8 +26,9 @@ jobs:
         with:
           root_file: main.tex
 
-      - name: Hacer commit y push del PDF al repositorio
-        uses: stefanzweifel/git-auto-commit-action@v5
+      - name: Upload PDF
+        uses: actions/upload-artifact@v4
         with:
-          commit_message: "🤖 PDF generate automatically"
-          file_pattern: "*.pdf"
+          name: main-pdf
+          path: main.pdf
+          if-no-files-found: error
