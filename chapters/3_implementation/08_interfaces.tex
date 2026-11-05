@@ -6,25 +6,28 @@ y cliente web---, y no maquetas. Los datos que aparecen en ellas provienen de un
 conjunto de siembra preparado para la demostración; las imágenes de los vehículos
 son recortes del material real capturado en el recinto.
 
-La comparación con los wireframes del capítulo de diseño muestra tres diferencias
+La comparación con los wireframes del capítulo de diseño muestra cuatro diferencias
 que conviene declarar antes de recorrer las vistas. La primera es que el panel de
 monitoreo no reproduce el video continuo con cajas en streaming: el sistema entrega el
-evento confirmado y el recorte de mayor tamaño que lo evidencia sin sobrecargar el ancho
-de banda. La segunda es que la vista de padrón de vehículos autorizados se implementó
+evento confirmado con el recorte de mayor tamaño y, para los cruces que lo ameritan, un
+clip breve de los segundos alrededor del evento, sin sobrecargar el ancho de banda. La segunda es que la vista de padrón de vehículos autorizados se implementó
 como vista administrativa y operativa (RF-10), complementada por la búsqueda forense
 de incidentes por ventana temporal. La tercera es que se añadió una vista de telemetría del
 modelo que no estaba en el diseño inicial, y que expone la latencia y la confianza
-registradas por el sistema en operación.
+registradas por el sistema en operación. La cuarta es la bandeja de validación
+operativa, que hace explícita la revisión humana que el capítulo de limitaciones
+delega en el operador de caseta y que deja registro de cada decisión.
 
 La aplicación ofrece tres modos de presentación ---claro, oscuro y sistema---; el
-último sigue la preferencia del equipo. Las capturas corresponden al tema oscuro,
-que es el que se emplea en operación nocturna.
+último sigue la preferencia del equipo. Las capturas corresponden al tema claro,
+que es el que se emplea en la atención diurna de caseta.
 
 La navegación se organiza en dos bloques. El de operación ---panel, incidentes,
 historial y padrón--- está disponible para cualquier sesión autenticada; el de
-administración ---cámaras, modelo y usuarios--- aparece solo para el rol
-administrador, y el servidor aplica la misma regla sobre cada recurso. Ocultar el
-enlace es una cortesía de la interfaz, no el control de acceso.
+administración ---cámaras, modelo y usuarios--- se agrupa en un menú desplegable
+que solo aparece para el rol administrador, y el servidor aplica la misma regla
+sobre cada recurso. Ocultar el enlace es una cortesía de la interfaz, no el control
+de acceso.
 
 \subsection{Acceso y autenticación}
 
@@ -36,7 +39,7 @@ solicitudes de lectura que no presenten un token válido. La Figura
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.92\textwidth]{fig_if_login.png}
+    \includegraphics[width=0.92\textwidth]{fig_login.png}
     \caption{Pantalla de acceso a la aplicación.}
     \label{fig:if_login}
 \end{figure}
@@ -57,14 +60,23 @@ junto con la acción de cierre manual. Las sesiones cuya permanencia excede el
 umbral configurado se señalan con una marca de sesión huérfana: son las que
 quedaron sin salida registrada y que el operador debe resolver. El panel de
 eventos en vivo recibe las novedades por el canal persistente, y el gráfico
-inferior presenta los ingresos de los últimos siete días.
+inferior presenta los ingresos de los últimos siete días
+(Figura~\ref{fig:if_panel_flujo}).
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.95\textwidth]{fig_if_panel.png}
-    \caption{Panel de monitoreo con la ocupación, el estado de las cámaras, las
-    sesiones activas y el registro de eventos en vivo.}
+    \includegraphics[width=0.95\textwidth]{fig_dashboard_1.png}
+    \caption{Panel de monitoreo con la ocupación, las tarjetas de resumen, el
+    estado de las cámaras y las sesiones activas.}
     \label{fig:if_panel}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{fig_dashboard_2.png}
+    \caption{Sesiones activas con su tiempo transcurrido y afluencia confirmada
+    de los últimos siete días.}
+    \label{fig:if_panel_flujo}
 \end{figure}
 
 Respecto del wireframe de la Figura~\ref{fig:wire_monitoreo}, la diferencia
@@ -73,7 +85,42 @@ costo y de arquitectura: transmitir video al navegador exige un servidor de
 medios y ancho de banda continuo, mientras que el evento confirmado con su
 recorte entrega la evidencia necesaria para auditar la decisión sin ese costo. La
 contrapartida se asume: el operador no ve el movimiento en tiempo real, sino el
-resultado de cada cruce.
+resultado de cada cruce. Como complemento de la evidencia, el sistema escribe un
+clip de pocos segundos ---dos antes y dos después del cruce--- únicamente cuando
+el evento se confirma; no es una transmisión continua, sino un archivo asociado al
+vehículo que se reproduce a demanda desde la bandeja o desde el detalle.
+
+\subsection{Bandeja de validación operativa}
+
+La bandeja de validación es la contraparte humana del clasificador. Cada evento
+confirmado por el portón ---ingreso, salida con coincidencia y salida sin
+coincidencia--- se presenta al operador con el recorte que lo evidencia, la
+matrícula reconocida y su confianza, el tipo y el color estimados, la cámara y el
+sentido del cruce. La matrícula se acompaña de la confianza de cada carácter y de
+las alternativas que el modelo consideró en cada posición, de modo que una lectura
+plausible pero incierta pueda corregirse en el carácter débil y no reescribiendo
+la placa completa. Sobre la matrícula se indica además si el vehículo figura en el
+padrón institucional, si no figura o si no hubo lectura; esa tercera distinción es
+deliberada, porque ``sin placa'' y ``no autorizado'' son hechos distintos y el
+operador necesita ambos.
+
+El operador dispone de cuatro decisiones. Puede confirmar la lectura, corregir la
+matrícula cuando el reconocimiento falló, descartar el evento cuando no es
+accionable, o ---en una salida que no pudo emparejarse con ninguna sesión--- elegir
+la sesión abierta que corresponde y cerrarla. Cada decisión se almacena en una
+tabla de auditoría de solo agregado, con la matrícula anterior, la corregida, el
+operador y el instante; la corrección no reescribe el registro original. Una
+matrícula corregida se marca como verificada por una persona, de modo que una
+salida posterior pueda emparejarse con ella aunque la lectura óptica original
+hubiera quedado por debajo del umbral de confianza.
+
+La bandeja no condiciona el registro del evento: el cruce se persiste cuando
+ocurre y la revisión llega después. Su función es hacer visible y auditable la
+supervisión que las limitaciones del sistema asignan al operador de caseta, no
+convertir al operador en requisito para que el vehículo sea contabilizado. La
+cola se conserva en el servidor y no solo en el canal persistente, de manera que
+un panel cerrado no pierde eventos pendientes y una decisión queda registrada
+aunque el navegador se recargue.
 
 \subsection{Búsqueda de incidentes y detalle del vehículo}
 
@@ -94,28 +141,20 @@ instante consultado. Cada tarjeta muestra el recorte del vehículo, la matrícul
 reconocida o la indicación de que no pudo leerse, el tipo y el color con su
 confianza, y el instante de la observación. Los casos sin matrícula se conservan
 en la lista: son precisamente los que el operador necesita revisar con la imagen.
-Seleccionar una tarjeta abre el detalle del vehículo (Figura~\ref{fig:if_vehiculo}),
+Seleccionar una tarjeta abre el detalle del vehículo,
 con el recorte de mayor tamaño disponible, los atributos con su confianza, el
 identificador interno y la tabla de sesiones con ingreso, salida, duración, estado
 y responsable del cierre.
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.95\textwidth]{fig_if_incidentes.png}
+    \includegraphics[width=0.95\textwidth]{fig_incidentes.png}
     \caption{Búsqueda de incidentes por ventana temporal y color, con los
     candidatos y su evidencia visual.}
     \label{fig:if_incidentes}
 \end{figure}
 
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.95\textwidth]{fig_if_vehiculo.png}
-    \caption{Detalle de un vehículo con su recorte, sus atributos y el historial
-    de sesiones.}
-    \label{fig:if_vehiculo}
-\end{figure}
-
-En el recorte del detalle se observa la información que el grabador superpone a la
+En los recortes se observa la información que el grabador superpone a la
 imagen ---identificador de canal, marca temporal y contador de fotogramas---. Esa
 superposición es la que el sistema anula antes de invocar al reconocimiento de
 texto (Sección~\ref{subsec:ocr_crnn}): sin el enmascarado, el motor intentaría leer
@@ -123,16 +162,25 @@ caracteres que no pertenecen a la matrícula y produciría lecturas espurias.
 
 \subsection{Historial de sesiones}
 
-La vista de historial presenta una tabla con las sesiones registradas, ordenada de
+La vista de historial (Figura~\ref{fig:if_historial}) presenta una tabla con las
+sesiones registradas, ordenada de
 la más reciente a la más antigua. Admite búsqueda por matrícula, tipo o color y
-filtros por punto de acceso y por estado de la sesión. Cada
+filtros por punto de acceso, por estado de la sesión y por rango de fechas. Cada
 fila expone la matrícula, el tipo, el color, el ingreso, la salida, la duración, el
 estado de la sesión y el responsable del cierre. La consulta subyacente está
 paginada por límite y desplazamiento, con un máximo de quinientos registros por
 solicitud; la vista solicita veinte por página y muestra el total de coincidencias
-junto con los controles de navegación. Su contenido es
-tabular y coincide en columnas con el bloque inferior de la Figura
-\ref{fig:if_vehiculo}, por lo que no se reproduce como figura independiente.
+junto con los controles de navegación. La barra superior permite exportar la página
+visible, de modo que una revisión puntual pueda adjuntarse sin descargar el
+historial completo.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{fig_historial.png}
+    \caption{Historial de eventos con búsqueda, filtros por portón, estado y rango
+    de fechas, y exportación de la página visible.}
+    \label{fig:if_historial}
+\end{figure}
 
 \subsection{Telemetría del modelo}
 
@@ -154,7 +202,7 @@ del recinto, no el desempeño del detector.
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.95\textwidth]{fig_if_modelo.png}
+    \includegraphics[width=0.95\textwidth]{fig_modelo.png}
     \caption{Telemetría del modelo: eventos, confianza media y latencia por
     percentil.}
     \label{fig:if_modelo}
@@ -165,17 +213,58 @@ del recinto, no el desempeño del detector.
 
 Las vistas de administración se reservan a los roles autorizados. El
 \textbf{padrón de vehículos} (RF-10) está disponible para administrador y
-operador: permite registrar matrículas autorizadas
-asignándoles titular y notas, alternar su estado activo/inactivo y eliminar
-registros; el motor de interfaz en tiempo real utiliza este padrón para alertar
-ante accesos no habilitados. Las vistas de \textbf{usuarios} y de
-\textbf{cámaras} quedan restringidas al administrador. La de usuarios permite listar, crear
-y modificar cuentas, asignar uno de los tres roles ---administrador, operador o
-dueño--- y activar o desactivar una cuenta; reproduce las reglas de negocio
-impidiendo eliminar al último administrador activo o a la propia cuenta. La vista
-de \textbf{cámaras} combina el registro persistente con el latido del capturador:
-muestra los puntos de acceso configurados, identifica cámaras caídas y permite
-dar de alta o retirar accesos.
+operador (Figura~\ref{fig:if_padron}): permite registrar matrículas autorizadas
+con su propietario o área, tipo, color y notas, alternar su estado activo/inactivo
+y eliminar registros. La tabla muestra matrícula, propietario, tipo, color, estado
+y fecha de registro; la búsqueda cubre matrícula y propietario, y la casilla de
+filtro restringe la lista a los vehículos activos. El motor de interfaz en tiempo
+real utiliza este padrón para alertar ante accesos no habilitados.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{fig_padron.png}
+    \caption{Padrón de vehículos autorizados con búsqueda, filtro de vigencia y
+    acciones de alta, edición y baja.}
+    \label{fig:if_padron}
+\end{figure}
+
+La vista de \textbf{usuarios} (Figura~\ref{fig:if_usuarios}) permite crear cuentas
+con usuario, contraseña y uno de los tres roles ---administrador, operador o
+dueño---, cambiar el rol de una cuenta existente, restablecer su contraseña,
+activarla o desactivarla y eliminarla; la tabla agrega el último acceso de cada
+usuario. Las reglas de negocio se aplican en el servidor: no se puede eliminar la
+propia cuenta ni degradar o desactivar al último administrador activo.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{fig_usuarios.png}
+    \caption{Gestión de usuarios: alta con rol, cambio de rol en línea, estado y
+    último acceso.}
+    \label{fig:if_usuarios}
+\end{figure}
+
+La vista de \textbf{cámaras} (Figura~\ref{fig:if_camaras}) combina el registro
+persistente con el latido del capturador: muestra los puntos de acceso
+configurados con su portón, estado y última señal, identifica cámaras caídas y
+permite editar o retirar un acceso. El alta (Figura~\ref{fig:if_camara_alta})
+pide identificador, portón, etiqueta, URL RTSP y estado; el identificador queda
+fijo una vez registrado, mientras que el portón puede reasignarse, y una URL vacía
+conserva la anterior.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{fig_camaras.png}
+    \caption{Puntos de acceso configurados, con portón, estado y última señal.}
+    \label{fig:if_camaras}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{fig_newcamara.png}
+    \caption{Alta de una cámara: identificador, portón, etiqueta, URL RTSP y
+    estado.}
+    \label{fig:if_camara_alta}
+\end{figure}
 
 \subsection{Documentación de la interfaz de programación}
 
