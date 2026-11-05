@@ -16,8 +16,15 @@ de incidentes por ventana temporal. La tercera es que se añadió una vista de t
 modelo que no estaba en el diseño inicial, y que expone la latencia y la confianza
 registradas por el sistema en operación.
 
-La aplicación implementa dos temas, claro y oscuro. Las capturas corresponden al
-tema oscuro, que es el que se emplea en operación nocturna.
+La aplicación ofrece tres modos de presentación ---claro, oscuro y sistema---; el
+último sigue la preferencia del equipo. Las capturas corresponden al tema oscuro,
+que es el que se emplea en operación nocturna.
+
+La navegación se organiza en dos bloques. El de operación ---panel, incidentes,
+historial y padrón--- está disponible para cualquier sesión autenticada; el de
+administración ---cámaras, modelo y usuarios--- aparece solo para el rol
+administrador, y el servidor aplica la misma regla sobre cada recurso. Ocultar el
+enlace es una cortesía de la interfaz, no el control de acceso.
 
 \subsection{Acceso y autenticación}
 
@@ -72,8 +79,8 @@ resultado de cada cruce.
 
 La vista de incidentes (Figura~\ref{fig:if_incidentes}) responde a la consulta
 que motiva el sistema en la operación: qué vehículos pasaron por el acceso en una
-ventana horaria determinada. El operador fija un intervalo ---por omisión, la hora
-anterior y la siguiente al instante recordado--- y puede restringir por color. El
+ventana horaria determinada. El operador fija un intervalo ---por omisión, las
+últimas veinticuatro horas--- y puede restringir por color. El
 filtro de color es deliberadamente blando: incluye los vehículos cuya clasificación
 está próxima al color pedido, porque el clasificador confunde tonos acromáticos y
 un filtro estricto ocultaría el candidato buscado. El vecindario no es arbitrario:
@@ -117,11 +124,13 @@ caracteres que no pertenecen a la matrícula y produciría lecturas espurias.
 \subsection{Historial de sesiones}
 
 La vista de historial presenta una tabla con las sesiones registradas, ordenada de
-la más reciente a la más antigua y con búsqueda por matrícula, tipo o color. Cada
+la más reciente a la más antigua. Admite búsqueda por matrícula, tipo o color y
+filtros por punto de acceso y por estado de la sesión. Cada
 fila expone la matrícula, el tipo, el color, el ingreso, la salida, la duración, el
 estado de la sesión y el responsable del cierre. La consulta subyacente está
 paginada por límite y desplazamiento, con un máximo de quinientos registros por
-solicitud, y la vista solicita las doscientas más recientes. Su contenido es
+solicitud; la vista solicita veinte por página y muestra el total de coincidencias
+junto con los controles de navegación. Su contenido es
 tabular y coincide en columnas con el bloque inferior de la Figura
 \ref{fig:if_vehiculo}, por lo que no se reproduce como figura independiente.
 
@@ -154,11 +163,13 @@ del recinto, no el desempeño del detector.
 \subsection{Vistas de administración}
 \label{subsec:vistas_admin}
 
-Las vistas de administración se reservan a los roles autorizados. La vista de
-\textbf{padrón de vehículos} (RF-10) permite registrar matrículas autorizadas
+Las vistas de administración se reservan a los roles autorizados. El
+\textbf{padrón de vehículos} (RF-10) está disponible para administrador y
+operador: permite registrar matrículas autorizadas
 asignándoles titular y notas, alternar su estado activo/inactivo y eliminar
 registros; el motor de interfaz en tiempo real utiliza este padrón para alertar
-ante accesos no habilitados. La vista de \textbf{usuarios} permite listar, crear
+ante accesos no habilitados. Las vistas de \textbf{usuarios} y de
+\textbf{cámaras} quedan restringidas al administrador. La de usuarios permite listar, crear
 y modificar cuentas, asignar uno de los tres roles ---administrador, operador o
 dueño--- y activar o desactivar una cuenta; reproduce las reglas de negocio
 impidiendo eliminar al último administrador activo o a la propia cuenta. La vista
