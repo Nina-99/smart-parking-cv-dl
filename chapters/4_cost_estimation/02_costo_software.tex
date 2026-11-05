@@ -1,7 +1,7 @@
 \section{Estimación del Costo de Software}
 
 La valoración del software construido se apoya en el \textbf{análisis de puntos
-de función}, método estandarizado que mide el tamaño de un sistema a partir de las
+de función} \cite{albrecht1979measuring,ifpug2010counting}, método estandarizado que mide el tamaño de un sistema a partir de las
 funciones que ofrece al usuario y no de su implementación. Esta propiedad es la
 que lo hace adecuado para el presente caso: permite valorar el sistema a partir
 de los requerimientos y de la arquitectura documentados en los capítulos
@@ -9,6 +9,7 @@ precedentes, con independencia del lenguaje empleado y del estilo de codificaci�
 del desarrollador.
 
 Se descarta explícitamente el uso de modelos paramétricos de estimación
+\cite{boehm1981software}
 construidos para proyectos industriales. Esos modelos se calibran sobre equipos de
 desarrollo, ciclos de vida prolongados y procesos organizacionales formalizados,
 condiciones que no se verifican en un proyecto de grado de desarrollo individual.
@@ -52,7 +53,7 @@ presenta el recuento resultante.
     \midrule
     \endhead
 
-    Archivo lógico & Vehículos: padrón y atributos identificados & Baja & 7 \\
+    Archivo lógico & Vehículos observados: atributos identificados y matrícula & Baja & 7 \\
     \midrule
     Archivo lógico & Sesiones de estacionamiento: ingreso, salida y permanencia & Media & 10 \\
     \midrule
@@ -135,9 +136,9 @@ resultado del conteo por área.
     \midrule
     Aplicación (casos de uso) & 2 & 182 \\
     \midrule
-    Adaptadores (base de datos, cola, bus y modelos) & 18 & 1.234 \\
+    Adaptadores (base de datos, cola, bus y modelos) & 18 & 1,234 \\
     \midrule
-    Entrada HTTP (rutas, esquemas y configuración) & 18 & 1.408 \\
+    Entrada HTTP (rutas, esquemas y configuración) & 18 & 1,408 \\
     \midrule
     Trabajador de inferencia & 5 & 349 \\
     \midrule
@@ -145,15 +146,15 @@ resultado del conteo por área.
     \midrule
     Captura de flujos de video & 2 & 361 \\
     \midrule
-    Cliente web & 29 & 2.561 \\
+    Cliente web & 29 & 2,561 \\
     \midrule
-    \textbf{Subtotal del producto} & \textbf{88} & \textbf{6.946} \\
+    \textbf{Subtotal del producto} & \textbf{88} & \textbf{6,946} \\
     \midrule
-    Pruebas del servicio y de las herramientas & 40 & 3.537 \\
+    Pruebas del servicio y de las herramientas & 40 & 3,537 \\
     \midrule
-    Herramientas de datos y entrenamiento & 31 & 6.225 \\
+    Herramientas de datos y entrenamiento & 31 & 6,225 \\
     \midrule
-    \textbf{Total entregado} & \textbf{159} & \textbf{16.708} \\*
+    \textbf{Total entregado} & \textbf{159} & \textbf{16,708} \\*
     \multicolumn{3}{r}{\footnotesize\textit{Fuente: Elaboración propia}} \\*
     \bottomrule
 \end{longtable}
@@ -167,7 +168,7 @@ trabajo pero no forma parte de la interfaz ofrecida al usuario.
 
 Ambas mediciones son independientes entre sí: el tamaño funcional se derivó de
 las funciones documentadas y el tamaño del código, de los archivos fuente. La
-relación obtenida sobre el producto ---$6.946$ líneas para $62$ puntos de
+relación obtenida sobre el producto ---$6{,}946$ líneas para $62$ puntos de
 función, es decir aproximadamente $112$ líneas por punto de función--- constituye
 una verificación de consistencia interna del análisis. Las pruebas y las
 herramientas de datos se informan por transparencia, pero se excluyen de esa
@@ -231,7 +232,7 @@ recalcularse.
     \midrule
     Tarifa horaria & $T$ & Bs $30$ & Parámetro declarado. \\
     \midrule
-    Costo de desarrollo & $C_{\text{software}}$ & Bs 22.320 & $E \cdot T$. \\*
+    Costo de desarrollo & $C_{\text{software}}$ & Bs 22,320 & $E \cdot T$. \\*
     \multicolumn{4}{r}{\footnotesize\textit{Fuente: Elaboración propia}} \\*
     \bottomrule
 \end{longtable}
@@ -241,11 +242,11 @@ en $12$ horas por punto de función, equivalentes a $744$ horas de dedicación p
 el tamaño calculado; el valor se adopta por analogía con proyectos de magnitud
 comparable desarrollados en lenguajes de alto nivel, y es coherente con un
 desarrollo individual de varios meses. La tarifa se fija en Bs $30$ por hora, que
-corresponde a un salario mensual de referencia de Bs 4.800 sobre una jornada de
-$160$ horas. Con ambos parámetros, el costo de desarrollo resulta de Bs 22.320.
+corresponde a un salario mensual de referencia de Bs 4,800 sobre una jornada de
+$160$ horas. Con ambos parámetros, el costo de desarrollo resulta de Bs 22,320.
 
 La estimación es sensible a la tarifa y no al tamaño: con una tarifa de Bs $20$
-el costo de software desciende a Bs 14.880, y con Bs $40$ asciende a Bs 29.760,
+el costo de software desciende a Bs 14,880, y con Bs $40$ asciende a Bs 29,760,
 mientras que el tamaño funcional permanece fijo porque se deriva de las
 funciones documentadas y no del esfuerzo invertido. Los dos parámetros son de
 mercado y deben reemplazarse por la cotización vigente al momento de la
