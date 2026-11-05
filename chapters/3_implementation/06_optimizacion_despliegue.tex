@@ -51,31 +51,36 @@ huella efectiva de cada formato para la variante empleada en la extracción.
     \midrule
     \endhead
 
-    Pesos (variante pequeña) & FP32 & $4{,}8$ MB & Alternativa más liviana. \\
+    Pesos (variante pequeña) & FP32 & $4{.}8$ MB & Alternativa más liviana. \\
     \midrule
-    Pesos (variante media) & FP32 & $42{,}2$ MB & Alternativa intermedia. \\
+    Pesos (variante media) & FP32 & $42{.}2$ MB & Alternativa intermedia. \\
     \midrule
-    Pesos (variante grande) & FP32 & $113{,}2$ MB & Variante empleada en la
+    Pesos (variante grande) & FP32 & $113{.}2$ MB & Variante empleada en la
     extracción. \\
     \midrule
-    Grafo (FP32) & FP32 & $212{,}9$ MB $+$ $214{,}4$ MB &
+    Grafo (FP32) & FP32 & $212{.}9$ MB $+$ $214{.}4$ MB &
     Pesos almacenados como datos externos. \\
     \midrule
-    Grafo (FP16) & FP16 & $106{,}6$ MB & Media precisión. \\
+    Grafo (FP16) & FP16 & $106{.}6$ MB & Media precisión. \\
     \midrule
-    Motor compilado & FP16 & $345{,}5$ MB & Específico del dispositivo de
+    Motor compilado & FP16 & $345{.}5$ MB & Específico del dispositivo de
     compilación. \\*
     \multicolumn{4}{r}{\footnotesize\textit{Fuente: Elaboración propia}} \\*
     \bottomrule
 \end{longtable}
 
-La comparación entre la representación en precisión simple y la de media
-precisión muestra una reducción de la huella de $427{,}3$ MB a $106{,}6$ MB, esto
-es, aproximadamente un $75\%$. El motor compilado, en cambio, ocupa un espacio
+La huella del artefacto en media precisión ($106{.}6$ MB) frente a la del grafo en
+precisión simple con pesos externos ($212{.}9$ MB $+$ $214{.}4$ MB $=$ $427{.}3$ MB)
+representa una reducción de aproximadamente el $75\%$. Esa diferencia no proviene
+únicamente del cambio de precisión: FP16, por sí solo, reduciría los pesos a la
+mitad. La cifra corresponde a la huella efectiva del artefacto exportado y
+simplificado, de modo que se reporta como reducción del artefacto y no como efecto
+aislado de la media precisión. El motor compilado, en cambio, ocupa un espacio
 mayor que los pesos originales: un motor de inferencia contiene, además de los
 parámetros, los núcleos de ejecución y las estrategias de paralelización
 seleccionadas para el dispositivo. Se trata, por tanto, de un intercambio
-deliberado de espacio en disco por velocidad de ejecución.
+deliberado de espacio en disco por velocidad de ejecución, cuyo efecto sobre la
+latencia no se midió en este trabajo.
 
 \subsection{Compilación y ejecución con TensorRT}
 
@@ -100,10 +105,9 @@ característica condiciona la distribución del sistema y se declara en el apart
 de limitaciones.
 
 En cuanto a la precisión de ejecución, el motor se compila en media precisión y
-la configuración de inferencia solicita ese mismo modo para los pesos que no
-disponen de motor. Nótese que los motores ya se encuentran cuantizados, por lo
-que la solicitud de media precisión se desactiva al cargarlos, evitando una
-conversión redundante.
+los pesos que se ejecutan sin compilación se cargan en ese mismo modo. Los
+motores ya incorporan la precisión con la que fueron compilados, de modo que no
+se aplica una conversión adicional al cargarlos.
 
 \subsection{Estrategias de reducción de carga computacional}
 

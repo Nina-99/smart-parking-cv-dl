@@ -45,42 +45,42 @@ mantener una única fuente de verdad para los datos. La Tabla
     archivo de bloqueo & Servicios, trabajador y herramientas de datos \\
     \midrule
 
-    Servicio web & FastAPI $\geq 0{,}115$; Uvicorn $\geq 0{,}32$ & API REST y
+    Servicio web & FastAPI $\geq 0{.}115$; Uvicorn $\geq 0{.}32$ & API REST y
     documentación automática de la interfaz \\
     \midrule
 
-    Acceso a datos & SQLAlchemy $\geq 2{,}0$ en modo asíncrono; asyncpg
-    $\geq 0{,}30$ & Persistencia no bloqueante desde el servicio \\
+    Acceso a datos & SQLAlchemy $\geq 2{.}0$ en modo asíncrono; asyncpg
+    $\geq 0{.}30$ & Persistencia no bloqueante desde el servicio \\
     \midrule
 
-    Migraciones & Alembic $\geq 1{,}14$ & Versionado del esquema de datos \\
+    Migraciones & Alembic $\geq 1{.}14$ & Versionado del esquema de datos \\
     \midrule
 
     Base de datos & PostgreSQL 16 & Almacenamiento relacional de vehículos,
     sesiones y detecciones \\
     \midrule
 
-    Cola de tareas & Celery $\geq 5{,}4$; Redis $\geq 5{,}1$ & Ejecución
+    Cola de tareas & Celery $\geq 5{.}4$; Redis $\geq 5{.}1$ & Ejecución
     asíncrona de la inferencia \\
     \midrule
 
-    Detección de objetos & Ultralytics (YOLO26) $\geq 8{,}4$ & Localización de
+    Detección de objetos & Ultralytics (YOLO26) $\geq 8{.}4$ & Localización de
     vehículos y placas de matrícula \\
     \midrule
 
-    Aprendizaje profundo & PyTorch $\geq 2{,}4$; torchvision $\geq 0{,}19$ &
+    Aprendizaje profundo & PyTorch $\geq 2{.}4$; torchvision $\geq 0{.}19$ &
     Entrenamiento e inferencia de los modelos \\
     \midrule
 
-    Visión clásica & OpenCV (sin interfaz gráfica) $\geq 4{,}10$ & Captura,
+    Visión clásica & OpenCV (sin interfaz gráfica) $\geq 4{.}10$ & Captura,
     preprocesamiento y calibración de zonas \\
     \midrule
 
-    Seguimiento & ByteTrack mediante \textit{lapx} $\geq 0{,}5{,}2$ & Asociación
+    Seguimiento & ByteTrack mediante \textit{lapx} $\geq 0{.}5{.}2$ & Asociación
     temporal de detecciones entre fotogramas \\
     \midrule
 
-    Reconocimiento de texto & PaddleOCR $\geq 2{,}8$; PaddlePaddle $\geq 3{,}0$ &
+    Reconocimiento de texto & PaddleOCR $\geq 2{.}8$; PaddlePaddle $\geq 3{.}0$ &
     Pseudo-etiquetado de placas y comparación de referencia \\
     \midrule
 
@@ -101,7 +101,7 @@ mantener una única fuente de verdad para los datos. La Tabla
     \midrule
 
     Contenerización & Docker; Docker Compose & Despliegue reproducible de los
-    cinco servicios \\*
+    seis contenedores \\*
     \multicolumn{3}{r}{\footnotesize\textit{Fuente: Elaboración propia}} \\*
     \bottomrule
 \end{longtable}
@@ -114,10 +114,13 @@ numérica incompatible con la requerida por el motor de reconocimiento de texto.
 
 \subsection{Arquitectura de despliegue}
 
-El sistema se despliega como un conjunto de cinco servicios contenerizados que
-comparten una red interna y se comunican por nombre de servicio. La Figura
-\ref{fig:despliegue} presenta su disposición; la Tabla \ref{tab:servicios}
-detalla la función de cada uno y sus dependencias de arranque.
+El sistema se despliega como un conjunto de seis contenedores que
+comparten una red interna y se comunican por nombre de servicio: cuatro servicios
+de aplicación ---API, trabajador, planificador y cliente web---, una base de datos
+y un intermediario de cola. La Figura \ref{fig:despliegue} presenta su
+disposición; la Tabla \ref{tab:servicios} detalla la función de cada uno y sus
+dependencias de arranque. El planificador se omite de la figura por claridad: su
+única función es disparar la rutina diaria de retención.
 
 \begin{figure}[htbp]
     \centering
@@ -183,6 +186,11 @@ detalla la función de cada uno y sus dependencias de arranque.
     \texttt{worker} & Celery & Consume las tareas de inferencia encoladas y
     actualiza los resultados en la base de datos. Comparte las mismas
     dependencias de arranque que el servicio. \\
+    \midrule
+
+    \texttt{beat} & Celery Beat & Ejecuta la rutina diaria de retención de
+    telemetría y recortes. Depende de la base de datos y de la cola; su caída no
+    detiene la inferencia. \\
     \midrule
 
     \texttt{postgres} & PostgreSQL 16 & Almacena el estado del sistema sobre un

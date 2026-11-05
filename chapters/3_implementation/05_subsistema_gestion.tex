@@ -255,16 +255,16 @@ solo en la nomenclatura de las rutas.
 El cierre de una sesión admite dos caminos. El primero es automático: cuando el
 reconocedor entrega una matrícula, la política de emparejamiento busca entre las
 sesiones activas una coincidencia exacta de matrícula, exige que ambas lecturas
----la del ingreso y la del egreso--- superen un umbral de confianza de $0{,}6$ y,
+---la del ingreso y la del egreso--- superen un umbral de confianza de $0{.}6$ y,
 si varias sesiones comparten la matrícula, cierra la más reciente. Si no hay
 coincidencia o la confianza es insuficiente, \textbf{no devuelve la mejor
 aproximación}: deja la sesión abierta. La decisión es deliberada y se midió antes
 de adoptarla. Se evaluó primero la alternativa barata, usar el extractor del
 clasificador de tipo como vector de identidad, sobre $400$ recortes del conjunto
-congelado: la similitud promedio entre el mismo vehículo fue $0{,}860$, mientras
-que entre vehículos distintos el percentil $90$ alcanzó $0{,}973$ y el $99$
-llegó a $0{,}991$. Es decir, el $19{,}9\%$ de los pares de vehículos diferentes
-supera el umbral de $0{,}95$, de modo que ningún punto de corte los separa: el
+congelado: la similitud promedio entre el mismo vehículo fue $0{.}860$, mientras
+que entre vehículos distintos el percentil $90$ alcanzó $0{.}973$ y el $99$
+llegó a $0{.}991$. Es decir, el $19{.}9\%$ de los pares de vehículos diferentes
+supera el umbral de $0{.}95$, de modo que ningún punto de corte los separa: el
 extractor está entrenado para la silueta, no para la identidad. El segundo camino
 es el cierre manual por parte del operador, con motivo y responsable registrados
 en los campos de auditoría. La regla que gobierna ambos caminos es la misma: un

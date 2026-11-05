@@ -10,7 +10,7 @@ evidencia sostiene.
 
 \begin{itemize}
     \item \textbf{Hardware:} GPU NVIDIA RTX 3050 Laptop (4 GB de memoria de video),
-        almacenamiento NVMe para los $360.488$ recortes de patente y para los
+        almacenamiento NVMe para los $360{,}488$ recortes de patente y para los
         conjuntos de atributos.
     \item \textbf{Independencia de los conjuntos:} en clasificación de
         atributos y en detección de placas la partición se realizó por sesión
@@ -30,7 +30,8 @@ evidencia sostiene.
         ejemplares (\texttt{min\_test\_support}); las clases por debajo de ese
         umbral se informan pero no promedian, porque su intervalo de confianza
         supera los $25$ puntos porcentuales. Para reconocimiento de texto se usa
-        la exactitud por carácter y la coincidencia exacta (\textit{Exact Match}).
+        la exactitud por carácter y la coincidencia exacta (\textit{Exact Match}),
+        calculada por recorte y acompañada de su equivalente por placa.
         La exactitud por carácter se calcula como $1 - \mathrm{CER}$ promediado
         por placa, es decir, un promedio macro que asigna el mismo peso a cada
         matrícula; no se reporta el agregado micro sobre el total de caracteres.
@@ -44,11 +45,11 @@ evidencia sostiene.
         eligió la época según el F1 macro de validación restringido a clases con
         al menos $20$ ejemplares. Utilizar el macro sobre todas las clases
         presentes dejaba la decisión en manos de clases con tres o cuatro
-        imágenes, donde un único acierto desplaza el promedio $1/11 = 0{,}09$.
-        Corregir ese criterio elevó el F1 macro de color de $0{,}7937$ a
-        $0{,}8124$.
+        imágenes, donde un único acierto desplaza el promedio $1/11 = 0{.}09$.
+        Corregir ese criterio elevó el F1 macro de color de $0{.}7937$ a
+        $0{.}8124$.
     \item \textbf{Repeticiones:} se ejecutó una corrida por clasificador. La
-        varianza medida entre corridas idénticas es de $1$ a $3{,}4$ puntos de
+        varianza medida entre corridas idénticas es de $1$ a $3{.}4$ puntos de
         F1 macro, de modo que las diferencias menores a ese rango no se
         interpretan como mejoras.
 \end{itemize}
@@ -56,7 +57,7 @@ evidencia sostiene.
 \subsection{Detección de vehículos (H1.1): medida}
 \label{subsec:resultados_deteccion}
 
-La hipótesis $H_{1.1}$ exige un mAP@50 igual o superior al $80\%$ para el detector
+La hipótesis $H_{1{.}1}$ exige un mAP@50 igual o superior al $80\%$ para el detector
 de vehículos. La medición se realizó sobre $337$ fotogramas completos extraídos de
 $55$ horas de grabación de las dos cámaras del recinto, con $304$ cajas
 delimitadoras verificadas por una persona.
@@ -92,7 +93,7 @@ asistencia acelera el trabajo y, sin control, sesga el resultado: con una caja y
 dibujada el anotador deja de buscar los vehículos que el detector no propuso, y el
 recall deja de ser medible porque los falsos negativos se vuelven invisibles. Para
 acotar el efecto, una de cada cuatro imágenes se presentó \emph{sin} propuestas y
-se dibujó desde cero. El $60{,}5$\,\% de las cajas se aceptaron sin corrección.
+se dibujó desde cero. El $60{.}5$\,\% de las cajas se aceptaron sin corrección.
 
 \subsubsection{Resultado}
 
@@ -105,31 +106,31 @@ se dibujó desde cero. El $60{,}5$\,\% de las cajas se aceptaron sin corrección
     \begin{tabular}{lrrrr}
         \toprule
         \textbf{Modelo} & \textbf{AP@50} & \textbf{IC 95\,\%} &
-        \textbf{Recall@0{,}5} & \textbf{Precisión@0{,}5} \\
+        \textbf{Recall@0.5} & \textbf{Precisión@0.5} \\
         \midrule
-        YOLO26n & $0{,}901$ & $0{,}876$--$0{,}924$ & $0{,}954$ & $0{,}628$ \\
-        YOLO26s & $0{,}887$ & $0{,}861$--$0{,}911$ & $0{,}987$ & $0{,}581$ \\
+        YOLO26n & $0{.}901$ & $0{.}876$--$0{.}924$ & $0{.}954$ & $0{.}628$ \\
+        YOLO26s & $0{.}887$ & $0{.}861$--$0{.}911$ & $0{.}987$ & $0{.}581$ \\
         \bottomrule
     \end{tabular}
 \end{table}
 
-\textbf{El límite inferior del intervalo del detector de operación es $0{,}876$,
-por encima del $0{,}80$ que exige $H_{1.1}$: la hipótesis se respalda.}
+\textbf{El límite inferior del intervalo del detector de operación es $0{.}876$,
+por encima del $0{.}80$ que exige $H_{1{.}1}$: la hipótesis se respalda.}
 
 El control de sesgo sostiene el número. Sobre el subconjunto anotado sin
-propuestas ($63$ imágenes) el AP@50 desciende a $0{,}876$
-($[0{,}802;\ 0{,}939]$), frente a $0{,}906$ ($[0{,}880;\ 0{,}931]$) en el
+propuestas ($63$ imágenes) el AP@50 desciende a $0{.}876$
+($[0{.}802;\ 0{.}939]$), frente a $0{.}906$ ($[0{.}880;\ 0{.}931]$) en el
 subconjunto asistido. La diferencia de tres puntos acota el efecto de la
 asistencia: existe, es medible y no alcanza a cambiar el veredicto.
 
 La comparación entre variantes no se interpreta como una mejora de la variante
-mayor. YOLO26s obtiene mayor exhaustividad ($0{,}987$ frente a $0{,}954$) pero
-peor precisión ($0{,}581$ frente a $0{,}628$) y menor AP@50, de modo que el
+mayor. YOLO26s obtiene mayor exhaustividad ($0{.}987$ frente a $0{.}954$) pero
+peor precisión ($0{.}581$ frente a $0{.}628$) y menor AP@50, de modo que el
 detector de operación se conserva. El resultado también descarta que el tamaño del
 modelo sea la palanca: los clasificadores de atributos, que se ejecutan una vez por
 vehículo, dominan el costo por fotograma (Subsección~\ref{subsec:capacidad}).
 
-La precisión a umbral $0{,}5$ merece una advertencia: casi cuatro de cada diez
+La precisión a umbral $0{.}5$ merece una advertencia: casi cuatro de cada diez
 detecciones por encima del umbral no corresponden a un vehículo etiquetado. En
 operación eso no se traduce en eventos espurios, porque el filtro de zona y la
 línea de cruce descartan el tráfico de la calle antes de abrir una sesión, pero el
@@ -140,7 +141,7 @@ dato se reporta porque acota lo que el detector aporta por sí solo.
 El error de la etapa de detección se propagaba al resto del pipeline sin
 cuantificar. Ahora está acotado: una detección perdida no genera evento, de modo
 que el techo de la determinación de eventos no puede ser superior a la
-exhaustividad medida aquí ($0{,}954$ a umbral $0{,}5$).
+exhaustividad medida aquí ($0{.}954$ a umbral $0{.}5$).
 
 \subsection{Clasificación de tipo de vehículo (H1.2)}
 
@@ -158,14 +159,14 @@ descartándose $49$ por no ser identificables.
         \toprule
         \textbf{Clase} & \textbf{Precisión} & \textbf{Exhaustividad} & \textbf{F1} & \textbf{n} \\
         \midrule
-        automóvil  & 0{,}838 & 0{,}748 & 0{,}791 & 159 \\
-        camioneta  & 0{,}880 & 0{,}880 & 0{,}880 &  83 \\
-        minibús    & 0{,}949 & 0{,}937 & 0{,}943 &  79 \\
-        moto       & 0{,}979 & 1{,}000 & 0{,}989 &  46 \\
-        vagoneta   & 0{,}816 & 0{,}868 & 0{,}842 & 266 \\
+        automóvil  & 0.838 & 0.748 & 0.791 & 159 \\
+        camioneta  & 0.880 & 0.880 & 0.880 &  83 \\
+        minibús    & 0.949 & 0.937 & 0.943 &  79 \\
+        moto       & 0.979 & 1.000 & 0.989 &  46 \\
+        vagoneta   & 0.816 & 0.868 & 0.842 & 266 \\
         \midrule
-        \textbf{F1 macro} & \multicolumn{2}{c}{} & \textbf{0{,}8887} & 633 \\
-        \textbf{Exactitud} & \multicolumn{2}{c}{} & \textbf{0{,}8578} & 633 \\
+        \textbf{F1 macro} & \multicolumn{2}{c}{} & \textbf{0.8887} & 633 \\
+        \textbf{Exactitud} & \multicolumn{2}{c}{} & \textbf{0.8578} & 633 \\
         \bottomrule
     \end{tabular}
 \end{table}
@@ -177,8 +178,8 @@ inverso). Es la confusión esperable entre dos siluetas de turismo que, desde un
 cámara de tráfico, difieren esencialmente en la altura del techo y el volumen
 trasero.
 
-\textbf{Contraste:} $H_{1.2}$ exige F1 macro $\geq 0{,}85$; el valor medido es
-$0{,}8887$. \textbf{La hipótesis se respalda.}
+\textbf{Contraste:} $H_{1{.}2}$ exige F1 macro $\geq 0{.}85$; el valor medido es
+$0{.}8887$. \textbf{La hipótesis se respalda.}
 
 \subsection{Clasificación de color predominante (H1.3)}
 
@@ -197,22 +198,22 @@ tanto, automóviles, camionetas, motocicletas y vagonetas, no la flota completa.
         \toprule
         \textbf{Clase} & \textbf{Precisión} & \textbf{Exhaustividad} & \textbf{F1} & \textbf{n} & \textbf{Evaluada} \\
         \midrule
-        blanco    & 0{,}883 & 0{,}917 & 0{,}900 & 132 & sí \\
-        gris      & 0{,}778 & 0{,}575 & 0{,}661 &  73 & sí \\
-        plata     & 0{,}824 & 0{,}800 & 0{,}812 & 105 & sí \\
-        negro     & 0{,}703 & 0{,}738 & 0{,}720 &  61 & sí \\
-        rojo      & 0{,}949 & 0{,}921 & 0{,}935 & 101 & sí \\
-        azul      & 0{,}887 & 0{,}810 & 0{,}847 &  58 & sí \\
+        blanco    & 0.883 & 0.917 & 0.900 & 132 & sí \\
+        gris      & 0.778 & 0.575 & 0.661 &  73 & sí \\
+        plata     & 0.824 & 0.800 & 0.812 & 105 & sí \\
+        negro     & 0.703 & 0.738 & 0.720 &  61 & sí \\
+        rojo      & 0.949 & 0.921 & 0.935 & 101 & sí \\
+        azul      & 0.887 & 0.810 & 0.847 &  58 & sí \\
         \midrule
-        verde     & 0{,}500 & 0{,}545 & 0{,}522 &  11 & no \\
-        amarillo  & 0{,}000 & 0{,}000 & 0{,}000 &   1 & no \\
-        marrón    & 0{,}000 & 0{,}000 & 0{,}000 &   2 & no \\
-        beige     & 0{,}083 & 0{,}250 & 0{,}125 &   4 & no \\
-        naranja   & 0{,}600 & 1{,}000 & 0{,}750 &   3 & no \\
+        verde     & 0.500 & 0.545 & 0.522 &  11 & no \\
+        amarillo  & 0.000 & 0.000 & 0.000 &   1 & no \\
+        marrón    & 0.000 & 0.000 & 0.000 &   2 & no \\
+        beige     & 0.083 & 0.250 & 0.125 &   4 & no \\
+        naranja   & 0.600 & 1.000 & 0.750 &   3 & no \\
         \midrule
-        \textbf{F1 macro (evaluadas)} & \multicolumn{2}{c}{} & \textbf{0{,}8124} & 530 & \\
-        \textbf{F1 macro (11 clases)} & \multicolumn{2}{c}{} & \textbf{0{,}5702} & 551 & \\
-        \textbf{Exactitud} & \multicolumn{2}{c}{} & \textbf{0{,}8022} & 551 & \\
+        \textbf{F1 macro (evaluadas)} & \multicolumn{2}{c}{} & \textbf{0.8124} & 530 & \\
+        \textbf{F1 macro (11 clases)} & \multicolumn{2}{c}{} & \textbf{0.5702} & 551 & \\
+        \textbf{Exactitud} & \multicolumn{2}{c}{} & \textbf{0.8022} & 551 & \\
         \bottomrule
     \end{tabular}
 \end{table}
@@ -226,29 +227,29 @@ tono, y el clasificador no dispone de una referencia de exposición absoluta: el
 mismo vehículo gris claro aparece casi blanco bajo iluminación directa y casi
 negro a la sombra.
 
-\textbf{Contraste:} $H_{1.3}$ exige F1 macro $\geq 0{,}85$. El valor que el
-protocolo de evaluación del proyecto reporta es $0{,}8124$, calculado sobre las
-seis clases con soporte suficiente. Queda $3{,}8$ puntos por debajo del umbral y
+\textbf{Contraste:} $H_{1{.}3}$ exige F1 macro $\geq 0{.}85$. El valor que el
+protocolo de evaluación del proyecto reporta es $0{.}8124$, calculado sobre las
+seis clases con soporte suficiente. Queda $3{.}8$ puntos por debajo del umbral y
 el intervalo del $95$\,\% de la métrica, obtenido por remuestreo estratificado del
-conjunto de prueba ($[0{,}777;\ 0{,}844]$), queda íntegramente por debajo de
-$0{,}85$: el incumplimiento no se explica por el error de muestreo del test,
+conjunto de prueba ($[0{.}777;\ 0{.}844]$), queda íntegramente por debajo de
+$0{.}85$: el incumplimiento no se explica por el error de muestreo del test,
 aunque el margen es el más estrecho del contraste y no supera el punto
 porcentual. \textbf{La hipótesis no se respalda} y se acepta la hipótesis nula
-$H_{0.3}$ para este componente, con dos precisiones: se trata del término más
+$H_{0{.}3}$ para este componente, con dos precisiones: se trata del término más
 débil del contraste, y su distancia al umbral es menor que la varianza medida
-entre corridas de entrenamiento ($1$ a $3{,}4$ puntos, Subsección~\ref{subsec:amenazas}), de modo que el
+entre corridas de entrenamiento ($1$ a $3{.}4$ puntos, Subsección~\ref{subsec:amenazas}), de modo que el
 veredicto describe este modelo entrenado y no la configuración en abstracto.
 
 El macro calculado sobre las once clases presentes en el conjunto de prueba
----incluidas cinco con menos de $40$ ejemplares--- arroja $0{,}5702$. Ese valor
+---incluidas cinco con menos de $40$ ejemplares--- arroja $0{.}5702$. Ese valor
 no se utiliza para el veredicto: el protocolo del proyecto excluye del promedio
 las clases cuyo intervalo de confianza supera los $25$ puntos, porque un puñado de
 ejemplos hace que el promedio describa el muestreo y no el modelo. Se informa
 únicamente para dejar constancia de la diferencia entre ambas lecturas.
 
 La conclusión general de la hipótesis no depende de este término: se apoya en
-$H_{1.4}$ y, dentro de él, en la coincidencia exacta ($0{,}526$ frente a la
-referencia de $0{,}80$), que es el término con mayor distancia al umbral.
+$H_{1{.}4}$ y, dentro de él, en la coincidencia exacta ($0{.}526$ frente a la
+referencia de $0{.}80$), que es el término con mayor distancia al umbral.
 
 \subsection{Detección de placas de matrícula (H1.4, componente de detección)}
 \label{sec:resultados_deteccion}
@@ -265,18 +266,18 @@ entrenamiento:
         \toprule
         \textbf{Sistema} & \textbf{Precisión} & \textbf{Exhaustividad} & \textbf{mAP@50} & \textbf{mAP@50--95} \\
         \midrule
-        YOLO26n ajustado    & 0{,}9857 & 0{,}9714 & 0{,}9898 & 0{,}6329 \\
-        PaddleOCR (localizador) & 0{,}9630 & 0{,}8060 & --- & --- \\
+        YOLO26n ajustado    & 0.9857 & 0.9714 & 0.9898 & 0.6329 \\
+        PaddleOCR (localizador) & 0.9630 & 0.8060 & --- & --- \\
         \bottomrule
     \end{tabular}
 \end{table}
 
-\textbf{Contraste:} $H_{1.4}$ exige una exhaustividad $\geq 90\%$ en la detección.
-El valor medido es $0{,}9714$. \textbf{El componente de detección se respalda.}
+\textbf{Contraste:} $H_{1{.}4}$ exige una exhaustividad $\geq 90\%$ en la detección.
+El valor medido es $0{.}9714$. \textbf{El componente de detección se respalda.}
 
 El dato que justificó entrenar un detector propio es la diferencia entre
 encontrar la placa y delimitarla correctamente: de las $700$ propuestas
-automáticas que sí correspondían a una placa, solo $183$ ($26{,}1\%$) resultaron
+automáticas que sí correspondían a una placa, solo $183$ ($26{.}1\%$) resultaron
 utilizables sin corrección humana. El etiquetador localiza, pero su caja recorta
 los glifos.
 
@@ -297,8 +298,8 @@ aumento de datos en la evaluación:
         \toprule
         \textbf{Modelo} & \textbf{Exactitud por carácter} & \textbf{Exact Match} \\
         \midrule
-        CRNN (ResNet18 + BiLSTM + CTC) & 0{,}851 & 0{,}526 \\
-        PaddleOCR                      & 0{,}540 & 0{,}237 \\
+        CRNN (ResNet18 + BiLSTM + CTC) & 0.851 & 0.526 \\
+        PaddleOCR                      & 0.540 & 0.237 \\
         \bottomrule
     \end{tabular}
 \end{table}
@@ -314,10 +315,10 @@ la que fija el techo del módulo:
         \toprule
         \textbf{Altura del recorte} & \textbf{n} & \textbf{Char. accuracy} & \textbf{Exact Match} \\
         \midrule
-        $< 20$ px      &   4 & 0{,}643 & 0{,}000 \\
-        $20$--$30$ px  &  15 & 0{,}781 & 0{,}467 \\
-        $30$--$40$ px  &  26 & 0{,}841 & 0{,}577 \\
-        $\geq 40$ px   & 107 & 0{,}872 & 0{,}542 \\
+        $< 20$ px      &   4 & 0.643 & 0.000 \\
+        $20$--$30$ px  &  15 & 0.781 & 0.467 \\
+        $30$--$40$ px  &  26 & 0.841 & 0.577 \\
+        $\geq 40$ px   & 107 & 0.872 & 0.542 \\
         \bottomrule
     \end{tabular}
 \end{table}
@@ -340,64 +341,66 @@ fue verificado manualmente por un operador:
 \begin{table}[H]
     \centering
     \caption{Sistema completo sobre $99$ recortes de vehículo con texto verificado.
-    Detector y lector reciben exactamente la misma entrada.}
+    Detector y lector reciben exactamente la misma entrada. Métricas por recorte;
+    los valores con promedio por placa se reportan en el texto.}
     \begin{tabular}{lrr}
         \toprule
         \textbf{Configuración} & \textbf{Exactitud por carácter} & \textbf{Exact Match} \\
         \midrule
-        Detector propio + CRNN (producción) & 0{,}882 & 0{,}566 \\
-        Caja humana + CRNN                  & 0{,}854 & 0{,}535 \\
+        Detector propio + CRNN (producción) & 0.882 & 0.566 \\
+        Caja humana + CRNN                  & 0.854 & 0.535 \\
         \bottomrule
     \end{tabular}
 \end{table}
 
 El detector localizó la placa en $99$ de $99$ casos de esta muestra
 ($100\%$). La caja del detector supera a la caja humana en ambas métricas
-($+2{,}8$ puntos de exactitud por carácter, $+3{,}1$ de coincidencia exacta): el
+($+2{.}8$ puntos de exactitud por carácter, $+3{.}1$ de coincidencia exacta): el
 encuadre guardado en el conjunto de prueba proviene de un recorte con márgenes
 fijos, mientras que el detector adapta la caja a cada imagen. El resultado
 confirma que el error de localización del detector no penaliza al reconocedor y que
 la medición sobre recortes de placa aislados es, en este caso, una cota inferior
 conservadora del sistema ensamblado.
 
-\textbf{Contraste:} $H_{1.4}$ es conjuntiva y exige, simultáneamente,
+\textbf{Contraste:} $H_{1{.}4}$ es conjuntiva y exige, simultáneamente,
 exhaustividad de detección $\geq 90\%$ y exactitud por carácter $\geq 90\%$. El
-primer término se cumple ($0{,}9714$). El segundo queda en la frontera: sobre los
-$152$ recortes de placa la exactitud por carácter es $0{,}851$; el intervalo de
-Wilson ($[0{,}783;\ 0{,}897]$) excluye el $0{,}90$, pero el intervalo exacto de
-Clopper--Pearson ($[0{,}782;\ 0{,}902]$) lo contiene, de modo que el veredicto de
-ese término depende del método de intervalo y no se declara fallido ni cumplido.
-La referencia de coincidencia exacta resuelve la ambigüedad en la dirección del
-incumplimiento, porque su distancia al valor de referencia no depende del método.
+primer término se cumple ($0{.}9714$). El segundo no se alcanza: sobre los $152$
+recortes, agrupados en $99$ placas, la exactitud por carácter promediada por placa
+es $0{.}851$ y su intervalo por remuestreo de placas es $[0{.}811;\ 0{.}890]$,
+íntegramente por debajo del umbral. El intervalo no depende de la semilla de
+remuestreo ni del checkpoint: la última época da $[0{.}811;\ 0{.}890]$ y la mejor
+época, $0{.}858$ con $[0{.}819;\ 0{.}894]$; ambos excluyen el $0{.}90$. La
+referencia de coincidencia exacta confirma la misma dirección con mayor margen.
 Sobre el sistema
 ensamblado, evaluado únicamente sobre los
 $99$ recortes de vehículo del encuadre servido ---un subconjunto más fácil, que
 excluye los recortes ceñidos de menor resolución--- la exactitud por carácter es
-$0{,}882$, con intervalo $[0{,}845;\ 0{,}919]$: el valor puntual sigue por debajo
-del umbral, pero su intervalo alcanza el $0{,}90$, de modo que en el sistema
-ensamblado el incumplimiento de este término es marginal en vez de concluyente.
-Con independencia de esa lectura, el criterio de evaluación del perfil declara
-\emph{a priori} una coincidencia exacta $\geq 80\%$ como referencia de aceptación,
-y el valor medido es $0{,}526$
-($[0{,}428;\ 0{,}621]$), más de veinte puntos por debajo. \textbf{La hipótesis
-$H_{1.4}$ no puede declararse respaldada} y se acepta $H_{0.4}$ conforme a la regla
-de decisión: el componente de reconocimiento no satisface el conjunto de valores
-mínimos establecidos en el criterio de evaluación ---la exactitud por carácter no
-supera el umbral con certeza y la coincidencia exacta queda más de veinte puntos
-por debajo de la referencia---. El término de exactitud por carácter, aislado, no
-alcanza para pronunciarse en ninguna dirección; el conjunto sí.
+$0{.}882$ por recorte y $0{.}867$ con promedio por placa, con intervalo
+$[0{.}818;\ 0{.}910]$. El intervalo contiene el umbral, de modo que en el sistema
+ensamblado el incumplimiento de este término es marginal en vez de concluyente, y
+su coincidencia exacta por placa ($0{.}539$, intervalo $[0{.}429;\ 0{.}653]$)
+sigue lejos del $0{.}80$. El criterio de evaluación del perfil declara
+\emph{a priori} una coincidencia exacta $\geq 80\%$ como referencia de aceptación;
+sobre los $152$ recortes aislados vale $0{.}526$ por recorte
+($[0{.}428;\ 0{.}621]$) y $0{.}478$ por placa ($[0{.}391;\ 0{.}569]$): el
+veredicto no depende de la unidad de análisis. \textbf{La hipótesis
+$H_{1{.}4}$ no se respalda} y se acepta $H_{0{.}4}$ conforme a la regla de decisión: el
+componente de reconocimiento no satisface el conjunto de valores mínimos
+establecidos en el criterio de evaluación, porque la exactitud por carácter queda
+por debajo del umbral y la coincidencia exacta, más de veinte puntos por debajo de
+la referencia.
 
 \subsubsection{Nota metodológica sobre la selección de época}
 
 El conjunto de prueba se evaluó al final de cada época durante el entrenamiento
 del reconocedor. El valor reportado corresponde a la época con mayor coincidencia
 exacta sobre ese conjunto ($98$ de $100$), guardada automáticamente como mejor
-checkpoint: exactitud por carácter $0{,}851$ y coincidencia exacta $0{,}526$. La
+checkpoint: exactitud por carácter $0{.}851$ y coincidencia exacta $0{.}526$. La
 selección del máximo introduce un sesgo de selección sobre el propio test, por lo
-que se reporta también el checkpoint de la última época, sin selección: $0{,}850$
-de exactitud por carácter y $0{,}520$ de coincidencia exacta. La diferencia entre
-ambos ---$0{,}1$ y $0{,}6$ puntos respectivamente--- cae dentro del error de
-muestreo del test ($n = 152$, intervalo al $95\%$ de $\pm 3{,}7$ puntos en
+que se reporta también el checkpoint de la última época, sin selección: $0{.}850$
+de exactitud por carácter y $0{.}520$ de coincidencia exacta. La diferencia entre
+ambos ---$0{.}1$ y $0{.}6$ puntos respectivamente--- cae dentro del error de
+muestreo del test ($n = 152$, intervalo al $95\%$ de $\pm 3{.}7$ puntos en
 exactitud por carácter), de modo que el sesgo de selección es despreciable frente
 a la incertidumbre de la medición. El veredicto de la hipótesis es el mismo con
 cualquiera de los dos estados.
@@ -418,18 +421,18 @@ entrenamiento y prueba: las correcciones de etiqueta aplicadas después de la
 partición fusionaron cadenas que antes diferían. Los siete recortes de prueba de
 esas cuatro placas se excluyeron del conjunto de evaluación, que pasó de $159$ a
 $152$ recortes. La exclusión no cambia el veredicto y reduce la coincidencia exacta
-medida en algo menos de un punto ($0{,}535 \rightarrow 0{,}526$): mantenerlos habría
+medida en algo menos de un punto ($0{.}535 \rightarrow 0{.}526$): mantenerlos habría
 inflado el resultado con siete recortes cuya placa el modelo ya había visto.
 
 Adicionalmente, el conjunto de entrenamiento real creció en dos pasos sobre el
 mismo test de $152$ recortes. Primero, la curación de los recortes ceñidos
 ---$29$ etiquetas corregidas y $80$ recortes ilegibles eliminados--- fijó el
-entrenamiento en $889$ recortes, que sobre este test alcanza $0{,}480$ de
+entrenamiento en $889$ recortes, que sobre este test alcanza $0{.}480$ de
 coincidencia exacta. Segundo, la revisión de $196$ recortes adicionales
 propuestos por el detector de placas y etiquetados manualmente por un operador
-llevó el entrenamiento a $1.085$ recortes y la coincidencia exacta a $0{,}526$.
+llevó el entrenamiento a $1{,}085$ recortes y la coincidencia exacta a $0{.}526$.
 La comparación entre los dos estados se hace sobre el mismo test y por tanto es
-limpia; la cifra de $0{,}831$ de la versión anterior del capítulo no es
+limpia; la cifra de $0{.}831$ de la versión anterior del capítulo no es
 comparable porque proviene del protocolo con fuga.
 
 \subsubsection{Estabilidad y transferencia del preentrenamiento sintético}
@@ -456,19 +459,19 @@ Cuatro ejecuciones con idéntica configuración arrojaron, en su primer epoch:
         \toprule
         \textbf{Configuración} & \textbf{Char. accuracy (epoch 1)} & \textbf{Resultado} \\
         \midrule
-        Tasa plena, semilla libre                 & $0{,}913$ & convergió \\
-        Tasa plena, semilla libre                 & $0{,}615$ & colapso parcial \\
-        Tasa plena, semilla fija                  & $0{,}112$ & colapso \\
-        Tasa plena, semilla fija, determinístico  & $0{,}100$ & colapso \\
+        Tasa plena, semilla libre                 & $0{.}913$ & convergió \\
+        Tasa plena, semilla libre                 & $0{.}615$ & colapso parcial \\
+        Tasa plena, semilla fija                  & $0{.}112$ & colapso \\
+        Tasa plena, semilla fija, determinístico  & $0{.}100$ & colapso \\
         \midrule
-        \textbf{Con escalado en 1.500 lotes}      & $\mathbf{0{,}923}$ & \textbf{convergió} \\
+        \textbf{Con escalado en 1,500 lotes}      & $\mathbf{0{.}923}$ & \textbf{convergió} \\
         \bottomrule
     \end{tabular}
 \end{table}
 
-El escalado lineal de la tasa durante los primeros $1.500$ lotes elimina la
+El escalado lineal de la tasa durante los primeros $1{,}500$ lotes elimina la
 variabilidad: la corrida reportada en este capítulo es reproducible y su primer
-epoch queda en $0{,}923$. Forzar el determinismo de las rutinas de GPU sin el
+epoch queda en $0{.}923$. Forzar el determinismo de las rutinas de GPU sin el
 escalado no resuelve el problema, solo hace que el colapso sea reproducible.
 
 \textbf{Más preentrenamiento sintético no transfiere.} Extender la etapa 1 de $2$ a
@@ -481,8 +484,8 @@ $5$ épocas mejora la validación sintética y degrada el resultado real:
         \toprule
         \textbf{Etapa 1} & \textbf{Validación sintética} & \textbf{Prueba real} \\
         \midrule
-        $2$ épocas & $0{,}933$ & $\mathbf{0{,}831}$ \\
-        $5$ épocas & $0{,}948$ & $0{,}585$ \\
+        $2$ épocas & $0{.}933$ & $\mathbf{0{.}831}$ \\
+        $5$ épocas & $0{.}948$ & $0{.}585$ \\
         \bottomrule
     \end{tabular}
 \end{table}
@@ -496,7 +499,7 @@ no son las de una placa nocturna real. Por esa razón la etapa 1 se mantiene en 
 \subsubsection{Por qué el volumen sintético no cierra la brecha de dominio}
 \label{subsubsec:techo_sintetico}
 
-La etapa 1 dispone de $360.000$ matrículas sintéticas frente a los $395$ recortes
+La etapa 1 dispone de $360{,}000$ matrículas sintéticas frente a los $395$ recortes
 reales con que contaba el ajuste fino en el momento de esa medición: una
 relación de casi mil a uno a favor del material generado. Si la brecha de
 reconocimiento fuera de volumen, esa proporción la habría cerrado. No lo hace, y
@@ -504,9 +507,9 @@ la medición que lo demuestra es directa, porque la etapa 1 se evalúa
 simultáneamente sobre ambos dominios.
 
 La Tabla~\ref{tab:etapa1_dominios} presenta las cinco épocas de una misma corrida.
-La exactitud sintética asciende de $0{,}923$ a $0{,}948$ y se estabiliza; la
-exactitud real oscila entre $0{,}094$ y $0{,}133$ sin tendencia, y la coincidencia
-exacta permanece en $0{,}000$ en las cinco épocas.
+La exactitud sintética asciende de $0{.}923$ a $0{.}948$ y se estabiliza; la
+exactitud real oscila entre $0{.}094$ y $0{.}133$ sin tendencia, y la coincidencia
+exacta permanece en $0{.}000$ en las cinco épocas.
 
 \begin{table}[H]
     \centering
@@ -519,27 +522,27 @@ exacta permanece en $0{,}000$ en las cinco épocas.
         \textbf{Época} & \textbf{Pérdida sintética} &
         \textbf{Sintética (car.)} & \textbf{Real (car.)} & \textbf{Real (EM)} \\
         \midrule
-        $1$ & $0{,}778$ & $0{,}923$ & $0{,}129$ & $0{,}000$ \\
-        $2$ & $0{,}201$ & $0{,}936$ & $0{,}116$ & $0{,}000$ \\
-        $3$ & $0{,}179$ & $0{,}948$ & $0{,}133$ & $0{,}000$ \\
-        $4$ & $0{,}176$ & $0{,}941$ & $0{,}122$ & $0{,}000$ \\
-        $5$ & $0{,}182$ & $0{,}936$ & $0{,}094$ & $0{,}000$ \\
+        $1$ & $0{.}778$ & $0{.}923$ & $0{.}129$ & $0{.}000$ \\
+        $2$ & $0{.}201$ & $0{.}936$ & $0{.}116$ & $0{.}000$ \\
+        $3$ & $0{.}179$ & $0{.}948$ & $0{.}133$ & $0{.}000$ \\
+        $4$ & $0{.}176$ & $0{.}941$ & $0{.}122$ & $0{.}000$ \\
+        $5$ & $0{.}182$ & $0{.}936$ & $0{.}094$ & $0{.}000$ \\
         \midrule
-        \textbf{Media} & --- & $\mathbf{0{,}937}$ & $0{,}119$ & $\mathbf{0{,}000}$ \\
+        \textbf{Media} & --- & $\mathbf{0{.}937}$ & $0{.}119$ & $\mathbf{0{.}000}$ \\
         \bottomrule
     \end{tabular}
 \end{table}
 
 La Figura~\ref{fig:techo_sintetico} representa ambas series con ejes
 independientes. Dentro de la corrida, el coeficiente de correlación de Pearson
-entre exactitud sintética y exactitud real es $r = 0{,}10$: la métrica sintética
+entre exactitud sintética y exactitud real es $r = 0{.}10$: la métrica sintética
 \textbf{no predice} el desempeño real. Agrupando las siete mediciones disponibles
 ---las cinco de esta corrida y las dos de la configuración reportada--- se obtiene
-$r = -0{,}46$, pero ese valor no debe interpretarse como una relación causal
+$r = -0{.}46$, pero ese valor no debe interpretarse como una relación causal
 inversa: agrupa corridas con presupuestos de entrenamiento distintos y su magnitud
 depende de un único punto. La lectura robusta es la que no depende de ninguna
 correlación: \textbf{en siete mediciones, sobre dos corridas, la coincidencia
-exacta sobre material real fue $0{,}000$}.
+exacta sobre material real fue $0{.}000$}.
 
 \begin{figure}[H]
     \centering
@@ -553,7 +556,9 @@ exacta sobre material real fue $0{,}000$}.
             ymin=0.885, ymax=0.960,
             xtick={1,2,3,4,5},
             ytick={0.89,0.91,0.93,0.95},
+            yticklabels={0.890,0.910,0.930,0.950},
             yticklabel style={text=matblue,
+                              /pgf/number format/use comma=false,
                               /pgf/number format/fixed,
                               /pgf/number format/precision=3,
                               /pgf/number format/zerofill},
@@ -581,7 +586,9 @@ exacta sobre material real fue $0{,}000$}.
             ymin=0.085, ymax=0.145,
             xtick={1,2,3,4,5},
             ytick={0.09,0.11,0.13},
+            yticklabels={0.090,0.110,0.130},
             yticklabel style={text=red!65!black,
+                              /pgf/number format/use comma=false,
                               /pgf/number format/fixed,
                               /pgf/number format/precision=3,
                               /pgf/number format/zerofill},
@@ -606,7 +613,7 @@ exacta sobre material real fue $0{,}000$}.
 
 \paragraph{El mecanismo: se aprende el generador, no la matrícula.}
 Un modelo no distingue entre aprender la tarea y aprender el atajo que resuelve el
-conjunto de entrenamiento. Con $360.000$ muestras de un único generador, el atajo
+conjunto de entrenamiento. Con $360{,}000$ muestras de un único generador, el atajo
 más corto es explotar los invariantes del renderizador, que son estables y
 perfectamente informativos dentro del dominio sintético y están ausentes en el
 real. Cuatro propiedades del pipeline sostienen ese atajo:
@@ -633,9 +640,9 @@ real. Cuatro propiedades del pipeline sostienen ese atajo:
         geometría del portón, el ruido tiene patrón fijo del sensor de esa cámara y
         la compresión es la del grabador. El modelo aprende a ser robusto frente al
         promedio de todas las degradaciones posibles, que no es ninguna de las que
-        ocurren. La diferencia de luminancia ya medida ---mediana $76{,}6$ real
-        frente a $106{,}4$ sintética, con desviación $20{,}7$ frente a
-        $34{,}4$--- es una manifestación de este mismo desajuste.
+        ocurren. La diferencia de luminancia ya medida ---mediana $76{.}6$ real
+        frente a $106{.}4$ sintética, con desviación $20{.}7$ frente a
+        $34{.}4$--- es una manifestación de este mismo desajuste.
 
     \item \textbf{El remuestreo no equivale al desenfoque óptico.} El generador
         dibuja un original nítido de $610 \times 204$ píxeles y lo reduce por
@@ -656,9 +663,9 @@ error de representación del glifo produce exactamente lo observado.
 La consecuencia no es aumentar el volumen: más muestras del mismo generador
 amplifican el atajo. La comparación al nivel de corrida lo confirma, porque
 extender la etapa 1 de dos a cinco épocas mejora la validación sintética
-($0{,}933 \rightarrow 0{,}948$) y deteriora la prueba real
-($0{,}831 \rightarrow 0{,}585$). La señal útil para el dominio real está en el
-material real, que llevó al reconocedor desde $0{,}148$ ---el punto de partida que
+($0{.}933 \rightarrow 0{.}948$) y deteriora la prueba real
+($0{.}831 \rightarrow 0{.}585$). La señal útil para el dominio real está en el
+material real, que llevó al reconocedor desde $0{.}148$ ---el punto de partida que
 dejó la etapa 1--- hasta la exactitud por carácter reportada en la
 Subsección~\ref{sec:resultados_ocr}. Cerrar la brecha exige fidelidad del
 generador: tipografía de la placa, relieve y su sombreado, degradación
@@ -669,7 +676,7 @@ Subsección~\ref{subsec:brecha_ocr} enumera.
 \subsection{Determinación de eventos de ingreso y salida (H1.5)}
 \label{sec:resultados_eventos}
 
-La hipótesis $H_{1.5}$ requiere una exactitud igual o superior al $90\%$ en la
+La hipótesis $H_{1{.}5}$ requiere una exactitud igual o superior al $90\%$ en la
 clasificación de eventos de ingreso y salida. La medición se realizó sobre una
 hora completa de las dos cámaras, reproducida de extremo a extremo por la cadena
 de operación: video grabado servido por RTSP, captura, cola de tareas, inferencia,
@@ -707,19 +714,19 @@ subsección.
         \textbf{Conjunto} & \textbf{Referencia} & \textbf{Aciertos} &
         \textbf{Perdidos} & \textbf{Espurios} & \textbf{Exactitud} \\
         \midrule
-        Ingresos & $2$ & $2$ & $0$ & $0$ & $1{,}000$ \\
-        Salidas  & $7$ & $6$ & $1$ & $0$ & $0{,}857$ \\
+        Ingresos & $2$ & $2$ & $0$ & $0$ & $1{.}000$ \\
+        Salidas  & $7$ & $6$ & $1$ & $0$ & $0{.}857$ \\
         \midrule
-        Total    & $9$ & $8$ & $1$ & $0$ & $0{,}889$ \\
+        Total    & $9$ & $8$ & $1$ & $0$ & $0{.}889$ \\
         \bottomrule
     \end{tabular}
 \end{table}
 
-\textbf{La exactitud medida es $0{,}889$, con un intervalo del $95$\,\% de
-$[0{,}565;\ 0{,}980]$. El intervalo contiene el umbral del $90\%$, de modo que la
+\textbf{La exactitud medida es $0{.}889$, con un intervalo del $95$\,\% de
+$[0{.}565;\ 0{.}980]$. El intervalo contiene el umbral del $90\%$, de modo que la
 hipótesis no se respalda ni se refuta con esta muestra: queda \emph{inconclusa}.}
 
-El único cruce perdido es el último de la grabación, a los $3\,597{,}6$ segundos de
+El único cruce perdido es el último de la grabación, a los $3\,597{.}6$ segundos de
 un video de $3\,600$: la reproducción termina antes de que la captura procese ese
 fotograma. No es un fallo de la decisión de evento, sino del borde de la ventana
 reproducida.
@@ -730,9 +737,9 @@ correcto en todos los casos.
 
 \subsubsection{Por qué no alcanza para pronunciarse}
 
-Nueve cruces son pocos para una proporción. Si la exactitud real fuera $0{,}95$,
+Nueve cruces son pocos para una proporción. Si la exactitud real fuera $0{.}95$,
 harían falta $139$ eventos para que el límite inferior del intervalo superara el
-$90\%$; con $0{,}97$ bastarían $71$. El cálculo es un análisis de tamaño de muestra
+$90\%$; con $0{.}97$ bastarían $71$. El cálculo es un análisis de tamaño de muestra
 por precisión, no una estimación \emph{post hoc} \cite{cohen1988statistical}. El
 recinto produce entre nueve y trece cruces por hora pareada, de modo que certificar
 el umbral exige del orden de diez a quince horas etiquetadas. Esa campaña no forma
@@ -741,7 +748,7 @@ parte de esta entrega y se declara como trabajo inmediato.
 \subsubsection{Datos de desarrollo, no de medición}
 
 La primera hora empleada, anterior a los ajustes que surgieron de ella, arrojó una
-exactitud del orden de $0{,}7$ sobre los $13$ cruces de esa hora. Ese valor
+exactitud del orden de $0{.}7$ sobre los $13$ cruces de esa hora. Ese valor
 \textbf{no se reporta como medición}: la hora se usó para corregir el filtrado por
 zona, la asignación del sentido y la estabilidad del flujo de video, de modo que su
 resultado está contaminado por el ajuste. Se consigna aquí porque describe el punto
@@ -791,14 +798,14 @@ resume el resultado.
         \toprule
         \textbf{Etapa} & \textbf{Media} & \textbf{p95} \\
         \midrule
-        Decodificación del JPEG        & $6{,}8$--$8{,}2$ ms & $7{,}4$ ms \\
-        Detección y clasificación ($2$ vehículos) & $22{,}7$--$33{,}5$ ms & $46{,}5$ ms \\
-        Agregación de trayectorias     & $<0{,}1$ ms & $0{,}1$ ms \\
+        Decodificación del JPEG        & $6{.}8$--$8{.}2$ ms & $7{.}4$ ms \\
+        Detección y clasificación ($2$ vehículos) & $22{.}7$--$33{.}5$ ms & $46{.}5$ ms \\
+        Agregación de trayectorias     & $<0{.}1$ ms & $0{.}1$ ms \\
         \midrule
-        Total por fotograma            & $29{,}5$--$43{,}4$ ms & --- \\
-        Fotogramas por segundo         & $23{,}0$--$29{,}7$ & --- \\
-        Cámaras a $2$ fps              & $11{,}5$--$14{,}9$ & --- \\
-        Cámaras al $70$\,\% de uso   & $8{,}1$--$10{,}4$ & --- \\
+        Total por fotograma            & $29{.}5$--$43{.}4$ ms & --- \\
+        Fotogramas por segundo         & $23{.}0$--$29{.}7$ & --- \\
+        Cámaras a $2$ fps              & $11{.}5$--$14{.}9$ & --- \\
+        Cámaras al $70$\,\% de uso   & $8{.}1$--$10{.}4$ & --- \\
         \bottomrule
     \end{tabular}
 \end{table}
@@ -822,12 +829,11 @@ continúa sin valor reportado.
 \begin{table}[H]
     \centering
     \caption{Estado de cada hipótesis específica frente a la evidencia medida.
-    Los intervalos de AP y F1 macro se obtienen por remuestreo; los de recall,
-    Exact Match y determinación de eventos, con la aproximación de Wilson
-    \cite{wilson1927probable,brown2001interval}. El de exactitud por carácter usa
-    la misma aproximación sobre $n = 152$ y no corrige la dependencia entre
-    recortes de una misma placa, por lo que es más estrecho que el que daría el
-    remuestreo por placa; ninguno incorpora la varianza entre corridas.}
+    Los intervalos de AP y F1 macro se obtienen por remuestreo; el de exactitud
+    por carácter, por remuestreo de las $99$ placas y promedio macro por placa;
+    los de recall, Exact Match y determinación de eventos, con la aproximación de
+    Wilson \cite{wilson1927probable,brown2001interval}. El Exact Match se calcula
+    por recorte. Ningún intervalo incorpora la varianza entre corridas.}
     \label{tab:contraste_hipotesis}
     \begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{0.28\textwidth}
         >{\raggedright\arraybackslash}p{0.17\textwidth} l
@@ -837,13 +843,13 @@ continúa sin valor reportado.
         \textbf{Hipótesis} & \textbf{Criterio} & \textbf{Medido} &
         \textbf{IC 95\,\%} & \textbf{Veredicto} \\
         \midrule
-        $H_{1.1}$ detección de vehículos & mAP@50 $\geq 0{,}80$ & $0{,}901$ & $0{,}876$--$0{,}924$ & respaldada \\
-        $H_{1.2}$ tipo de vehículo       & F1 macro $\geq 0{,}85$ & $0{,}8887$ & $0{,}866$--$0{,}910$ & respaldada \\
-        $H_{1.3}$ color predominante     & F1 macro $\geq 0{,}85$ & $0{,}8124$ & $0{,}777$--$0{,}844$ & no respaldada \\
-        $H_{1.4}$ placas (detección)     & recall $\geq 0{,}90$ & $0{,}9714$ & $0{,}936$--$0{,}988$ & respaldada \\
-        $H_{1.4}$ placas (reconocimiento) & char acc $\geq 0{,}90$ & $0{,}851$ & $0{,}783$--$0{,}897$ & inconclusa (frontera) \\
-        $H_{1.4}$ placas (Exact Match)   & EM $\geq 0{,}80$ & $0{,}526$ & $0{,}428$--$0{,}621$ & referencia no alcanzada \\
-        $H_{1.5}$ eventos ingreso/salida & exactitud $\geq 0{,}90$ & $0{,}889$ & $0{,}565$--$0{,}980$ & inconclusa \\
+        $H_{1{.}1}$ detección de vehículos & mAP@50 $\geq 0{.}80$ & $0{.}901$ & $0{.}876$--$0{.}924$ & respaldada \\
+        $H_{1{.}2}$ tipo de vehículo       & F1 macro $\geq 0{.}85$ & $0{.}8887$ & $0{.}866$--$0{.}910$ & respaldada \\
+        $H_{1{.}3}$ color predominante     & F1 macro $\geq 0{.}85$ & $0{.}8124$ & $0{.}777$--$0{.}844$ & no respaldada \\
+        $H_{1{.}4}$ placas (detección)     & recall $\geq 0{.}90$ & $0{.}9714$ & $0{.}936$--$0{.}988$ & respaldada \\
+        $H_{1{.}4}$ placas (reconocimiento) & char acc $\geq 0{.}90$ & $0{.}851$ & $0{.}811$--$0{.}890$ & no respaldada \\
+        $H_{1{.}4}$ placas (Exact Match)   & EM $\geq 0{.}80$ & $0{.}526$ & $0{.}428$--$0{.}621$ & referencia no alcanzada \\
+        $H_{1{.}5}$ eventos ingreso/salida & exactitud $\geq 0{.}90$ & $0{.}889$ & $0{.}565$--$0{.}980$ & inconclusa \\
         \bottomrule
     \end{tabularx}
 \end{table}
@@ -853,16 +859,15 @@ La columna de veredicto distingue tres estados que no son intercambiables:
 \emph{no respaldada} cuando queda por debajo, e \emph{inconclusa} cuando el
 intervalo contiene el umbral.
 Esa regla equivale a una prueba unilateral de intervalo: se postula
-$H_0:\pi\ge\theta$ frente a $H_1:\pi<\theta$ con $\alpha=0{,}05$, de modo que un
+$H_0:\pi\ge\theta$ frente a $H_1:\pi<\theta$ con $\alpha=0{.}05$, de modo que un
 intervalo íntegramente por debajo de $\theta$ rechaza la hipótesis de investigación
 y uno íntegramente por encima la respalda; cuando el intervalo contiene $\theta$ no
 hay pronunciamiento posible. La aceptación de la hipótesis nula es, en este
 sentido, una decisión tomada con el riesgo declarado y no la demostración de que el
-valor nulo sea verdadero \cite{neyman1933problem,fisher1935design,%
-schuirmann1987comparison,lakens2017equivalence}. El caso de color es el más
-estrecho: su intervalo superior ($0{,}849$) roza el umbral, de modo que el
+valor nulo sea verdadero \cite{neyman1933problem,fisher1935design,schuirmann1987comparison,lakens2017equivalence,lakens2018equivalence,kruschke2018rejecting}. El caso de color es el más
+estrecho: su intervalo superior ($0{.}849$) roza el umbral, de modo que el
 incumplimiento es marginal y no se usa como sostén del veredicto general. El macro
-sobre las once clases ($0{,}5702$) no se reporta como medición porque incluye
+sobre las once clases ($0{.}5702$) no se reporta como medición porque incluye
 clases con soporte insuficiente y el protocolo las excluye del promedio. Los
 intervalos declarados tampoco corrigen la dependencia entre recortes de una misma
 placa o sesión; un intervalo que la incorporara exigiría remuestreo por
@@ -875,8 +880,8 @@ reportado.
 
 El techo no lo fija la comparación entre modelos, que el CRNN gana en ambas
 métricas, sino la resolución del material. Con el mismo modelo, la exactitud por
-carácter pasa de $0{,}643$ en los recortes de menos de $20$ píxeles de altura a
-$0{,}875$ en los de $40$ o más. Los recortes del primer grupo contienen siete
+carácter pasa de $0{.}643$ en los recortes de menos de $20$ píxeles de altura a
+$0{.}875$ en los de $40$ o más. Los recortes del primer grupo contienen siete
 caracteres en unos $40 \times 13$ píxeles: ningún modelo puede reconstruir
 información que no está en la imagen.
 
@@ -885,13 +890,13 @@ ajuste fino dispone todavía de pocos ejemplos por carácter. La exactitud de pr
 se aplana mientras la pérdida de entrenamiento continúa descendiendo: el modelo
 deja de aprender del dominio real y empieza a memorizar las placas vistas. El
 límite aparece por cantidad de datos, no por convergencia. La ampliación del
-conjunto de entrenamiento de $889$ a $1.085$ recortes ---$196$ recortes nuevos
-revisados a mano--- elevó la coincidencia exacta de $0{,}480$ a $0{,}526$ sobre
+conjunto de entrenamiento de $889$ a $1{,}085$ recortes ---$196$ recortes nuevos
+revisados a mano--- elevó la coincidencia exacta de $0{.}480$ a $0{.}526$ sobre
 el mismo test de $152$ recortes, lo que confirma que la cantidad de datos sigue
 siendo una palanca activa y que el techo aún no se ha alcanzado. La comparación
 pareada sobre las mismas $152$ placas da $7$ aciertos solo del modelo anterior
 frente a $14$ solo del actual; el test de McNemar
-\cite{mcnemar1947note,dietterich1998approximate} arroja $p = 0{,}19$, de modo que
+\cite{mcnemar1947note,dietterich1998approximate} arroja $p = 0{.}19$, de modo que
 la dirección es consistente en ambos encuadres pero el tamaño del test no alcanza
 para declarar la diferencia significativa.
 
@@ -903,15 +908,15 @@ mediciones se tomaron sobre el protocolo anterior; se conservan porque el tamañ
 del efecto es lo que las hace relevantes y no depende de la partición.
 
 \begin{itemize}
-    \item \textbf{Normalización de contraste (CLAHE):} $0{,}14 \rightarrow 0{,}676$
+    \item \textbf{Normalización de contraste (CLAHE):} $0{.}14 \rightarrow 0{.}676$
         de exactitud por carácter en la corrida de dos etapas. Sin ella, las
         capturas nocturnas quedan fuera de la distribución de entrenamiento.
-    \item \textbf{Aumento geométrico de recorte:} $0{,}594 \rightarrow 0{,}782$ de
+    \item \textbf{Aumento geométrico de recorte:} $0{.}594 \rightarrow 0{.}782$ de
         exactitud por carácter en el sistema completo. El error de encuadre entre
         el detector que corta en producción y el etiquetador que cortó los datos
         de entrenamiento se absorbía como error de reconocimiento.
     \item \textbf{Selección de época por clases con soporte suficiente:}
-        $0{,}7937 \rightarrow 0{,}8124$ de F1 macro en el clasificador de color,
+        $0{.}7937 \rightarrow 0{.}8124$ de F1 macro en el clasificador de color,
         sin cambiar el modelo ni una sola imagen.
 \end{itemize}
 
@@ -920,12 +925,12 @@ del efecto es lo que las hace relevantes y no depende de la partición.
 
 \begin{itemize}
     \item \textbf{Una sola corrida por clasificador.} La varianza medida entre
-        corridas idénticas es de $1$ a $3{,}4$ puntos de F1 macro; diferencias
+        corridas idénticas es de $1$ a $3{.}4$ puntos de F1 macro; diferencias
         menores a ese rango no se interpretan como mejoras.
     \item \textbf{Muestra moderada en la medición de extremo a extremo.} Los $99$
-        recortes con texto verificado implican un error estándar de $1{,}9$ puntos
-        en exactitud por carácter ($\mathrm{IC}_{95} \approx \pm 3{,}6$) y de
-        $5{,}0$ puntos en coincidencia exacta ($\mathrm{IC}_{95} \approx \pm 9{,}8$).
+        recortes con texto verificado implican un error estándar de $1{.}9$ puntos
+        en exactitud por carácter ($\mathrm{IC}_{95} \approx \pm 3{.}6$) y de
+        $5{.}0$ puntos en coincidencia exacta ($\mathrm{IC}_{95} \approx \pm 9{.}8$).
         La comparación con PaddleOCR en esa condición es indicativa, no concluyente.
     \item \textbf{Selección de la muestra de extremo a extremo.} Los $99$ recortes
         provienen de un conjunto donde el etiquetador automático ya había
@@ -937,7 +942,7 @@ del efecto es lo que las hace relevantes y no depende de la partición.
         reconocimiento, pero no se controla la variabilidad entre modelos de
         cámara o condiciones de instalación distintas.
     \item \textbf{Muestra insuficiente en la determinación de eventos.} La
-        exactitud medida ($0{,}889$) tiene un intervalo que contiene el umbral, de
+        exactitud medida ($0{.}889$) tiene un intervalo que contiene el umbral, de
         modo que la etapa queda inconclusa y no medida con la precisión que exige
         el criterio. Certificarla requiere del orden de diez a quince horas
         pareadas etiquetadas (Subsección~\ref{sec:resultados_eventos}).

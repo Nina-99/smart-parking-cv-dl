@@ -91,21 +91,21 @@ enumera los parámetros que lo gobiernan.
     \endhead
 
     \texttt{scan\_stride} & 12 & Separación entre muestras en la primera pasada. \\
-    \texttt{motion\_downscale} & 0,25 & Reducción aplicada antes de estimar el movimiento. \\
+    \texttt{motion\_downscale} & 0.25 & Reducción aplicada antes de estimar el movimiento. \\
     \texttt{motion\_pixel\_threshold} & 25 & Diferencia de intensidad que cuenta como cambio. \\
-    \texttt{motion\_threshold} & 0,008 & Fracción de píxeles cambiados para declarar actividad. \\
+    \texttt{motion\_threshold} & 0.008 & Fracción de píxeles cambiados para declarar actividad. \\
     \texttt{segment\_pad\_frames} & 45 & Margen añadido a cada ventana detectada. \\
     \texttt{segment\_merge\_gap} & 60 & Separación máxima para fusionar ventanas contiguas. \\
     \texttt{dense\_stride} & 1 & Procesamiento fotograma a fotograma en la segunda pasada. \\
     \texttt{grace\_frames} & 30 & Fotogramas de tolerancia antes de cerrar una trayectoria. \\
     \texttt{min\_track\_hits} & 3 & Observaciones mínimas para aceptar una trayectoria. \\
     \texttt{top\_k\_frames} & 10 & Fotogramas conservados por trayectoria. \\
-    \texttt{vehicle\_conf} & 0,35 & Confianza mínima de detección del vehículo. \\
+    \texttt{vehicle\_conf} & 0.35 & Confianza mínima de detección del vehículo. \\
     \texttt{min\_area\_pixels} & 3000 & Área mínima de la caja del vehículo. \\
-    \texttt{ocr\_min\_conf} & 0,60 & Confianza mínima para aceptar la lectura preliminar de la placa. \\
+    \texttt{ocr\_min\_conf} & 0.60 & Confianza mínima para aceptar la lectura preliminar de la placa. \\
     \texttt{min\_plate\_px} & 40 & Altura mínima del recorte de placa. \\
-    \texttt{min\_plate\_sharpness} & 15,0 & Nitidez mínima exigida al recorte de placa. \\
-    \texttt{plate\_y\_min} / \texttt{plate\_y\_max} & 0,55 / 1,00 & Franja vertical esperada de la placa dentro del vehículo. \\*
+    \texttt{min\_plate\_sharpness} & 15.0 & Nitidez mínima exigida al recorte de placa. \\
+    \texttt{plate\_y\_min} / \texttt{plate\_y\_max} & 0.55 / 1.00 & Franja vertical esperada de la placa dentro del vehículo. \\*
     \multicolumn{3}{r}{\footnotesize\textit{Fuente: Elaboración propia}} \\*
     \bottomrule
 \end{longtable}
@@ -219,7 +219,7 @@ atributo:
     \item \textbf{Etiquetado humano directo de atributos (tipo y color):} Los
         atributos visuales del vehículo (categoría de carrocería y color
         predominante) son etiquetados en su totalidad por un operador humano mediante
-        una herramienta interactiva especializada (\texttt{label\_attributes.py}).
+        una herramienta interactiva especializada (\texttt{label\_type.py}).
         Se prohíbe explícitamente el uso de clasificadores automáticos para generar
         estas etiquetas: hacerlo implicaría entrenar el modelo final con las
         predicciones de una regla contra la cual se pretende evaluar su desempeño,
@@ -284,29 +284,31 @@ La salida del proceso se organiza según la Tabla \ref{tab:salida_dataset}.
     \bottomrule
 \end{longtable}
 
-\subsection{Partición y protocolo de ablación del conjunto de datos}
+\subsection{Participación, composición y protocolo de ablación del conjunto de datos}
 
-La partición entre entrenamiento, validación y prueba se establece por
-sesión de grabación y por trayectoria, y no de forma aleatoria por imagen. Un mismo
-vehículo aparece en decenas de fotogramas consecutivos; si esos fotogramas se
-distribuyeran al azar, el modelo memorizaría el vehículo específico en lugar de
-aprender a generalizar. La partición por sesión elimina la fuga de información por
-identidad.
+La partición entre entrenamiento, validación y prueba se establece por sesión de
+grabación, agrupada en bloques horarios, y no de forma aleatoria por imagen. Un
+mismo vehículo aparece en decenas de fotogramas consecutivos; si esos fotogramas
+se distribuyeran al azar, el modelo memorizaría el vehículo específico en lugar de
+aprender a generalizar. Al mantener cada sesión en un único subconjunto, ninguna
+trayectoria queda repartida entre entrenamiento y prueba, de modo que se elimina
+la fuga de información por identidad.
 
 Para evaluar el impacto de la generación sintética sobre el reconocimiento de
 matrículas, se construye un protocolo de ablación determinista
 (\texttt{prepare\_ocr\_ablation.py}) fijando una semilla aleatoria ($seed = 7$) y una
 proporción de prueba del $20\%$.
 
-La Tabla \ref{tab:caracterizacion_dataset} muestra la caracterización del conjunto de
-datos alcanzada en el hito experimental actual.
+La Tabla \ref{tab:caracterizacion_dataset} resume la composición del conjunto de
+datos de reconocimiento de matrículas. La composición completa de los conjuntos de
+atributos y de placas se detalla en el Anexo~B.
 
 \begin{longtable}{
         P{0.20}
         P{0.12}
         P{0.60}
     }
-    \caption{Caracterización del conjunto de datos (Hito preliminar)}
+    \caption{Composición del conjunto de datos de reconocimiento de matrículas}
     \label{tab:caracterizacion_dataset}\\
 
     \toprule
@@ -327,36 +329,51 @@ datos alcanzada en el hito experimental actual.
     \midrule
     \endhead
 
-    \texttt{train\_real} & 395 & Muestras reales extraídas de 284 sesiones de grabación. \\
+    \texttt{train\_real} & 1,085 & Muestras reales extraídas de las sesiones de grabación. \\
     \midrule
-    \texttt{train\_synth} & 359.992 & Muestras sintéticas generadas con formato boliviano. \\
+    \texttt{train\_synth} & 360,000 & Muestras sintéticas generadas con formato boliviano. \\
     \midrule
-    \texttt{test} (evaluación) & 101 & Muestras reales independientes para la prueba final. \\
+    \texttt{test} (evaluación) & 152 & Muestras reales independientes para la prueba final. \\
     \midrule
-    \textbf{Total real procesado} & \textbf{496} & \textbf{Extraídas de 284 sesiones de grabación.} \\*
+    \textbf{Total real procesado} & \textbf{1,237} & \textbf{$640$ placas distintas, particionadas por cadena de matrícula.} \\*
     \multicolumn{3}{r}{\footnotesize\textit{Fuente: Elaboración propia}} \\*
     \bottomrule
 \end{longtable}
 
-Es importante destacar que el tamaño actual del conjunto de datos real ($496$
-matrículas confirmadas por un operador) representa un hito preliminar de la
-investigación, y que ese tamaño es la restricción dominante del módulo de
-reconocimiento, no la arquitectura del modelo (Sección~\ref{sec:resultados_ocr}).
-Dado que los modelos profundos de OCR requieren volúmenes crecientes de datos para
-maximizar su generalización, la infraestructura de extracción y los protocolos
-desarrollados están diseñados para escalar la recolección sin alterar la
-metodología ni el código de evaluación.
+Además de la partición de entrenamiento y prueba del reconocedor, la evaluación de
+extremo a extremo se realizó sobre $99$ recortes de vehículo con texto de placa
+verificado por un operador, provenientes de los recortes del conjunto de prueba que
+conservan la imagen original del vehículo. Ese conjunto no participa del
+entrenamiento y se describe en el Anexo~B. El conjunto de color, por su parte,
+excluye los minibuses y la clase residual \textit{otro}, de modo que su tamaño no
+coincide con el del conjunto de tipo; la composición y el motivo de cada exclusión
+se detallan en el mismo anexo.
 
-Los 360.000 especímenes sintéticos previstos se redujeron a 359.992 utilizables:
-ocho archivos JPEG quedaron truncados durante su transferencia desde el disco
-externo de trabajo, que presentó errores de entrada/salida ($EIO$) en
-aproximadamente el $1{,}3\%$ de los recortes del pool. Los ocho archivos no
-pudieron recuperarse y se excluyeron del listado de entrenamiento. El episodio se
-documenta aquí porque condicionó el orden de trabajo posterior: todo el material
-se migró a almacenamiento NVMe y el disco externo dejó de ser fuente de verdad.
+Dos limitaciones del material condicionan el alcance de los resultados. La primera
+es el volumen de matrículas reales: $640$ confirmadas por un operador, de las
+cuales $541$ placas se destinan al ajuste fino, constituyen la restricción
+dominante del módulo de reconocimiento y no la arquitectura del modelo
+(Sección~\ref{sec:resultados_ocr}). Los protocolos de extracción están diseñados
+para escalar la recolección sin alterar la metodología ni los criterios de
+evaluación. La segunda es la procedencia: todas las sesiones provienen de las
+mismas cámaras del recinto, de modo que la partición por sesión controla la fuga
+por identidad dentro de una misma toma, y la partición por cadena de matrícula
+elimina la fuga de placa, pero no se controla la variabilidad entre modelos de
+cámara o condiciones de instalación distintas.
 
-Cabe señalar una limitación inherente a la recolección: todas las sesiones provienen
-de las mismas cámaras instaladas en el recinto. La partición por sesión controla
-la fuga por identidad dentro de la misma toma, pero no la variabilidad entre
-distintos modelos de cámara o diferentes recintos. Esta condición se mantiene de
-forma transparente y se retoma en el análisis de resultados.
+La integridad del material se verificó antes de la partición. Durante la
+transferencia desde el disco externo de trabajo ---que presentó errores de
+entrada/salida en aproximadamente el $1{.}3\%$ de los recortes del pool--- ocho
+archivos sintéticos quedaron irrecuperables y otros veinticinco se truncaron. Los
+treinta y tres se regeneraron de forma determinística: el generador deriva el
+estado aleatorio de cada placa de su índice, de modo que la misma revisión del
+código reproduce el mismo espécimen. En los veinticinco casos con etiqueta previa
+se verificó que el texto regenerado coincidiera exactamente con el original; en
+los ocho restantes la revisión se confirmó por continuidad con índices vecinos
+recuperados. El conjunto final conserva $360{,}000$ especímenes válidos.
+
+El episodio se documenta porque un generador determinístico por índice solo es
+reproducible para una revisión fija del código. Una modificación posterior del
+alfabeto de caracteres hace que un mismo índice produzca una placa distinta, y por
+lo tanto que reanudar una generación interrumpida reescriba el material en vez de
+continuarlo.
